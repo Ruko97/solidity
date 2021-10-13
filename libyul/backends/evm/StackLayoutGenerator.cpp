@@ -53,7 +53,7 @@ StackLayout StackLayoutGenerator::run(CFG const& _cfg)
 	StackLayoutGenerator{stackLayout, nullptr}.processEntryPoint(*_cfg.entry);
 
 	for (auto& functionInfo: _cfg.functionInfo | ranges::views::values)
-		StackLayoutGenerator{stackLayout, &functionInfo}.processEntryPoint(*functionInfo.entry, &functionInfo);
+		StackLayoutGenerator{stackLayout}.processEntryPoint(*functionInfo.entry, &functionInfo);
 
 	return stackLayout;
 }

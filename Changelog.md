@@ -39,22 +39,15 @@ Language Features:
 
 
 Compiler Features:
- * Commandline Interface: Add ``--transient-storage-layout`` output.
- * Commandline Interface: Allow the use of ``--asm-json`` output option in assembler mode to export EVM assembly of the contracts in JSON format.
- * Commandline Interface: Do not perform IR optimization when only unoptimized IR is requested.
- * Constant Optimizer: Uses ``PUSH0`` if supported by the selected evm version.
- * Error Reporting: Unimplemented features are now properly reported as errors instead of being handled as if they were bugs.
- * EVM: Support for the EVM version "Prague".
- * Peephole Optimizer: ``PUSH0``, when supported, is duplicated explicitly instead of using ``DUP1``.
- * Peephole Optimizer: Remove identical code snippets that terminate the control flow if they occur one after another.
- * SMTChecker: Add CHC engine check for underflow and overflow in unary minus operation.
- * SMTChecker: Replace CVC4 as a possible BMC backend with cvc5.
- * Standard JSON Interface: Add ``transientStorageLayout`` output.
- * Standard JSON Interface: Do not perform IR optimization when only unoptimized IR is requested.
- * Yul: Drop the deprecated typed Yul dialect that was only accessible via ``--yul`` in the CLI.
- * Yul: The presence of types in untyped Yul dialects is now a parser error.
- * Yul Optimizer: Caching of optimized IR to speed up optimization of contracts with bytecode dependencies.
- * Yul Optimizer: The optimizer now treats some previously unrecognized identical literals as identical.
+ * Commandline Interface: Return exit code ``2`` on uncaught exceptions.
+ * Commandline Interface: Add `--no-cbor-metadata` that skips CBOR metadata from getting appended at the end of the bytecode.
+ * EVM: Basic support for the EVM version "Paris".
+ * Natspec: Add event Natspec inheritance for devdoc.
+ * Standard JSON: Add a boolean field `settings.metadata.appendCBOR` that skips CBOR metadata from getting appended at the end of the bytecode.
+ * Yul EVM Code Transform: Generate more optimal code for user-defined functions that always terminate a transaction. No return labels will be pushed for calls to functions that always terminate.
+ * Yul Optimizer: Allow replacing the previously hard-coded cleanup sequence by specifying custom steps after a colon delimiter (``:``) in the sequence string.
+ * Language Server: Add basic document hover support.
+ * Optimizer: Added optimization rule ``and(shl(X, Y), shl(X, Z)) => shl(X, and(Y, Z))``.
 
 
 Bugfixes:
