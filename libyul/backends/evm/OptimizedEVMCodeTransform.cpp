@@ -70,7 +70,7 @@ void OptimizedEVMCodeTransform::operator()(CFG::FunctionCall const& _call)
 	// Validate stack.
 	{
 		yulAssert(m_assembly.stackHeight() == static_cast<int>(m_stack.size()), "");
-		yulAssert(m_stack.size() >= _call.function.get().numArguments + (_call.canContinue ? 1 : 0), "");
+		yulAssert(m_stack.size() >= _call.function.get().arguments.size() + (_call.canContinue ? 1 : 0), "");
 		// Assert that we got the correct arguments on stack for the call.
 		for (auto&& [arg, slot]: ranges::zip_view(
 			_call.functionCall.get().arguments | ranges::views::reverse,
@@ -80,7 +80,7 @@ void OptimizedEVMCodeTransform::operator()(CFG::FunctionCall const& _call)
 		// Assert that we got the correct return label on stack.
 		if (_call.canContinue)
 		{
-			auto const* returnLabelSlot = std::get_if<FunctionCallReturnLabelSlot>(
+			auto const* returnLabelSlot = get_if<FunctionCallReturnLabelSlot>(
 				&m_stack.at(m_stack.size() - _call.functionCall.get().arguments.size() - 1)
 			);
 			yulAssert(returnLabelSlot && &returnLabelSlot->call.get() == &_call.functionCall.get(), "");
@@ -92,7 +92,7 @@ void OptimizedEVMCodeTransform::operator()(CFG::FunctionCall const& _call)
 		m_assembly.setSourceLocation(originLocationOf(_call));
 		m_assembly.appendJumpTo(
 			getFunctionLabel(_call.function),
-			static_cast<int>(_call.function.get().numReturns) - static_cast<int>(_call.function.get().numArguments) - (_call.canContinue ? 1 : 0),
+			static_cast<int>(_call.function.get().returns.size() - _call.function.get().arguments.size()) - (_call.canContinue ? 1 : 0),
 			AbstractAssembly::JumpType::IntoFunction
 		);
 		if (_call.canContinue)
@@ -102,7 +102,7 @@ void OptimizedEVMCodeTransform::operator()(CFG::FunctionCall const& _call)
 	// Update stack.
 	{
 		// Remove arguments and return label from m_stack.
-		for (size_t i = 0; i < _call.function.get().numArguments + (_call.canContinue ? 1 : 0); ++i)
+		for (size_t i = 0; i < _call.function.get().arguments.size() + (_call.canContinue ? 1 : 0); ++i)
 			m_stack.pop_back();
 		// Push return values to m_stack.
 		for (size_t index: ranges::views::iota(0u, _call.function.get().numReturns))
@@ -502,9 +502,9 @@ void OptimizedEVMCodeTransform::operator()(CFG::BasicBlock const& _block)
 		[&](CFG::BasicBlock::Terminated const&)
 		{
 			yulAssert(!_block.operations.empty());
-			if (CFG::BuiltinCall const* builtinCall = std::get_if<CFG::BuiltinCall>(&_block.operations.back().operation))
+			if (CFG::BuiltinCall const* builtinCall = get_if<CFG::BuiltinCall>(&_block.operations.back().operation))
 				yulAssert(builtinCall->builtin.get().controlFlowSideEffects.terminatesOrReverts(), "");
-			else if (CFG::FunctionCall const* functionCall = std::get_if<CFG::FunctionCall>(&_block.operations.back().operation))
+			else if (CFG::FunctionCall const* functionCall = get_if<CFG::FunctionCall>(&_block.operations.back().operation))
 				yulAssert(!functionCall->canContinue);
 			else
 				yulAssert(false);

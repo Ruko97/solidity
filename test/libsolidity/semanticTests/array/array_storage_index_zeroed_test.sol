@@ -50,20 +50,20 @@ contract C {
     }
 }
 // ----
-// test_zeroed_indices(uint256): 1 ->
-// test_zeroed_indices(uint256): 5 ->
-// gas irOptimized: 133763
-// gas legacy: 131664
-// gas legacyOptimized: 129990
-// test_zeroed_indices(uint256): 10 ->
-// gas irOptimized: 228556
-// gas legacy: 225215
-// gas legacyOptimized: 222351
-// test_zeroed_indices(uint256): 15 ->
-// gas irOptimized: 327360
-// gas legacy: 322899
-// gas legacyOptimized: 318907
-// test_zeroed_indices(uint256): 0xFF ->
-// gas irOptimized: 5180120
-// gas legacy: 5093135
-// gas legacyOptimized: 5020523
+// test_zeroed_indicies(uint256): 1 ->
+// test_zeroed_indicies(uint256): 5 ->
+// gas irOptimized: 131998
+// gas legacy: 132961
+// gas legacyOptimized: 130752
+// test_zeroed_indicies(uint256): 10 ->
+// gas irOptimized: 226012
+// gas legacy: 228071
+// gas legacyOptimized: 224010
+// test_zeroed_indicies(uint256): 15 ->
+// gas irOptimized: 324140
+// gas legacy: 327311
+// gas legacyOptimized: 321462
+// test_zeroed_indicies(uint256): 0xFF ->
+// gas irOptimized: 5120200
+// gas legacy: 5172987
+// gas legacyOptimized: 5066462
