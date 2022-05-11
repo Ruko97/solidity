@@ -22,6 +22,7 @@
 #include <libyul/optimiser/FullInliner.h>
 
 #include <libyul/optimiser/ASTCopier.h>
+#include <libyul/optimiser/CallGraphGenerator.h>
 #include <libyul/optimiser/FunctionCallFinder.h>
 #include <libyul/optimiser/NameCollector.h>
 #include <libyul/optimiser/Metrics.h>
@@ -48,8 +49,12 @@ void FullInliner::run(OptimiserStepContext& _context, Block& _ast)
 }
 
 FullInliner::FullInliner(Block& _ast, NameDispenser& _dispenser, Dialect const& _dialect):
-	m_ast(_ast), m_nameDispenser(_dispenser), m_dialect(_dialect)
+	m_ast(_ast),
+	m_recursiveFunctions(CallGraphGenerator::callGraph(_ast).recursiveFunctions()),
+	m_nameDispenser(_dispenser),
+	m_dialect(_dialect)
 {
+
 	// Determine constants
 	SSAValueTracker tracker;
 	tracker(m_ast);
@@ -198,7 +203,7 @@ bool FullInliner::shallInline(FunctionCall const& _funCall, YulString _callSite)
 		aggressiveInlining = false;
 
 	// No aggressive inlining, if we cannot perform stack-to-memory.
-	if (!m_hasMemoryGuard)
+	if (!m_hasMemoryGuard || m_recursiveFunctions.count(_callSite))
 		aggressiveInlining = false;
 
 	if (!aggressiveInlining && m_functionSizes.at(_callSite) > 45)

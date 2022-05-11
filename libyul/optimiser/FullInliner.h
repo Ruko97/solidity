@@ -113,6 +113,8 @@ private:
 	std::set<YulString> m_noInlineFunctions;
 	/// True, if the code contains a ``memoryguard`` and we can expect to be able to move variables to memory later.
 	bool m_hasMemoryGuard = false;
+	/// Set of recursive functions.
+	std::set<YulString> m_recursiveFunctions;
 	/// Names of functions to always inline.
 	std::set<YulString> m_singleUse;
 	/// Variables that are constants (used for inlining heuristic)
