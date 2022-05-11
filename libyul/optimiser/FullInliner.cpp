@@ -188,17 +188,20 @@ bool FullInliner::shallInline(FunctionCall const& _funCall, YulString _callSite)
 	if (m_pass == Pass::InlineTiny)
 		return false;
 
-	bool usesNewCodeTransform = true;
+	bool aggressiveInlining = true;
 
 	if (
 		EVMDialect const* evmDialect = dynamic_cast<EVMDialect const*>(&m_dialect);
 		!evmDialect || !evmDialect->providesObjectAccess() || evmDialect->evmVersion() <= langutil::EVMVersion::homestead()
 	)
-		usesNewCodeTransform = false;
+		// No aggressive inlining with the old code transform.
+		aggressiveInlining = false;
 
-	// Do not inline into already big functions, unless we will use the new code transform and can perform
-	// stack-to-memory.
-	if ((!m_hasMemoryGuard || !usesNewCodeTransform) && m_functionSizes.at(_callSite) > 45)
+	// No aggressive inlining, if we cannot perform stack-to-memory.
+	if (!m_hasMemoryGuard)
+		aggressiveInlining = false;
+
+	if (!aggressiveInlining && m_functionSizes.at(_callSite) > 45)
 		return false;
 
 	if (m_singleUse.count(calledFunction->name))
@@ -216,7 +219,7 @@ bool FullInliner::shallInline(FunctionCall const& _funCall, YulString _callSite)
 			break;
 		}
 
-	return (size < (usesNewCodeTransform ? 8 : 6) || (constantArg && size < (usesNewCodeTransform ? 16 : 12)));
+	return (size < (aggressiveInlining ? 8 : 6) || (constantArg && size < (aggressiveInlining ? 16 : 12)));
 }
 
 void FullInliner::tentativelyUpdateCodeSize(YulString _function, YulString _callSite)
