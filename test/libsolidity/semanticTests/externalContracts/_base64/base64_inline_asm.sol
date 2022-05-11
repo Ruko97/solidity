@@ -35,7 +35,7 @@ library InlineAsmBase64 {
         // Add some extra buffer at the end required for the writing
         string memory result = new string(encodedLen);
 
-        assembly {
+        assembly ("memory-safe") {
             // Store the actual result length in memory
             mstore(result, encodedLen)
 

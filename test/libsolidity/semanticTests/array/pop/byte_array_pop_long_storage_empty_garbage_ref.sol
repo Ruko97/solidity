@@ -6,7 +6,7 @@ contract c {
         for (uint8 i = 0; i <= 40; i++)
             data.push(0x03);
         for (uint8 j = 0; j <= 40; j++) {
-            assembly {
+            assembly ("memory-safe") {
                 mstore(0, "garbage")
             }
             data.pop();

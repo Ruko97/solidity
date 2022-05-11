@@ -19,7 +19,7 @@ contract C {
 
             for (uint i = 3; i < len; i++)
             {
-                assembly {
+                assembly ("memory-safe") {
                     mstore(0, storageArray.slot)
                     let pos := add(keccak256(0, 0x20), i)
 

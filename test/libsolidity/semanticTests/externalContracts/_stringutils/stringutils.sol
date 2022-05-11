@@ -45,7 +45,7 @@ library strings {
     function memcpy(uint dest, uint src, uint len) private pure {
         // Copy word-length chunks while possible
         for(; len >= 32; len -= 32) {
-            assembly {
+            assembly ("memory-safe") {
                 mstore(dest, mload(src))
             }
             dest += 32;
@@ -61,7 +61,7 @@ library strings {
         // Copy remaining bytes
         uint mask;
         unchecked { mask = 256 ** (32 - len) - 1; }
-        assembly {
+        assembly ("memory-safe") {
             let srcpart := and(mload(src), not(mask))
             let destpart := and(mload(dest), mask)
             mstore(dest, or(destpart, srcpart))
@@ -121,7 +121,7 @@ library strings {
      */
     function toSliceB32(bytes32 self) internal pure returns (slice memory ret) {
         // Allocate space for `self` in memory, copy it there, and point ret at it
-        assembly {
+        assembly ("memory-safe") {
             let ptr := mload(0x40)
             mstore(0x40, add(ptr, 0x20))
             mstore(ptr, self)
@@ -167,7 +167,7 @@ library strings {
         uint end = ptr + self._len;
         for (l = 0; ptr < end; l++) {
             uint8 b;
-            assembly { b := and(mload(ptr), 0xFF) }
+            assembly ("memory-safe") { b := and(mload(ptr), 0xFF) }
             if (b < 0x80) {
                 ptr += 1;
             } else if(b < 0xE0) {
@@ -212,7 +212,7 @@ library strings {
         for (uint idx = 0; idx < shortest; idx += 32) {
             uint a;
             uint b;
-            assembly {
+            assembly ("memory-safe") {
                 a := mload(selfptr)
                 b := mload(otherptr)
             }
@@ -262,7 +262,7 @@ library strings {
         uint l;
         uint b;
         // Load the first byte of the rune into the LSBs of b
-        assembly { b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF) }
+        assembly ("memory-safe") { b := and(mload(sub(mload(add(self, 32)), 31)), 0xFF) }
         if (b < 0x80) {
             l = 1;
         } else if(b < 0xE0) {
@@ -312,7 +312,7 @@ library strings {
         uint divisor = 2 ** 248;
 
         // Load the rune into the MSBs of b
-        assembly { word:= mload(mload(add(self, 32))) }
+        assembly ("memory-safe") { word:= mload(mload(add(self, 32))) }
         uint b = word / divisor;
         if (b < 0x80) {
             ret = b;
@@ -352,7 +352,7 @@ library strings {
      * @return The hash of the slice.
      */
     function keccak(slice memory self) internal pure returns (bytes32 ret) {
-        assembly {
+        assembly ("memory-safe") {
             ret := keccak256(mload(add(self, 32)), mload(self))
         }
     }
@@ -373,7 +373,7 @@ library strings {
         }
 
         bool equal;
-        assembly {
+        assembly ("memory-safe") {
             let length := mload(needle)
             let selfptr := mload(add(self, 0x20))
             let needleptr := mload(add(needle, 0x20))
@@ -396,7 +396,7 @@ library strings {
 
         bool equal = true;
         if (self._ptr != needle._ptr) {
-            assembly {
+            assembly ("memory-safe") {
                 let length := mload(needle)
                 let selfptr := mload(add(self, 0x20))
                 let needleptr := mload(add(needle, 0x20))
@@ -430,7 +430,7 @@ library strings {
         }
 
         bool equal;
-        assembly {
+        assembly ("memory-safe") {
             let length := mload(needle)
             let needleptr := mload(add(needle, 0x20))
             equal := eq(keccak256(selfptr, length), keccak256(needleptr, length))
@@ -454,7 +454,7 @@ library strings {
         uint selfptr = self._ptr + self._len - needle._len;
         bool equal = true;
         if (selfptr != needle._ptr) {
-            assembly {
+            assembly ("memory-safe") {
                 let length := mload(needle)
                 let needleptr := mload(add(needle, 0x20))
                 equal := eq(keccak256(selfptr, length), keccak256(needleptr, length))
@@ -479,27 +479,27 @@ library strings {
                 bytes32 mask = bytes32(~(2 ** (8 * (32 - needlelen)) - 1));
 
                 bytes32 needledata;
-                assembly { needledata := and(mload(needleptr), mask) }
+                assembly ("memory-safe") { needledata := and(mload(needleptr), mask) }
 
                 uint end = selfptr + selflen - needlelen;
                 bytes32 ptrdata;
-                assembly { ptrdata := and(mload(ptr), mask) }
+                assembly ("memory-safe") { ptrdata := and(mload(ptr), mask) }
 
                 while (ptrdata != needledata) {
                     if (ptr >= end)
                         return selfptr + selflen;
                     ptr++;
-                    assembly { ptrdata := and(mload(ptr), mask) }
+                    assembly ("memory-safe") { ptrdata := and(mload(ptr), mask) }
                 }
                 return ptr;
             } else {
                 // For long needles, use hashing
                 bytes32 hash;
-                assembly { hash := keccak256(needleptr, needlelen) }
+                assembly ("memory-safe") { hash := keccak256(needleptr, needlelen) }
 
                 for (idx = 0; idx <= selflen - needlelen; idx++) {
                     bytes32 testHash;
-                    assembly { testHash := keccak256(ptr, needlelen) }
+                    assembly ("memory-safe") { testHash := keccak256(ptr, needlelen) }
                     if (hash == testHash)
                         return ptr;
                     ptr += 1;
@@ -519,27 +519,27 @@ library strings {
                 bytes32 mask = bytes32(~(2 ** (8 * (32 - needlelen)) - 1));
 
                 bytes32 needledata;
-                assembly { needledata := and(mload(needleptr), mask) }
+                assembly ("memory-safe") { needledata := and(mload(needleptr), mask) }
 
                 ptr = selfptr + selflen - needlelen;
                 bytes32 ptrdata;
-                assembly { ptrdata := and(mload(ptr), mask) }
+                assembly ("memory-safe") { ptrdata := and(mload(ptr), mask) }
 
                 while (ptrdata != needledata) {
                     if (ptr <= selfptr)
                         return selfptr;
                     ptr--;
-                    assembly { ptrdata := and(mload(ptr), mask) }
+                    assembly ("memory-safe") { ptrdata := and(mload(ptr), mask) }
                 }
                 return ptr + needlelen;
             } else {
                 // For long needles, use hashing
                 bytes32 hash;
-                assembly { hash := keccak256(needleptr, needlelen) }
+                assembly ("memory-safe") { hash := keccak256(needleptr, needlelen) }
                 ptr = selfptr + (selflen - needlelen);
                 while (ptr >= selfptr) {
                     bytes32 testHash;
-                    assembly { testHash := keccak256(ptr, needlelen) }
+                    assembly ("memory-safe") { testHash := keccak256(ptr, needlelen) }
                     if (hash == testHash)
                         return ptr + needlelen;
                     ptr -= 1;

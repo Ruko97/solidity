@@ -1,10 +1,11 @@
 {
+    pop(memoryguard(0))
     function f(a) -> b {
         let x := mload(a)
         b := sload(x)
     }
-    // This will stop inlining at some point because
-    // the function gets too big.
+    // This will not stop inlining with the new code transform in
+    // the presence of above memoryguard.
     function g() -> x {
         x := f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(f(2)))))))))))))))))))
     }
@@ -15,68 +16,68 @@
 // step: fullInliner
 //
 // {
-//     { }
+//     { pop(memoryguard(0)) }
 //     function f(a) -> b
 //     { b := sload(mload(a)) }
 //     function g() -> x_1
 //     {
-//         let a_20 := 2
-//         let b_21 := 0
-//         b_21 := sload(mload(a_20))
-//         let a_23 := b_21
-//         let b_24 := 0
-//         b_24 := sload(mload(a_23))
-//         let a_26 := b_24
-//         let b_27 := 0
-//         b_27 := sload(mload(a_26))
-//         let a_29 := b_27
-//         let b_30 := 0
-//         b_30 := sload(mload(a_29))
-//         let a_32 := b_30
-//         let b_33 := 0
-//         b_33 := sload(mload(a_32))
-//         let a_35 := b_33
-//         let b_36 := 0
-//         b_36 := sload(mload(a_35))
-//         let a_38 := b_36
-//         let b_39 := 0
-//         b_39 := sload(mload(a_38))
-//         let a_41 := b_39
-//         let b_42 := 0
-//         b_42 := sload(mload(a_41))
-//         let a_44 := b_42
-//         let b_45 := 0
-//         b_45 := sload(mload(a_44))
-//         let a_47 := b_45
-//         let b_48 := 0
-//         b_48 := sload(mload(a_47))
-//         let a_50 := b_48
-//         let b_51 := 0
-//         b_51 := sload(mload(a_50))
-//         let a_53 := b_51
-//         let b_54 := 0
-//         b_54 := sload(mload(a_53))
-//         let a_56 := b_54
-//         let b_57 := 0
-//         b_57 := sload(mload(a_56))
-//         let a_59 := b_57
-//         let b_60 := 0
-//         b_60 := sload(mload(a_59))
-//         let a_62 := b_60
-//         let b_63 := 0
-//         b_63 := sload(mload(a_62))
-//         let a_65 := b_63
-//         let b_66 := 0
-//         b_66 := sload(mload(a_65))
-//         let a_68 := b_66
-//         let b_69 := 0
-//         b_69 := sload(mload(a_68))
-//         let a_71 := b_69
-//         let b_72 := 0
-//         b_72 := sload(mload(a_71))
-//         let a_74 := b_72
-//         let b_75 := 0
-//         b_75 := sload(mload(a_74))
-//         x_1 := b_75
+//         let a_21 := 2
+//         let b_22 := 0
+//         b_22 := sload(mload(a_21))
+//         let a_24 := b_22
+//         let b_25 := 0
+//         b_25 := sload(mload(a_24))
+//         let a_27 := b_25
+//         let b_28 := 0
+//         b_28 := sload(mload(a_27))
+//         let a_30 := b_28
+//         let b_31 := 0
+//         b_31 := sload(mload(a_30))
+//         let a_33 := b_31
+//         let b_34 := 0
+//         b_34 := sload(mload(a_33))
+//         let a_36 := b_34
+//         let b_37 := 0
+//         b_37 := sload(mload(a_36))
+//         let a_39 := b_37
+//         let b_40 := 0
+//         b_40 := sload(mload(a_39))
+//         let a_42 := b_40
+//         let b_43 := 0
+//         b_43 := sload(mload(a_42))
+//         let a_45 := b_43
+//         let b_46 := 0
+//         b_46 := sload(mload(a_45))
+//         let a_48 := b_46
+//         let b_49 := 0
+//         b_49 := sload(mload(a_48))
+//         let a_51 := b_49
+//         let b_52 := 0
+//         b_52 := sload(mload(a_51))
+//         let a_54 := b_52
+//         let b_55 := 0
+//         b_55 := sload(mload(a_54))
+//         let a_57 := b_55
+//         let b_58 := 0
+//         b_58 := sload(mload(a_57))
+//         let a_60 := b_58
+//         let b_61 := 0
+//         b_61 := sload(mload(a_60))
+//         let a_63 := b_61
+//         let b_64 := 0
+//         b_64 := sload(mload(a_63))
+//         let a_66 := b_64
+//         let b_67 := 0
+//         b_67 := sload(mload(a_66))
+//         let a_69 := b_67
+//         let b_70 := 0
+//         b_70 := sload(mload(a_69))
+//         let a_72 := b_70
+//         let b_73 := 0
+//         b_73 := sload(mload(a_72))
+//         let a_75 := b_73
+//         let b_76 := 0
+//         b_76 := sload(mload(a_75))
+//         x_1 := b_76
 //     }
 // }
