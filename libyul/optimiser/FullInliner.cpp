@@ -22,6 +22,7 @@
 #include <libyul/optimiser/FullInliner.h>
 
 #include <libyul/optimiser/ASTCopier.h>
+#include <libyul/optimiser/FunctionCallFinder.h>
 #include <libyul/optimiser/NameCollector.h>
 #include <libyul/optimiser/Metrics.h>
 #include <libyul/optimiser/SSAValueTracker.h>
@@ -72,6 +73,15 @@ FullInliner::FullInliner(Block& _ast, NameDispenser& _dispenser, Dialect const& 
 			m_singleUse.emplace(fun.name);
 		updateCodeSize(fun);
 	}
+
+	// Check for memory guard.
+	vector<FunctionCall*> memoryGuardCalls = FunctionCallFinder::run(
+		_ast,
+		"memoryguard"_yulstring
+	);
+	// We will perform less aggressive inlining, if no ``memoryguard`` call is found.
+	if (!memoryGuardCalls.empty())
+		m_hasMemoryGuard = true;
 }
 
 void FullInliner::run(Pass _pass)
@@ -186,8 +196,9 @@ bool FullInliner::shallInline(FunctionCall const& _funCall, YulString _callSite)
 	)
 		usesNewCodeTransform = false;
 
-	// Do not inline into already big functions.
-	if (!usesNewCodeTransform && m_functionSizes.at(_callSite) > 45)
+	// Do not inline into already big functions, unless we will use the new code transform and can perform
+	// stack-to-memory.
+	if ((!m_hasMemoryGuard || !usesNewCodeTransform) && m_functionSizes.at(_callSite) > 45)
 		return false;
 
 	if (m_singleUse.count(calledFunction->name))
