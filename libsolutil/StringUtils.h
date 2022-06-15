@@ -121,6 +121,10 @@ inline std::string formatNumberReadable(
 		"only unsigned types or bigint supported"
 	); //bigint does not carry sign bit on shift
 
+	if (_value < 0) {
+		std::cout << "Shohomot bae" << std::endl;
+	}
+
 	// smaller numbers return as decimal
 	if (_value <= 0x1000000)
 		return _value.str();
@@ -130,7 +134,11 @@ inline std::string formatNumberReadable(
 
 	// when multiple trailing zero bytes, format as N * 2**x
 	int i = 0;
+
 	T v = _value;
+	if (!std::numeric_limits<T>::is_signed)
+		v = -v;
+	
 	for (; (v & 0xff) == 0; v >>= 8)
 		++i;
 	if (i > 2)
