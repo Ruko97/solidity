@@ -101,6 +101,15 @@ std::string joinHumanReadablePrefixed
 		return _separator + joinHumanReadable(_list, _separator, _lastSeparator);
 }
 
+/// Formats unsigned large numbers to be easily readable by humans.
+/// Returns decimal representation for smaller numbers; hex for large numbers.
+/// "Special" numbers, powers-of-two and powers-of-two minus 1, are returned in
+/// formulaic form like 0x01 * 2**24 - 1.
+/// @a T will typically by unsigned, u160, u256 or bigint.
+/// @param _value to be formatted
+/// @param _useTruncation if true, internal truncation is also applied,
+/// like  0x5555...{+56 more}...5555
+/// @example formatNumber((u256)0x7ffffff)
 template <class T>
 inline std::string formatUnsignedNumberReadable (
 	T const& _value,
@@ -176,7 +185,7 @@ inline std::string formatUnsignedNumberReadable (
 /// Returns decimal representation for smaller numbers; hex for large numbers.
 /// "Special" numbers, powers-of-two and powers-of-two minus 1, are returned in
 /// formulaic form like 0x01 * 2**24 - 1.
-/// @a T will typically by unsigned, u160, u256 or bigint.
+/// @a T can be any integer variable, will typically be u160, u256 or bigint.
 /// @param _value to be formatted
 /// @param _useTruncation if true, internal truncation is also applied,
 /// like  0x5555...{+56 more}...5555
