@@ -201,10 +201,11 @@ inline std::string formatNumberReadable(
 		"only integer numbers are supported"
 	);
 
-	if (!boost::multiprecision::is_signed_number<T>::value || _value >= 0) {
-		return formatUnsignedNumberReadable(_value, _useTruncation);
+	if (_value >= 0) {
+		bigint _v = bigint(_value);
+		return formatUnsignedNumberReadable(_v, _useTruncation);
 	} else {
-		T _abs_value = (-1) * _value;
+		bigint _abs_value = bigint(-1) * _value;
 		return "-" + formatUnsignedNumberReadable(_abs_value, _useTruncation);
 	}
 }
