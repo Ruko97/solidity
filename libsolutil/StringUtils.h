@@ -101,17 +101,8 @@ std::string joinHumanReadablePrefixed
 		return _separator + joinHumanReadable(_list, _separator, _lastSeparator);
 }
 
-/// Formats large numbers to be easily readable by humans.
-/// Returns decimal representation for smaller numbers; hex for large numbers.
-/// "Special" numbers, powers-of-two and powers-of-two minus 1, are returned in
-/// formulaic form like 0x01 * 2**24 - 1.
-/// @a T will typically by unsigned, u160, u256 or bigint.
-/// @param _value to be formatted
-/// @param _useTruncation if true, internal truncation is also applied,
-/// like  0x5555...{+56 more}...5555
-/// @example formatNumber((u256)0x7ffffff)
 template <class T>
-inline std::string formatNumberReadable(
+inline std::string formatNumberReadableUnsigned (
 	T const& _value,
 	bool _useTruncation = false
 )
@@ -179,6 +170,38 @@ inline std::string formatNumberReadable(
 
 	// otherwise, show whole value.
 	return str;
+}
+
+/// Formats large numbers to be easily readable by humans.
+/// Returns decimal representation for smaller numbers; hex for large numbers.
+/// "Special" numbers, powers-of-two and powers-of-two minus 1, are returned in
+/// formulaic form like 0x01 * 2**24 - 1.
+/// @a T will typically by unsigned, u160, u256 or bigint.
+/// @param _value to be formatted
+/// @param _useTruncation if true, internal truncation is also applied,
+/// like  0x5555...{+56 more}...5555
+/// @example formatNumber((u256)0x7ffffff)
+template <class T>
+inline std::string formatNumberReadable(
+	T const& _value,
+	bool _useTruncation = false
+)
+{
+	static_assert(
+		std::numeric_limits<T>::is_integer,
+		"only integer numbers are supported"
+	);
+
+	if (_value >= 0) {
+		return formatNumberReadableUnsigned(_value, _useTruncation);
+	} else {
+		if (boost::multiprecision::is_signed_number<T>::value) {
+			T v = (-1) * _value;
+			return "-" + formatNumberReadableUnsigned(v, _useTruncation);
+		}
+		// ! This should be erroneous
+		return "ERROR!: Should not reach here";
+	}
 }
 
 /// Safely converts an usigned integer as string into an unsigned int type.
