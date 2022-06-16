@@ -192,15 +192,11 @@ inline std::string formatNumberReadable(
 		"only integer numbers are supported"
 	);
 
-	if (_value >= 0) {
+	if (!boost::multiprecision::is_signed_number<T>::value || _value >= 0) {
 		return formatNumberReadableUnsigned(_value, _useTruncation);
 	} else {
-		if (boost::multiprecision::is_signed_number<T>::value) {
-			T v = (-1) * _value;
-			return "-" + formatNumberReadableUnsigned(v, _useTruncation);
-		}
-		// ! This should be erroneous
-		return "ERROR!: Should not reach here";
+		T v = (-1) * _value;
+		return "-" + formatNumberReadableUnsigned(v, _useTruncation);
 	}
 }
 
