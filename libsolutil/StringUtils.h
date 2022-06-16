@@ -102,7 +102,7 @@ std::string joinHumanReadablePrefixed
 }
 
 template <class T>
-inline std::string formatNumberReadableUnsigned (
+inline std::string formatUnsignedNumberReadable (
 	T const& _value,
 	bool _useTruncation = false
 )
@@ -193,10 +193,10 @@ inline std::string formatNumberReadable(
 	);
 
 	if (!boost::multiprecision::is_signed_number<T>::value || _value >= 0) {
-		return formatNumberReadableUnsigned(_value, _useTruncation);
+		return formatUnsignedNumberReadable(_value, _useTruncation);
 	} else {
 		T v = (-1) * _value;
-		return "-" + formatNumberReadableUnsigned(v, _useTruncation);
+		return "-" + formatUnsignedNumberReadable(v, _useTruncation);
 	}
 }
 
