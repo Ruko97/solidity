@@ -198,15 +198,15 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 
 	BOOST_CHECK_EQUAL(
 		formatNumberReadable(
-			frontend::IntegerType(256, frontend::IntegerType::Modifier::Unsigned).minValue()
+			frontend::IntegerType(256, frontend::IntegerType::Modifier::Signed).minValue()
 		),
-		"-0x80 * 2**248"	// TODO: need to change this
+		"-0x80 * 2**248"
 	);
 	BOOST_CHECK_EQUAL(
 		formatNumberReadable(
-			frontend::IntegerType(256, frontend::IntegerType::Modifier::Unsigned).maxValue()
+			frontend::IntegerType(256, frontend::IntegerType::Modifier::Signed).maxValue()
 		),
-		"0x7FFF...{+56 more}...FFFF"	// TODO: need to change this
+		"0x80 * 2**248 - 1"
 	);
 }
 
