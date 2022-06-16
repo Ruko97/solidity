@@ -202,10 +202,10 @@ inline std::string formatNumberReadable(
 	);
 
 	if (_value >= 0) {
-		bigint _v = bigint(_value);
+		bigint const _v = bigint(_value);
 		return formatUnsignedNumberReadable(_v, _useTruncation);
 	} else {
-		bigint _abs_value = bigint(-1) * _value;
+		bigint const _abs_value = bigint(-1) * _value;
 		return "-" + formatUnsignedNumberReadable(_abs_value, _useTruncation);
 	}
 }
