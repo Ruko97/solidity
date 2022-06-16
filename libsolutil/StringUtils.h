@@ -204,8 +204,8 @@ inline std::string formatNumberReadable(
 	if (!boost::multiprecision::is_signed_number<T>::value || _value >= 0) {
 		return formatUnsignedNumberReadable(_value, _useTruncation);
 	} else {
-		T v = (-1) * _value;
-		return "-" + formatUnsignedNumberReadable(v, _useTruncation);
+		T _abs_value = (-1) * _value;
+		return "-" + formatUnsignedNumberReadable(_abs_value, _useTruncation);
 	}
 }
 
