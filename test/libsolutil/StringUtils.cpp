@@ -181,16 +181,16 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 		fromHex("0x0bcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
 	));
 
-	s256 d = u2s(
-		u256(0x7AAAaaaaAAAAaaaa) << 192 |
+	s256 d = (-1) * u2s(
+		u256(0x5555555555555555) << 192 |
 		u256(0xFFFFffffFFFFffff) << 128 |
 		u256(0xFFFFffffFFFFffff) << 64 |
 		u256(0xFFFFffffFFFFffff)
 	);
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(b, true), "-0x5555...{+56 more}...5555");
-	BOOST_CHECK_EQUAL(formatNumberReadable(c, true), "-0xBCDE...{+55 more}...6789");
-	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "-0x7AAAaaaaAAAAaaab * 2**192 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(c, true), "-0x0BCD...{+56 more}...6789");
+	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "-0x5555555555555556 * 2**192 - 1");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(s256(-1)), "-1");
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x10000)), "-65536");
