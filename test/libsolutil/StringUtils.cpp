@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(b, true), "-0x5555...{+56 more}...5555");
 	BOOST_CHECK_EQUAL(formatNumberReadable(c, true), "-0x0BCD...{+56 more}...6789");
-	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "-0x5555555555555556 * 2**192 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "-0x5555555555555556 * 2**192 + 1");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(s256(-1)), "-1");
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x10000)), "-65536");
