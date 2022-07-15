@@ -130,9 +130,17 @@ inline std::string formatUnsignedNumberReadable (
 		// 0x100 yields 2**8 (N is 1 and redundant)
 		if (v == 1)
 			return "2**" + std::to_string(i * 8);
-		return toHex(toCompactBigEndian(v), prefix, hexcase) +
-			" * 2**" +
-			std::to_string(i * 8);
+		else if ((v & (v-1)) == 0)
+		{
+			int j = 0;
+			for (; (v & 0x1) == 0; v >>= 1)
+				j++;
+			return "2**" + std::to_string(i * 8 + j);
+		}
+		else
+			return toHex(toCompactBigEndian(v), prefix, hexcase) +
+				" * 2**" +
+				std::to_string(i * 8);
 	}
 
 	// when multiple trailing FF bytes, format as N * 2**x - 1
@@ -144,9 +152,17 @@ inline std::string formatUnsignedNumberReadable (
 		// 0xFF yields 2**8 - 1 (v is 0 in that case)
 		if (v == 0)
 			return "2**" + std::to_string(i * 8) + " - 1";
-		return toHex(toCompactBigEndian(T(v + 1)), prefix, hexcase) +
-			" * 2**" + std::to_string(i * 8) +
-			" - 1";
+		else if ((v & (v+1)) == 0)
+		{
+			int j = 0;
+			for (; (v & 0x1) != 0; v >>= 1)
+				j++;
+			return "2**" + std::to_string(i * 8 + j) + " - 1";
+		}
+		else
+			return toHex(toCompactBigEndian(T(v + 1)), prefix, hexcase) +
+				" * 2**" + std::to_string(i * 8) +
+				" - 1";
 	}
 
 	std::string str = toHex(toCompactBigEndian(_value), prefix, hexcase);

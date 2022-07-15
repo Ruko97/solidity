@@ -107,17 +107,17 @@ BOOST_AUTO_TEST_CASE(test_human_readable_join)
 
 BOOST_AUTO_TEST_CASE(test_format_number_readable)
 {
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x8000000)), "0x08 * 2**24");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x80000000)), "0x80 * 2**24");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x800000000)), "0x08 * 2**32");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x8000000000)), "0x80 * 2**32");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x80000000000)), "0x08 * 2**40");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x8000000)), "2**27");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x80000000)), "2**31");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x800000000)), "2**35");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x8000000000)), "2**39");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x80000000000)), "2**43");
 
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffff)), "0x08 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7fffffff)), "0x80 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffffff)), "0x08 * 2**32 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7fffffffff)), "0x80 * 2**32 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffffffff)), "0x08 * 2**40 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffff)), "2**27 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7fffffff)), "2**31 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffffff)), "2**35 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7fffffffff)), "2**39 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x7ffffffffff)), "2**43 - 1");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x88000000)), "0x88 * 2**24");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x8888888888000000)), "0x8888888888 * 2**24");
@@ -142,6 +142,10 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable)
 	BOOST_CHECK_EQUAL(formatNumberReadable(c, true), "0xABCD...{+56 more}...6789");
 	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "0xAAAAaaaaAAAAaaab * 2**192 - 1");
 
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0)), "0");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x10000)), "65536");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xFFFF)), "65535");
+
 	//for codegen/ExpressionCompiler
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(-1)), "2**256 - 1");
 
@@ -154,17 +158,17 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable)
 
 BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 {
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x8000000)), "-0x08 * 2**24");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x80000000)), "-0x80 * 2**24");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x800000000)), "-0x08 * 2**32");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x8000000000)), "-0x80 * 2**32");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x80000000000)), "-0x08 * 2**40");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x8000000)), "-2**27");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x80000000)), "-2**31");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x800000000)), "-2**35");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x8000000000)), "-2**39");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x80000000000)), "-2**43");
 
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffff)), "-0x08 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7fffffff)), "-0x80 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffffff)), "-0x08 * 2**32 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7fffffffff)), "-0x80 * 2**32 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffffffff)), "-0x08 * 2**40 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffff)), "-2**27 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7fffffff)), "-2**31 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffffff)), "-2**35 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7fffffffff)), "-2**39 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x7ffffffffff)), "-2**43 - 1");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x88000000)), "-0x88 * 2**24");
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x8888888888000000)), "-0x8888888888 * 2**24");
@@ -200,13 +204,13 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 		formatNumberReadable(
 			frontend::IntegerType(256, frontend::IntegerType::Modifier::Signed).minValue()
 		),
-		"-0x80 * 2**248"
+		"-2**255"
 	);
 	BOOST_CHECK_EQUAL(
 		formatNumberReadable(
 			frontend::IntegerType(256, frontend::IntegerType::Modifier::Signed).maxValue()
 		),
-		"0x80 * 2**248 - 1"
+		"2**255 - 1"
 	);
 }
 
