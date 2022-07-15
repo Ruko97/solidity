@@ -132,8 +132,8 @@ inline std::string formatNumberReadable(
 	if (!_isNegative && _value <= 0x1000000)
 		return _value.str();
 
-	if (_isNegative && T(-1 * _value) <= 0x1000000)
-		return "-" + (T(-1 * _value)).str();
+	if (_isNegative && bigint(-1 * _value) <= 0x1000000)
+		return "-" + (bigint(-1 * _value)).str();
 
 	HexCase hexcase = HexCase::Mixed;
 	HexPrefix hexprefix = HexPrefix::Add;
@@ -142,7 +142,7 @@ inline std::string formatNumberReadable(
 
 	// when multiple trailing zero bytes, format as N * 2**x
 	int i = 0;
-	v = _isNegative ? bigint(-1) * _value : bigint(_value);
+	v = _isNegative ? (bigint(-1) * _value) : bigint(_value);
 
 	for (; (v & 0xff) == 0; v >>= 8)
 		++i;
@@ -167,7 +167,7 @@ inline std::string formatNumberReadable(
 
 	// when multiple trailing FF bytes, format as N * 2**x - 1
 	i = 0;
-	v = _isNegative ? bigint(-1) * _value : bigint(_value);
+	v = _isNegative ? (bigint(-1) * _value) : bigint(_value);
 
 	for (; (v & 0xff) == 0xff; v >>= 8)
 		++i;
@@ -187,7 +187,7 @@ inline std::string formatNumberReadable(
 		}
 		else
 			return _sign +
-				toHex(toCompactBigEndian(bigint(v) + 1), hexprefix, hexcase) +
+				toHex(toCompactBigEndian(bigint(v + 1)), hexprefix, hexcase) +
 				" * 2**" + std::to_string(i * 8) +
 				_suffix;
 	}
