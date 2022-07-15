@@ -101,94 +101,6 @@ std::string joinHumanReadablePrefixed
 		return _separator + joinHumanReadable(_list, _separator, _lastSeparator);
 }
 
-/// Same as @ref formatNumberReadable but only for unsigned numbers
-template <class T>
-inline std::string formatUnsignedNumberReadable (
-	T const& _value,
-	bool _useTruncation = false
-)
-{
-	static_assert(
-		std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed,
-		"only unsigned types or bigint supported"
-	); //bigint does not carry sign bit on shift
-
-	// smaller numbers return as decimal
-	if (_value <= 0x1000000)
-		return _value.str();
-
-	HexCase hexcase = HexCase::Mixed;
-	HexPrefix prefix = HexPrefix::Add;
-
-	// when multiple trailing zero bytes, format as N * 2**x
-	int i = 0;
-	T v = _value;
-	for (; (v & 0xff) == 0; v >>= 8)
-		++i;
-	if (i > 2)
-	{
-		// 0x100 yields 2**8 (N is 1 and redundant)
-		if (v == 1)
-			return "2**" + std::to_string(i * 8);
-		else if ((v & (v-1)) == 0)
-		{
-			int j = 0;
-			for (; (v & 0x1) == 0; v >>= 1)
-				j++;
-			return "2**" + std::to_string(i * 8 + j);
-		}
-		else
-			return toHex(toCompactBigEndian(v), prefix, hexcase) +
-				" * 2**" +
-				std::to_string(i * 8);
-	}
-
-	// when multiple trailing FF bytes, format as N * 2**x - 1
-	i = 0;
-	for (v = _value; (v & 0xff) == 0xff; v >>= 8)
-		++i;
-	if (i > 2)
-	{
-		// 0xFF yields 2**8 - 1 (v is 0 in that case)
-		if (v == 0)
-			return "2**" + std::to_string(i * 8) + " - 1";
-		else if ((v & (v+1)) == 0)
-		{
-			int j = 0;
-			for (; (v & 0x1) != 0; v >>= 1)
-				j++;
-			return "2**" + std::to_string(i * 8 + j) + " - 1";
-		}
-		else
-			return toHex(toCompactBigEndian(T(v + 1)), prefix, hexcase) +
-				" * 2**" + std::to_string(i * 8) +
-				" - 1";
-	}
-
-	std::string str = toHex(toCompactBigEndian(_value), prefix, hexcase);
-	if (_useTruncation)
-	{
-		// return as interior-truncated hex.
-		size_t len = str.size();
-
-		if (len < 24)
-			return str;
-
-		size_t const initialChars = (prefix == HexPrefix::Add) ? 6 : 4;
-		size_t const finalChars = 4;
-		size_t numSkipped = len - initialChars - finalChars;
-
-		return str.substr(0, initialChars) +
-			"...{+" +
-			std::to_string(numSkipped) +
-			" more}..." +
-			str.substr(len-finalChars, len);
-	}
-
-	// otherwise, show whole value.
-	return str;
-}
-
 /// Formats large numbers to be easily readable by humans.
 /// Returns decimal representation for smaller numbers; hex for large numbers.
 /// "Special" numbers, powers-of-two and powers-of-two minus 1, are returned in
@@ -198,7 +110,7 @@ inline std::string formatUnsignedNumberReadable (
 /// @param _useTruncation if true, internal truncation is also applied,
 /// like  0x5555...{+56 more}...5555
 /// @example formatNumberReadable((u256)0x7ffffff) = "0x08 * 2**24"
-/// @example formatNumberReadable(-57896044618658097711785492504343953926634992332820282019728792003956564819968) = -0x80 * 2**248
+/// @example formatNumberReadable(-57896044618658097711785492504343953926634992332820282019728792003956564819968) = -2**255
 template <class T>
 inline std::string formatNumberReadable(
 	T const& _value,
@@ -210,16 +122,101 @@ inline std::string formatNumberReadable(
 		"only integer numbers are supported"
 	);
 
-	if (_value >= 0)
+	bool _isNegative = false;
+	bigint v;
+
+	if (_value < 0)
+		_isNegative = true;
+
+	// smaller numbers return as decimal
+	if (!_isNegative && _value <= 0x1000000)
+		return _value.str();
+
+	if (_isNegative && T(-1 * _value) <= 0x1000000)
+		return "-" + (T(-1 * _value)).str();
+
+	HexCase hexcase = HexCase::Mixed;
+	HexPrefix hexprefix = HexPrefix::Add;
+
+	std::string _sign = _isNegative ? "-" : "";
+
+	// when multiple trailing zero bytes, format as N * 2**x
+	int i = 0;
+	v = _isNegative ? bigint(-1) * _value : bigint(_value);
+
+	for (; (v & 0xff) == 0; v >>= 8)
+		++i;
+	if (i > 2)
 	{
-		bigint const _v = bigint(_value);
-		return formatUnsignedNumberReadable(_v, _useTruncation);
+		// 0x100 yields 2**8 (N is 1 and redundant)
+		if (v == 1)
+			return _sign + "2**" + std::to_string(i * 8);
+		else if ((v & (v-1)) == 0)
+		{
+			int j = 0;
+			for (; (v & 0x1) == 0; v >>= 1)
+				j++;
+			return _sign + "2**" + std::to_string(i * 8 + j);
+		}
+		else
+			return _sign +
+				toHex(toCompactBigEndian(v), hexprefix, hexcase) +
+				" * 2**" +
+				std::to_string(i * 8);
 	}
-	else
+
+	// when multiple trailing FF bytes, format as N * 2**x - 1
+	i = 0;
+	v = _isNegative ? bigint(-1) * _value : bigint(_value);
+
+	for (; (v & 0xff) == 0xff; v >>= 8)
+		++i;
+	if (i > 2)
 	{
-		bigint const _abs_value = bigint(-1) * _value;
-		return "-" + formatUnsignedNumberReadable(_abs_value, _useTruncation);
+		std::string _suffix = _isNegative ? " + 1" : " - 1";
+
+		// 0xFF yields 2**8 - 1 (v is 0 in that case)
+		if (v == 0)
+			return _sign + "2**" + std::to_string(i * 8) + _suffix;
+		else if ((v & (v + 1)) == 0)
+		{
+			int j = 0;
+			for (; (v & 0x1) != 0; v >>= 1)
+				j++;
+			return _sign + "2**" + std::to_string(i * 8 + j) + _suffix;
+		}
+		else
+			return _sign +
+				toHex(toCompactBigEndian(bigint(v) + 1), hexprefix, hexcase) +
+				" * 2**" + std::to_string(i * 8) +
+				_suffix;
 	}
+
+	v = _isNegative ? bigint(-1) * _value : bigint(_value);
+	std::string str = toHex(toCompactBigEndian(v), hexprefix, hexcase);
+
+	if (_useTruncation)
+	{
+		// return as interior-truncated hex.
+		size_t len = str.size();
+
+		if (len < 24)
+			return _sign + str;
+
+		size_t const initialChars = (hexprefix == HexPrefix::Add) ? 6 : 4;
+		size_t const finalChars = 4;
+		size_t numSkipped = len - initialChars - finalChars;
+
+		return _sign + 
+			str.substr(0, initialChars) +
+			"...{+" +
+			std::to_string(numSkipped) +
+			" more}..." +
+			str.substr(len-finalChars, len);
+	}
+
+	// otherwise, show whole value.
+	return _sign + str;
 }
 
 /// Safely converts an usigned integer as string into an unsigned int type.
