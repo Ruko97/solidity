@@ -107,19 +107,19 @@ void Whiskers::checkTemplateContainsTags(string const& _parameter, vector<string
 {
 	for (auto const& prefix: _prefixes)
 	{
-		string tag{"<" + prefix + _parameter};
-		size_t foundTag = m_template.find(tag);
+		string tagPartial{"<" + prefix + _parameter};
+		size_t foundTag = m_template.find(tagPartial);
 		
 		assertThrow(
 			foundTag != string::npos,
 			WhiskersError,
-			"Tag '" + tag + ">' not found in template:\n" + m_template
+			"Tag '" + tagPartial + ">' not found in template:\n" + m_template
 		);
 		
 		assertThrow(
 			foundTag + 1 != m_template.size() && m_template[foundTag + 1] == '>'
 			WhiskersError,
-			"Tag '" + tag + ">' in location " + foundTag + " incomplete"
+			"Tag '" + tagPartial + ">' in location " + foundTag + " incomplete"
 		);
 	}
 }
