@@ -117,9 +117,9 @@ void Whiskers::checkTemplateContainsTags(string const& _parameter, vector<string
 		);
 		
 		assertThrow(
-			foundTag + 1 != m_template.size() && m_template[foundTag + 1] == '>'
+			foundTag + 1 != m_template.size() && m_template[foundTag + 1] == '>',
 			WhiskersError,
-			"Tag '" + tagPartial + ">' in location " + foundTag + " incomplete"
+			"Tag '" + tagPartial + ">' in location " + to_string(foundTag) + " incomplete"
 		);
 	}
 }
