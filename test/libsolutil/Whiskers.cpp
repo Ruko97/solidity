@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(conditional_with_else)
 BOOST_AUTO_TEST_CASE(broken_conditional_with_else)
 {
 	string templ = "<?b>X<!bY</b>";
-	BOOST_CHECK_ERROR(Whiskers(templ).render(), WhiskersError);
+	BOOST_CHECK_EQUAL(Whiskers(templ).render(), templ);
 	BOOST_CHECK_ERROR(Whiskers(templ)("b", true).render(), WhiskersError);
 	BOOST_CHECK_ERROR(Whiskers(templ)("b", false).render(), WhiskersError);
 }
