@@ -27,6 +27,8 @@
 #include <libsolutil/CommonData.h>
 #include <libsolutil/Numeric.h>
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <limits>
 #include <locale>
@@ -142,19 +144,21 @@ inline std::string formatNumberReadable(
 	{
 		// 0x100 yields 2**8 (N is 1 and redundant)
 		if (temp == 1)
-			return sign + "2**" + std::to_string(i * 8);
+			return fmt::format("{}2**{}", sign, std::to_string(i * 8));
 		else if ((temp & (temp-1)) == 0)
 		{
 			int j = 0;
 			for (; (temp & 0x1) == 0; temp >>= 1)
 				j++;
-			return sign + "2**" + std::to_string(i * 8 + j);
+			return fmt::format("{}2**{}", sign, std::to_string(i * 8 + j));
 		}
 		else
-			return sign +
-				toHex(toCompactBigEndian(temp), hexprefix, hexcase) +
-				" * 2**" +
-				std::to_string(i * 8);
+			return fmt::format(
+				"{}{} * 2**{}",
+				sign,
+				toHex(toCompactBigEndian(temp), hexprefix, hexcase),
+				std::to_string(i * 8)
+			);
 	}
 
 	// when multiple trailing FF bytes, format as N * 2**x - 1
@@ -166,19 +170,22 @@ inline std::string formatNumberReadable(
 		std::string suffix = isNegative ? " + 1" : " - 1";
 
 		if (temp == 0)
-			return sign + "2**" + std::to_string(i * 8) + suffix;
+			return fmt::format("{}2**{}{}", sign, std::to_string(i * 8), suffix);
 		else if ((temp & (temp + 1)) == 0)
 		{
 			int j = 0;
 			for (; (temp & 0x1) != 0; temp >>= 1)
 				j++;
-			return sign + "2**" + std::to_string(i * 8 + j) + suffix;
+			return fmt::format("{}2**{}{}", sign, std::to_string(i * 8 + j), suffix);
 		}
 		else
-			return sign +
-				toHex(toCompactBigEndian(bigint(temp + 1)), hexprefix, hexcase) +
-				" * 2**" + std::to_string(i * 8) +
-				suffix;
+			return fmt::format(
+				"{}{} * 2**{}{}",
+				sign,
+				toHex(toCompactBigEndian(temp), hexprefix, hexcase),
+				std::to_string(i * 8),
+				suffix
+			);
 	}
 
 	std::string str = toHex(toCompactBigEndian(signedValue), hexprefix, hexcase);
@@ -194,13 +201,14 @@ inline std::string formatNumberReadable(
 		size_t const initialChars = (hexprefix == HexPrefix::Add) ? 6 : 4;
 		size_t const finalChars = 4;
 		size_t numSkipped = len - initialChars - finalChars;
-
-		return sign +
-			str.substr(0, initialChars) +
-			"...{+" +
-			std::to_string(numSkipped) +
-			" more}..." +
-			str.substr(len-finalChars, len);
+			
+		return fmt::format(
+			"{}{}...{{+{} more}}...{}",
+			sign,
+			str.substr(0, initialChars),
+			std::to_string(numSkipped),
+			str.substr(len-finalChars, len)
+		);
 	}
 
 	return sign + str;
