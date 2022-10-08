@@ -125,7 +125,6 @@ inline std::string formatNumberReadable(
 	);
 
 	bool isNegative = _value < 0;
-	bigint temp;
 	bigint signedValue = isNegative ? (bigint(-1) * _value) : bigint(_value);
 	std::string sign = isNegative ? "-" : "";
 
@@ -136,56 +135,61 @@ inline std::string formatNumberReadable(
 	HexCase hexcase = HexCase::Mixed;
 	HexPrefix hexprefix = HexPrefix::Add;
 
-	// when multiple trailing zero bytes, format as N * 2**x
-	int i = 0;
-	for (temp = signedValue; (temp & 0xff) == 0; temp >>= 8)
-		++i;
-	if (i > 2)
+	// Scope for temp and i
 	{
-		// 0x100 yields 2**8 (N is 1 and redundant)
-		if (temp == 1)
-			return fmt::format("{}2**{}", sign, std::to_string(i * 8));
-		else if ((temp & (temp-1)) == 0)
+		bigint temp;
+		
+		// when multiple trailing zero bytes, format as N * 2**x
+		int i = 0;
+		for (temp = signedValue; (temp & 0xff) == 0; temp >>= 8)
+			++i;
+		if (i > 2)
 		{
-			int j = 0;
-			for (; (temp & 0x1) == 0; temp >>= 1)
-				j++;
-			return fmt::format("{}2**{}", sign, std::to_string(i * 8 + j));
+			// 0x100 yields 2**8 (N is 1 and redundant)
+			if (temp == 1)
+				return fmt::format("{}2**{}", sign, std::to_string(i * 8));
+			else if ((temp & (temp-1)) == 0)
+			{
+				int j = 0;
+				for (; (temp & 0x1) == 0; temp >>= 1)
+					j++;
+				return fmt::format("{}2**{}", sign, std::to_string(i * 8 + j));
+			}
+			else
+				return fmt::format(
+					"{}{} * 2**{}",
+					sign,
+					toHex(toCompactBigEndian(temp), hexprefix, hexcase),
+					std::to_string(i * 8)
+				);
 		}
-		else
-			return fmt::format(
-				"{}{} * 2**{}",
-				sign,
-				toHex(toCompactBigEndian(temp), hexprefix, hexcase),
-				std::to_string(i * 8)
-			);
-	}
-
-	// when multiple trailing FF bytes, format as N * 2**x - 1
-	i = 0;
-	for (temp = signedValue; (temp & 0xff) == 0xff; temp >>= 8)
-		++i;
-	if (i > 2)
-	{
-		std::string suffix = isNegative ? " + 1" : " - 1";
-
-		if (temp == 0)
-			return fmt::format("{}2**{}{}", sign, std::to_string(i * 8), suffix);
-		else if ((temp & (temp + 1)) == 0)
+	
+		// when multiple trailing FF bytes, format as N * 2**x - 1
+		i = 0;
+		for (temp = signedValue; (temp & 0xff) == 0xff; temp >>= 8)
+			++i;
+		if (i > 2)
 		{
-			int j = 0;
-			for (; (temp & 0x1) != 0; temp >>= 1)
-				j++;
-			return fmt::format("{}2**{}{}", sign, std::to_string(i * 8 + j), suffix);
+			std::string suffix = isNegative ? " + 1" : " - 1";
+	
+			if (temp == 0)
+				return fmt::format("{}2**{}{}", sign, std::to_string(i * 8), suffix);
+			else if ((temp & (temp + 1)) == 0)
+			{
+				int j = 0;
+				for (; (temp & 0x1) != 0; temp >>= 1)
+					j++;
+				return fmt::format("{}2**{}{}", sign, std::to_string(i * 8 + j), suffix);
+			}
+			else
+				return fmt::format(
+					"{}{} * 2**{}{}",
+					sign,
+					toHex(toCompactBigEndian(temp + (bigint)1), hexprefix, hexcase),
+					std::to_string(i * 8),
+					suffix
+				);
 		}
-		else
-			return fmt::format(
-				"{}{} * 2**{}{}",
-				sign,
-				toHex(toCompactBigEndian(temp + (bigint)1), hexprefix, hexcase),
-				std::to_string(i * 8),
-				suffix
-			);
 	}
 
 	std::string str = toHex(toCompactBigEndian(signedValue), hexprefix, hexcase);
