@@ -182,7 +182,7 @@ inline std::string formatNumberReadable(
 			return fmt::format(
 				"{}{} * 2**{}{}",
 				sign,
-				toHex(toCompactBigEndian(temp+1), hexprefix, hexcase),
+				toHex(toCompactBigEndian(temp + (bigint)1), hexprefix, hexcase),
 				std::to_string(i * 8),
 				suffix
 			);
