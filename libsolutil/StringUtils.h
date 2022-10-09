@@ -124,9 +124,9 @@ inline std::string formatNumberReadable(
 		"only integer types are supported"
 	);
 
-	bool isNegative = _value < 0;
-	bigint signedValue = isNegative ? (bigint(-1) * _value) : bigint(_value);
-	std::string sign = isNegative ? "-" : "";
+	bool const isNegative = _value < 0;
+	bigint const signedValue = isNegative ? (bigint(-1) * _value) : bigint(_value);
+	std::string const sign = isNegative ? "-" : "";
 
 	// smaller numbers return as decimal
 	if (signedValue <= 0x1000000)
