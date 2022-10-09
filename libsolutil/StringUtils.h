@@ -159,7 +159,7 @@ inline std::string formatNumberReadable(
 				return fmt::format(
 					"{}{} * 2**{}",
 					sign,
-					toHex(toCompactBigEndian(temp), hexprefix, hexcase),
+					toHex(toCompactBigEndian(temp), hexPrefix, hexCase),
 					std::to_string(i * 8)
 				);
 		}
@@ -185,14 +185,14 @@ inline std::string formatNumberReadable(
 				return fmt::format(
 					"{}{} * 2**{}{}",
 					sign,
-					toHex(toCompactBigEndian(temp + (bigint)1), hexprefix, hexcase),
+					toHex(toCompactBigEndian(temp + (bigint)1), hexPrefix, hexCase),
 					std::to_string(i * 8),
 					suffix
 				);
 		}
 	}
 
-	std::string str = toHex(toCompactBigEndian(signedValue), hexprefix, hexcase);
+	std::string str = toHex(toCompactBigEndian(signedValue), hexPrefix, hexCase);
 
 	if (_useTruncation)
 	{
@@ -202,7 +202,7 @@ inline std::string formatNumberReadable(
 		if (len < 24)
 			return sign + str;
 
-		size_t const initialChars = (hexprefix == HexPrefix::Add) ? 6 : 4;
+		size_t const initialChars = (hexPrefix == HexPrefix::Add) ? 6 : 4;
 		size_t const finalChars = 4;
 		size_t numSkipped = len - initialChars - finalChars;
 			
