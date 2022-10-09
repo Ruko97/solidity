@@ -140,17 +140,52 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable)
 	u256 c = (u256)FixedHash<32>(
 		fromHex("0xabcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
 	);
-	u256 d = u256(0xAAAAaaaaAAAAaaaa) << 192 |
+	u256 d = u256(0xAAAAaaaaAAAAaaaa) << 192;
+	u256 e = u256(0xAAAAaaaaAAAAaaaa) << 192 |
 		u256(0xFFFFffffFFFFffff) << 128 |
 		u256(0xFFFFffffFFFFffff) << 64 |
 		u256(0xFFFFffffFFFFffff);
 	BOOST_CHECK_EQUAL(formatNumberReadable(b, true), "0x5555...{+56 more}...5555");
 	BOOST_CHECK_EQUAL(formatNumberReadable(c, true), "0xABCD...{+56 more}...6789");
-	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "0xAAAAaaaaAAAAaaab * 2**192 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(d, true), "0xAAAAaaaaAAAAaaaa * 2**192");
+	BOOST_CHECK_EQUAL(formatNumberReadable(e, true), "0xAAAAaaaaAAAAaaab * 2**192 - 1");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x20000000)), "2**29");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x200000000)), "2**33");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2000000000)), "2**37");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x20000000000)), "2**41");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x200000000000)), "2**45");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1FFFFFFF)), "2**29 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1FFFFFFFF)), "2**33 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1FFFFFFFFF)), "2**37 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1FFFFFFFFFF)), "2**41 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1FFFFFFFFFFF)), "2**45 - 1");
+		
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3000000)), "0x03 * 2**24");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x30000000)), "0x30 * 2**24");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x300000000)), "0x03 * 2**32");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3000000000)), "0x30 * 2**32");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFF)), "0x03 * 2**24 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFF)), "0x03 * 2**28 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFFF)), "0x03 * 2**32 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFFFF)), "0x03 * 2**36 - 1");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA3000000)), "0xA3 * 2**24");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA30000000)), "0xA3 * 2**28");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFF)), "0xA3 * 2**24 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFF)), "0xA3 * 2**28 - 1");
+	
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 130, true), "0xB * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 249, true), "0x6 * 2**248");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0)), "0");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x10000)), "65536");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xFFFF)), "65535");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x1000000)), "16777216");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xFFFFFF)), "16777215");
 
 	//for codegen/ExpressionCompiler
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(-1)), "2**256 - 1");
