@@ -132,8 +132,8 @@ inline std::string formatNumberReadable(
 	if (signedValue <= 0x1000000)
 		return sign + signedValue.str();
 
-	HexCase hexcase = HexCase::Mixed;
-	HexPrefix hexprefix = HexPrefix::Add;
+	HexCase hexCase = HexCase::Mixed;
+	HexPrefix hexPrefix = HexPrefix::Add;
 
 	// Scope for temp and i
 	{
