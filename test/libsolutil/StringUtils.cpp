@@ -168,18 +168,22 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable)
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3000000000)), "0x30 * 2**32");
 	
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFF)), "0x03 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFF)), "0x03 * 2**28 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFF)), "0x30 * 2**24 - 1");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFFF)), "0x03 * 2**32 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFFFF)), "0x03 * 2**36 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x2FFFFFFFFF)), "0x30 * 2**32 - 1");
 	
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA3000000)), "0xA3 * 2**24");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA30000000)), "0xA3 * 2**28");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA3000000)), "0xa3 * 2**24");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA30000000)), "0x0a30 * 2**24");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA300000000)), "0xa3 * 2**32");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA3000000000)), "0x0a30 * 2**32");	
 	
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFF)), "0xA3 * 2**24 - 1");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFF)), "0xA3 * 2**28 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFF)), "0xa3 * 2**24 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFF)), "0x0a30 * 2**24 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFFF)), "0xa3 * 2**32 - 1");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFFFF)), "0x0a30 * 2**32 - 1");
 	
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 130, true), "0xB * 2**128");
-	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 249, true), "0x6 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 130, true), "0x0c * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 249, true), "0x06 * 2**248");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0)), "0");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x10000)), "65536");
