@@ -182,8 +182,25 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable)
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFFF)), "0xa3 * 2**32 - 1");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0xA2FFFFFFFFF)), "0x0a30 * 2**32 - 1");
 
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 128, true), "0x03 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 129, true), "0x06 * 2**128");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 130, true), "0x0c * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 131, true), "0x18 * 2**128");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 248, true), "0x03 * 2**248");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 249, true), "0x06 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 250, true), "0x0c * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x3) << 251, true), "0x18 * 2**248");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 128, true), "0x09 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 129, true), "0x12 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 130, true), "0x24 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 131, true), "0x48 * 2**128");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 248, true), "0x09 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 249, true), "0x12 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 250, true), "0x24 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x9) << 251, true), "0x48 * 2**248");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0)), "0");
 	BOOST_CHECK_EQUAL(formatNumberReadable(u256(0x10000)), "65536");
@@ -279,8 +296,25 @@ BOOST_AUTO_TEST_CASE(test_format_number_readable_signed)
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0xA2FFFFFFFF)), "-0xa3 * 2**32 + 1");
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0xA2FFFFFFFFF)), "-0x0a30 * 2**32 + 1");
 
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 128, true), "-0x03 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 129, true), "-0x06 * 2**128");
 	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 130, true), "-0x0c * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 131, true), "-0x18 * 2**128");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 248, true), "-0x03 * 2**248");
 	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 249, true), "-0x06 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 250, true), "-0x0c * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x3)) << 251, true), "-0x18 * 2**248");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 128, true), "-0x09 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 129, true), "-0x12 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 130, true), "-0x24 * 2**128");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 131, true), "-0x48 * 2**128");
+
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 248, true), "-0x09 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 249, true), "-0x12 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 250, true), "-0x24 * 2**248");
+	BOOST_CHECK_EQUAL(formatNumberReadable(((-1) * s256(0x9)) << 251, true), "-0x48 * 2**248");
 
 	BOOST_CHECK_EQUAL(formatNumberReadable(s256(-1)), "-1");
 	BOOST_CHECK_EQUAL(formatNumberReadable((-1) * s256(0x10000)), "-65536");
