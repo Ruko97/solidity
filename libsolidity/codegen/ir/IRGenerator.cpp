@@ -294,8 +294,8 @@ InternalDispatchMap IRGenerator::generateInternalDispatchFunctions(ContractDefin
 				solAssert(caseValues.count(function->id()) == 0, "Duplicate function ID");
 				solAssert(m_context.functionCollector().contains(IRNames::function(*function)), "");
 
-				cases.emplace_back(std::map<std::string, std::string>{
-					{"funID", std::to_string(m_context.mostDerivedContract().annotation().internalFunctionIDs.at(function))},
+				cases.emplace_back(map<string, string>{
+					{"funID", to_string(*function->annotation().internalFunctionID)},
 					{"name", IRNames::function(*function)}
 				});
 				caseValues.insert(function->id());

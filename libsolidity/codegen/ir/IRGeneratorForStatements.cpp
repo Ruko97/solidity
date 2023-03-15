@@ -2854,7 +2854,7 @@ void IRGeneratorForStatements::assignInternalFunctionIDIfNotCalledDirectly(
 		return;
 
 	define(IRVariable(_expression).part("functionIdentifier")) <<
-		std::to_string(m_context.mostDerivedContract().annotation().internalFunctionIDs.at(&_referencedFunction)) <<
+		to_string(*_referencedFunction.annotation().internalFunctionID) <<
 		"\n";
 	m_context.addToInternalDispatch(_referencedFunction);
 }

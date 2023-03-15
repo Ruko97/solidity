@@ -482,7 +482,10 @@ bool ASTJsonExporter::visit(FunctionDefinition const& _node)
 	if (_node.isPartOfExternalInterface() && m_stackState > CompilerStack::State::ParsedAndImported)
 		attributes.emplace_back("functionSelector", _node.externalIdentifierHex());
 	if (!_node.annotation().baseFunctions.empty())
-		attributes.emplace_back(std::make_pair("baseFunctions", getContainerIds(_node.annotation().baseFunctions, true)));
+		attributes.emplace_back(make_pair("baseFunctions", getContainerIds(_node.annotation().baseFunctions, true)));
+
+	if (_node.annotation().internalFunctionID.set())
+		attributes.emplace_back("internalFunctionID", *_node.annotation().internalFunctionID);
 
 	setJsonNode(_node, "FunctionDefinition", std::move(attributes));
 	return false;

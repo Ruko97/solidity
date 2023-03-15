@@ -250,6 +250,10 @@ AST Changes:
  * AST: Add the ``usedEvents`` field to ``ContractDefinition`` which contains the AST IDs of all events emitted by the contract as well as all events defined and inherited by the contract.
 
 
+AST Changes:
+ * AST: add the ``internalFunctionID`` field to the AST nodes of functions that may be called via the internal dispatch. These IDs are always generated, but they are only used in via-IR code generation.
+
+
 ### 0.8.19 (2023-02-22)
 
 Language Features:
