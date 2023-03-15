@@ -494,8 +494,90 @@ bool CompilerStack::analyze()
 			if (!analyzeExperimental())
 				noErrors = false;
 		}
-		else if (!analyzeLegacy(noErrors))
-			noErrors = false;
+
+		// Create & assign callgraphs and check for contract dependency cycles
+		if (noErrors)
+		{
+			createAndAssignCallGraphs();
+			annotateInternalFunctionIDs();
+			findAndReportCyclicContractDependencies();
+		}
+
+		if (noErrors)
+			for (Source const* source: m_sourceOrder)
+				if (source->ast && !PostTypeContractLevelChecker{m_errorReporter}.check(*source->ast))
+					noErrors = false;
+
+		// Check that immutable variables are never read in c'tors and assigned
+		// exactly once
+		if (noErrors)
+			for (Source const* source: m_sourceOrder)
+				if (source->ast)
+					for (ASTPointer<ASTNode> const& node: source->ast->nodes())
+						if (ContractDefinition* contract = dynamic_cast<ContractDefinition*>(node.get()))
+							ImmutableValidator(m_errorReporter, *contract).analyze();
+
+		if (noErrors)
+		{
+			// Control flow graph generator and analyzer. It can check for issues such as
+			// variable is used before it is assigned to.
+			CFG cfg(m_errorReporter);
+			for (Source const* source: m_sourceOrder)
+				if (source->ast && !cfg.constructFlow(*source->ast))
+					noErrors = false;
+
+			if (noErrors)
+			{
+				ControlFlowRevertPruner pruner(cfg);
+				pruner.run();
+
+				ControlFlowAnalyzer controlFlowAnalyzer(cfg, m_errorReporter);
+				if (!controlFlowAnalyzer.run())
+					noErrors = false;
+			}
+		}
+
+		if (noErrors)
+		{
+			// Checks for common mistakes. Only generates warnings.
+			StaticAnalyzer staticAnalyzer(m_errorReporter);
+			for (Source const* source: m_sourceOrder)
+				if (source->ast && !staticAnalyzer.analyze(*source->ast))
+					noErrors = false;
+		}
+
+		if (noErrors)
+		{
+			// Check for state mutability in every function.
+			vector<ASTPointer<ASTNode>> ast;
+			for (Source const* source: m_sourceOrder)
+				if (source->ast)
+					ast.push_back(source->ast);
+
+			if (!ViewPureChecker(ast, m_errorReporter).check())
+				noErrors = false;
+		}
+
+		if (noErrors)
+		{
+			// Run SMTChecker
+
+			auto allSources = util::applyMap(m_sourceOrder, [](Source const* _source) { return _source->ast; });
+			if (ModelChecker::isPragmaPresent(allSources))
+				m_modelCheckerSettings.engine = ModelCheckerEngine::All();
+
+			// m_modelCheckerSettings is spread to engines and solver interfaces,
+			// so we need to check whether the enabled ones are available before building the classes.
+			if (m_modelCheckerSettings.engine.any())
+				m_modelCheckerSettings.solvers = ModelChecker::checkRequestedSolvers(m_modelCheckerSettings.solvers, m_errorReporter);
+
+			ModelChecker modelChecker(m_errorReporter, *this, m_smtlib2Responses, m_modelCheckerSettings, m_readFile);
+			modelChecker.checkRequestedSourcesAndContracts(allSources);
+			for (Source const* source: m_sourceOrder)
+				if (source->ast)
+					modelChecker.analyze(*source->ast);
+			m_unhandledSMTLib2Queries += modelChecker.unhandledQueries();
+		}
 	}
 	catch (FatalError const& error)
 	{
@@ -1292,6 +1374,7 @@ void CompilerStack::storeContractDefinitions()
 
 void CompilerStack::annotateInternalFunctionIDs()
 {
+	uint64_t internalFunctionID = 1;
 	for (Source const* source: m_sourceOrder)
 	{
 		if (!source->ast)
@@ -1299,23 +1382,20 @@ void CompilerStack::annotateInternalFunctionIDs()
 
 		for (ContractDefinition const* contract: ASTNode::filteredNodes<ContractDefinition>(source->ast->nodes()))
 		{
-			uint64_t internalFunctionID = 1;
 			ContractDefinitionAnnotation& annotation = contract->annotation();
 
 			if (auto const* deployTimeInternalDispatch = util::valueOrNullptr((*annotation.deployedCallGraph)->edges, CallGraph::SpecialNode::InternalDispatch))
 				for (auto const& node: *deployTimeInternalDispatch)
-					if (auto const* callable = std::get_if<CallableDeclaration const*>(&node))
+					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
 						if (auto const* function = dynamic_cast<FunctionDefinition const*>(*callable))
-						{
-							solAssert(contract->annotation().internalFunctionIDs.count(function) == 0);
-							contract->annotation().internalFunctionIDs[function] = internalFunctionID++;
-						}
+							if (!function->annotation().internalFunctionID.set())
+								function->annotation().internalFunctionID = internalFunctionID++;
 			if (auto const* creationTimeInternalDispatch = util::valueOrNullptr((*annotation.creationCallGraph)->edges, CallGraph::SpecialNode::InternalDispatch))
 				for (auto const& node: *creationTimeInternalDispatch)
-					if (auto const* callable = std::get_if<CallableDeclaration const*>(&node))
+					if (auto const* callable = get_if<CallableDeclaration const*>(&node))
 						if (auto const* function = dynamic_cast<FunctionDefinition const*>(*callable))
 							// Make sure the function already got an ID since it also occurs in the deploy-time internal dispatch.
-							solAssert(contract->annotation().internalFunctionIDs.count(function) != 0);
+							solAssert(function->annotation().internalFunctionID.set());
 		}
 	}
 }
