@@ -2,7 +2,8 @@
 
 ### Requirements
  - [ ] GitHub account with access to [solidity](https://github.com/ethereum/solidity), [solc-js](https://github.com/ethereum/solc-js),
-       [solc-bin](https://github.com/ethereum/solc-bin), [solidity-website](https://github.com/ethereum/solidity-website).
+       [solc-bin](https://github.com/ethereum/solc-bin), [homebrew-ethereum](https://github.com/ethereum/homebrew-ethereum),
+       [solidity-website](https://github.com/ethereum/solidity-website).
  - [ ] DockerHub account with push rights to the [``solc`` image](https://hub.docker.com/r/ethereum/solc).
  - [ ] Launchpad (Ubuntu One) account with a membership in the ["Ethereum" team](https://launchpad.net/~ethereum) and
        a gnupg key for your email in the ``ethereum.org`` domain (has to be version 1, gpg2 won't work).
@@ -40,7 +41,6 @@ At least a day before the release:
 ### Blog Post
  - [ ] Create a post on [solidity-website](https://github.com/ethereum/solidity-website/tree/main/src/posts) in the ``Releases`` category and explain some of the new features or concepts.
  - [ ] Create a post on [solidity-website](https://github.com/ethereum/solidity-website/tree/main/src/posts) in the ``Security Alerts`` category in case of important bug(s).
- - [ ] Get the posts reviewed and approved **before the release starts**.
 
 ### Changelog
  - [ ] Sort the changelog entries alphabetically and correct any errors you notice. Commit it.
