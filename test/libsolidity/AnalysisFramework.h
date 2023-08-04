@@ -58,6 +58,7 @@ protected:
 	langutil::ErrorList expectError(std::string const& _source, bool _warning = false, bool _allowMultiple = false);
 
 	std::string formatErrors(
+		langutil::ErrorList _errors,
 		bool _colored = false,
 		bool _withErrorIds = false
 	) const;
@@ -162,7 +163,7 @@ do \
 	auto sourceAndError = parseAnalyseAndReturnError((text), true); \
 	std::string message; \
 	if (!sourceAndError.second.empty()) \
-		message = formatErrors();\
+		message = formatErrors(compiler().errors());\
 	BOOST_CHECK_MESSAGE(sourceAndError.second.empty(), message); \
 } \
 while(0)
