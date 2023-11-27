@@ -23,6 +23,8 @@
 #include <libsolutil/CommonData.h>
 #include <libsolutil/JSON.h>
 
+#include <json/json.h>
+
 #include <iosfwd>
 #include <numeric>
 #include <stdexcept>
@@ -49,11 +51,7 @@ public:
 		ExpectedValuesActualGas
 	};
 
-	TestFunctionCall(FunctionCall _call):
-		m_call(std::move(_call)),
-		m_gasCostsExcludingCode(m_call.expectations.gasUsedExcludingCode),
-		m_codeDepositGasCosts(m_call.expectations.gasUsedForCodeDeposit)
-	{}
+	TestFunctionCall(FunctionCall _call): m_call(std::move(_call)), m_gasCosts(m_call.expectations.gasUsed) {}
 
 	/// Formats this function call test and applies the format that was detected during parsing.
 	/// _renderMode determines the source of values to be inserted into the updated test expectations.
@@ -95,9 +93,8 @@ public:
 	void calledNonExistingFunction() { m_calledNonExistingFunction = true; }
 	void setFailure(const bool _failure) { m_failure = _failure; }
 	void setRawBytes(const bytes _rawBytes) { m_rawBytes = _rawBytes; }
-	void setGasCostExcludingCode(std::string const& _runType, u256 const& _gasCost) { m_gasCostsExcludingCode[_runType] = _gasCost; }
-	void setCodeDepositGasCost(std::string const& _runType, u256 const& _gasCost) { m_codeDepositGasCosts[_runType] = _gasCost; }
-	void setContractABI(Json _contractABI) { m_contractABI = std::move(_contractABI); }
+	void setGasCost(std::string const& _runType, u256 const& _gasCost) { m_gasCosts[_runType] = _gasCost; }
+	void setContractABI(Json::Value _contractABI) { m_contractABI = std::move(_contractABI); }
 	void setSideEffects(std::vector<std::string> _sideEffects) { m_call.actualSideEffects = _sideEffects; }
 
 private:
@@ -145,14 +142,12 @@ private:
 	/// Result of the actual call been made.
 	bytes m_rawBytes = bytes{};
 	/// Actual gas costs
-	std::map<std::string, u256> m_gasCostsExcludingCode;
-	/// Actual code deposit gas costs
-	std::map<std::string, u256> m_codeDepositGasCosts;
+	std::map<std::string, u256> m_gasCosts;
 	/// Transaction status of the actual call. False in case of a REVERT or any other failure.
 	bool m_failure = true;
 	/// JSON object which holds the contract ABI and that is used to set the output formatting
 	/// in the interactive update routine.
-	Json m_contractABI = Json{};
+	Json::Value m_contractABI = Json::Value{};
 	/// Flags that the test failed because the called function is not known to exist on the contract.
 	bool m_calledNonExistingFunction = false;
 };

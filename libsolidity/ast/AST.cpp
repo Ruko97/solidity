@@ -816,9 +816,7 @@ std::set<VariableDeclaration::Location> VariableDeclaration::allowedDataLocation
 {
 	using Location = VariableDeclaration::Location;
 
-	if (isStateVariable())
-		return std::set<Location>{Location::Unspecified, Location::Transient};
-	else if (!hasReferenceOrMappingType() || isEventOrErrorParameter())
+	if (!hasReferenceOrMappingType() || isStateVariable() || isEventOrErrorParameter())
 		return std::set<Location>{ Location::Unspecified };
 	else if (isCallableOrCatchParameter())
 	{
@@ -1059,15 +1057,3 @@ TryCatchClause const* TryStatement::errorClause() const {
 TryCatchClause const* TryStatement::fallbackClause() const {
 	return findClause(m_clauses);
 }
-
-/// Experimental Solidity nodes
-/// @{
-TypeClassDefinitionAnnotation& TypeClassDefinition::annotation() const
-{
-	return initAnnotation<TypeClassDefinitionAnnotation>();
-}
-TypeDeclarationAnnotation& TypeDefinition::annotation() const
-{
-	return initAnnotation<TypeDeclarationAnnotation>();
-}
-/// @}

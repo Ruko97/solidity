@@ -101,14 +101,10 @@ public:
 	bool hasChainID() const { return *this >= istanbul(); }
 	bool hasSelfBalance() const { return *this >= istanbul(); }
 	bool hasBaseFee() const { return *this >= london(); }
-	bool hasBlobBaseFee() const { return *this >= cancun(); }
 	bool hasPrevRandao() const { return *this >= paris(); }
 	bool hasPush0() const { return *this >= shanghai(); }
-	bool hasBlobHash() const { return *this >= cancun(); }
-	bool hasMcopy() const { return *this >= cancun(); }
-	bool supportsTransientStorage() const { return *this >= cancun(); }
 
-	bool hasOpcode(evmasm::Instruction _opcode, std::optional<uint8_t> _eofVersion) const;
+	bool hasOpcode(evmasm::Instruction _opcode) const;
 
 	/// Whether we have to retain the costs for the call opcode itself (false),
 	/// or whether we can just forward easily all remaining gas (true).
@@ -119,7 +115,7 @@ private:
 
 	EVMVersion(Version _version): m_version(_version) {}
 
-	Version m_version = Version::Cancun;
+	Version m_version = Version::Shanghai;
 };
 
 }

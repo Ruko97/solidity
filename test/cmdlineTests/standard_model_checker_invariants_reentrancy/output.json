@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "9302",
@@ -12,7 +13,8 @@
 ",
             "message": "Return value of low-level calls not used.",
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 143,
                 "file": "A",
                 "start": 132
@@ -33,14 +35,14 @@
             "component": "general",
             "errorCode": "1180",
             "formattedMessage": "Info: Reentrancy property(ies) for A:test:
-(((!(x <= 0) || !(<errorCode> >= 1)) && (!(x <= 0) || !(x' >= 1))) || true)
+(((!(x <= 0) || !(x' >= 1)) && (!(x <= 0) || !(<errorCode> >= 1))) || true)
 <errorCode> = 0 -> no errors
 <errorCode> = 1 -> Assertion failed at assert(x < 10)
 
 
 ",
             "message": "Reentrancy property(ies) for A:test:
-(((!(x <= 0) || !(<errorCode> >= 1)) && (!(x <= 0) || !(x' >= 1))) || true)
+(((!(x <= 0) || !(x' >= 1)) && (!(x <= 0) || !(<errorCode> >= 1))) || true)
 <errorCode> = 0 -> no errors
 <errorCode> = 1 -> Assertion failed at assert(x < 10)
 ",
@@ -48,8 +50,10 @@
             "type": "Info"
         }
     ],
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

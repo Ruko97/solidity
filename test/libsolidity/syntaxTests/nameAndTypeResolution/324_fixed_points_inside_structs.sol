@@ -6,4 +6,4 @@ contract test {
     myStruct a = myStruct(3.125, 3);
 }
 // ----
-// UnimplementedFeatureError 1834: Not yet implemented - FixedPointType.
+// UnimplementedFeatureError: Not yet implemented - FixedPointType.

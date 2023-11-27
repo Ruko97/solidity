@@ -22,6 +22,7 @@
 
 #include <libyul/optimiser/Suite.h>
 
+using namespace std;
 using namespace solidity::yul;
 using namespace solidity::phaser;
 
@@ -50,16 +51,16 @@ bool CacheStats::operator==(CacheStats const& _other) const
 }
 
 Program ProgramCache::optimiseProgram(
-	std::string const& _abbreviatedOptimisationSteps,
-	std::size_t _repetitionCount
+	string const& _abbreviatedOptimisationSteps,
+	size_t _repetitionCount
 )
 {
-	std::string targetOptimisations = _abbreviatedOptimisationSteps;
-	for (std::size_t i = 1; i < _repetitionCount; ++i)
+	string targetOptimisations = _abbreviatedOptimisationSteps;
+	for (size_t i = 1; i < _repetitionCount; ++i)
 		targetOptimisations += _abbreviatedOptimisationSteps;
 
-	std::size_t prefixSize = 0;
-	for (std::size_t i = 1; i <= targetOptimisations.size(); ++i)
+	size_t prefixSize = 0;
+	for (size_t i = 1; i <= targetOptimisations.size(); ++i)
 	{
 		auto const& pair = m_entries.find(targetOptimisations.substr(0, i));
 		if (pair != m_entries.end())
@@ -78,9 +79,9 @@ Program ProgramCache::optimiseProgram(
 		m_entries.at(targetOptimisations.substr(0, prefixSize)).program
 	);
 
-	for (std::size_t i = prefixSize + 1; i <= targetOptimisations.size(); ++i)
+	for (size_t i = prefixSize + 1; i <= targetOptimisations.size(); ++i)
 	{
-		std::string stepName = OptimiserSuite::stepAbbreviationToNameMap().at(targetOptimisations[i - 1]);
+		string stepName = OptimiserSuite::stepAbbreviationToNameMap().at(targetOptimisations[i - 1]);
 		intermediateProgram.optimise({stepName});
 
 		m_entries.insert({targetOptimisations.substr(0, i), {intermediateProgram, m_currentRound}});
@@ -90,7 +91,7 @@ Program ProgramCache::optimiseProgram(
 	return intermediateProgram;
 }
 
-void ProgramCache::startRound(std::size_t _roundNumber)
+void ProgramCache::startRound(size_t _roundNumber)
 {
 	assert(_roundNumber > m_currentRound);
 	m_currentRound = _roundNumber;
@@ -112,7 +113,7 @@ void ProgramCache::clear()
 	m_currentRound = 0;
 }
 
-Program const* ProgramCache::find(std::string const& _abbreviatedOptimisationSteps) const
+Program const* ProgramCache::find(string const& _abbreviatedOptimisationSteps) const
 {
 	auto const& pair = m_entries.find(_abbreviatedOptimisationSteps);
 	if (pair == m_entries.end())
@@ -131,18 +132,18 @@ CacheStats ProgramCache::gatherStats() const
 	};
 }
 
-std::size_t ProgramCache::calculateTotalCachedCodeSize() const
+size_t ProgramCache::calculateTotalCachedCodeSize() const
 {
-	std::size_t size = 0;
+	size_t size = 0;
 	for (auto const& pair: m_entries)
 		size += pair.second.program.codeSize(CacheStats::StorageWeights);
 
 	return size;
 }
 
-std::map<std::size_t, std::size_t> ProgramCache::countRoundEntries() const
+map<size_t, size_t> ProgramCache::countRoundEntries() const
 {
-	std::map<std::size_t, std::size_t> counts;
+	map<size_t, size_t> counts;
 	for (auto& pair: m_entries)
 		if (counts.find(pair.second.roundNumber) != counts.end())
 			++counts.at(pair.second.roundNumber);

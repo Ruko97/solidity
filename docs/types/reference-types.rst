@@ -29,9 +29,6 @@ annotation, the "data location", about where it is stored. There are three data 
 non-persistent area where function arguments are stored, and behaves mostly like memory.
 
 .. note::
-    ``transient`` is not yet supported as a data location for reference types.
-
-.. note::
     If you can, try to use ``calldata`` as data location because it will avoid copies and
     also makes sure that the data cannot be modified. Arrays and structs with ``calldata``
     data location can also be returned from functions, but it is not possible to
@@ -395,7 +392,8 @@ Array Members
         // Data location for all state variables is storage.
         bool[2][] pairsOfFlags;
 
-        // newPairs is stored in memory
+        // newPairs is stored in memory - the only possibility
+        // for public contract function arguments
         function setAllFlagPairs(bool[2][] memory newPairs) public {
             // assignment to a storage array performs a copy of ``newPairs`` and
             // replaces the complete array ``pairsOfFlags``.

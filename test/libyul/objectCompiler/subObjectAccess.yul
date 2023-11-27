@@ -65,168 +65,166 @@ object "A" {
     }
   }
 }
-// ====
-// EVMVersion: >=shanghai
 // ----
 // Assembly:
-//     /* "source":57:72   */
+//     /* "source":37:52   */
 //   0x00
-//     /* "source":96:109   */
+//     /* "source":68:81   */
 //   bytecodeSize
-//     /* "source":133:148   */
+//     /* "source":97:112   */
 //   dataOffset(sub_0)
-//     /* "source":172:185   */
+//     /* "source":128:141   */
 //   dataSize(sub_0)
-//     /* "source":210:227   */
+//     /* "source":158:175   */
 //   dataOffset(sub_0.sub_0)
-//     /* "source":252:267   */
+//     /* "source":192:207   */
 //   dataSize(sub_0.sub_0)
-//     /* "source":292:309   */
+//     /* "source":224:241   */
 //   swap1
 //   dataOffset(sub_0.sub_1)
-//     /* "source":334:349   */
+//     /* "source":258:273   */
 //   swap3
 //   dataSize(sub_0.sub_1)
-//     /* "source":375:394   */
+//     /* "source":291:310   */
 //   swap5
 //   dataOffset(sub_0.sub_0.sub_0)
-//     /* "source":420:437   */
+//     /* "source":328:345   */
 //   swap7
 //   dataSize(sub_0.sub_0.sub_0)
-//     /* "source":450:464   */
+//     /* "source":351:365   */
 //   swap9
-//     /* "source":457:458   */
+//     /* "source":358:359   */
 //   0x00
-//     /* "source":450:464   */
+//     /* "source":351:365   */
 //   sstore
-//     /* "source":484:486   */
+//     /* "source":377:379   */
 //   0x20
-//     /* "source":477:492   */
+//     /* "source":370:385   */
 //   sstore
-//     /* "source":512:514   */
+//     /* "source":397:399   */
 //   0x40
-//     /* "source":505:520   */
+//     /* "source":390:405   */
 //   sstore
-//     /* "source":540:542   */
+//     /* "source":417:419   */
 //   0x60
-//     /* "source":533:548   */
+//     /* "source":410:425   */
 //   sstore
-//     /* "source":568:571   */
+//     /* "source":437:440   */
 //   0x80
-//     /* "source":561:578   */
+//     /* "source":430:447   */
 //   sstore
-//     /* "source":598:601   */
+//     /* "source":459:462   */
 //   0xa0
-//     /* "source":591:608   */
+//     /* "source":452:469   */
 //   sstore
-//     /* "source":628:631   */
+//     /* "source":481:484   */
 //   0xc0
-//     /* "source":621:638   */
+//     /* "source":474:491   */
 //   sstore
-//     /* "source":658:661   */
+//     /* "source":503:506   */
 //   0xe0
-//     /* "source":651:668   */
+//     /* "source":496:513   */
 //   sstore
-//     /* "source":688:691   */
+//     /* "source":525:528   */
 //   0x0100
-//     /* "source":681:699   */
+//     /* "source":518:536   */
 //   sstore
-//     /* "source":719:722   */
+//     /* "source":548:551   */
 //   0x0120
-//     /* "source":712:730   */
+//     /* "source":541:559   */
 //   sstore
-//     /* "source":753:756   */
+//     /* "source":574:577   */
 //   0x0140
-//     /* "source":750:751   */
+//     /* "source":571:572   */
 //   0x00
-//     /* "source":743:757   */
+//     /* "source":564:578   */
 //   return
 // stop
 // data_acaf3289d7b601cbd114fb36c4d29c85bbfd5e133f14cb355c3fd8d99367964f 48656c6c6f2c20576f726c6421
 //
 // sub_0: assembly {
-//         /* "source":896:911   */
+//         /* "source":659:674   */
 //       dataOffset(sub_0)
-//         /* "source":939:952   */
+//         /* "source":692:705   */
 //       dataSize(sub_0)
-//         /* "source":980:995   */
+//         /* "source":723:738   */
 //       dataOffset(sub_1)
-//         /* "source":1023:1036   */
+//         /* "source":756:769   */
 //       dataSize(sub_1)
-//         /* "source":1065:1082   */
+//         /* "source":788:805   */
 //       swap1
 //       dataOffset(sub_0.sub_0)
-//         /* "source":1111:1126   */
+//         /* "source":824:839   */
 //       swap3
 //       dataSize(sub_0.sub_0)
-//         /* "source":1143:1157   */
+//         /* "source":847:861   */
 //       swap5
-//         /* "source":1150:1151   */
+//         /* "source":854:855   */
 //       0x00
-//         /* "source":1143:1157   */
+//         /* "source":847:861   */
 //       sstore
-//         /* "source":1181:1183   */
+//         /* "source":875:877   */
 //       0x20
-//         /* "source":1174:1189   */
+//         /* "source":868:883   */
 //       sstore
-//         /* "source":1213:1215   */
+//         /* "source":897:899   */
 //       0x40
-//         /* "source":1206:1221   */
+//         /* "source":890:905   */
 //       sstore
-//         /* "source":1245:1247   */
+//         /* "source":919:921   */
 //       0x60
-//         /* "source":1238:1253   */
+//         /* "source":912:927   */
 //       sstore
-//         /* "source":1277:1280   */
+//         /* "source":941:944   */
 //       0x80
-//         /* "source":1270:1287   */
+//         /* "source":934:951   */
 //       sstore
-//         /* "source":1311:1314   */
+//         /* "source":965:968   */
 //       0xa0
-//         /* "source":1304:1321   */
+//         /* "source":958:975   */
 //       sstore
-//         /* "source":1348:1351   */
+//         /* "source":992:995   */
 //       0xc0
-//         /* "source":1345:1346   */
+//         /* "source":989:990   */
 //       0x00
-//         /* "source":1338:1352   */
+//         /* "source":982:996   */
 //       return
 //     stop
 //
 //     sub_0: assembly {
-//             /* "source":1466:1481   */
+//             /* "source":1052:1067   */
 //           dataOffset(sub_0)
-//             /* "source":1513:1526   */
+//             /* "source":1087:1100   */
 //           dataSize(sub_0)
-//             /* "source":1547:1561   */
+//             /* "source":1110:1124   */
 //           swap1
-//             /* "source":1554:1555   */
+//             /* "source":1117:1118   */
 //           0x00
-//             /* "source":1547:1561   */
+//             /* "source":1110:1124   */
 //           sstore
-//             /* "source":1589:1591   */
+//             /* "source":1140:1142   */
 //           0x20
-//             /* "source":1582:1597   */
+//             /* "source":1133:1148   */
 //           sstore
-//             /* "source":1628:1630   */
+//             /* "source":1167:1169   */
 //           0x40
-//             /* "source":1625:1626   */
+//             /* "source":1164:1165   */
 //           0x00
-//             /* "source":1618:1631   */
+//             /* "source":1157:1170   */
 //           return
 //         stop
 //
 //         sub_0: assembly {
-//                 /* "source":1714:1723   */
+//                 /* "source":1223:1232   */
 //               invalid
 //         }
 //     }
 //
 //     sub_1: assembly {
-//             /* "source":1794:1803   */
+//             /* "source":1295:1304   */
 //           invalid
 //     }
 // }
 // Bytecode: 5f6084603d603660746010906073926001946073966001985f5560205560405560605560805560a05560c05560e05561010055610120556101405ff3fe6025601060356001906035926001945f5560205560405560605560805560a05560c05ff3fe600f6001905f5560205560405ff3fefefefe600f6001905f5560205560405ff3fefe
 // Opcodes: PUSH0 PUSH1 0x84 PUSH1 0x3D PUSH1 0x36 PUSH1 0x74 PUSH1 0x10 SWAP1 PUSH1 0x73 SWAP3 PUSH1 0x1 SWAP5 PUSH1 0x73 SWAP7 PUSH1 0x1 SWAP9 PUSH0 SSTORE PUSH1 0x20 SSTORE PUSH1 0x40 SSTORE PUSH1 0x60 SSTORE PUSH1 0x80 SSTORE PUSH1 0xA0 SSTORE PUSH1 0xC0 SSTORE PUSH1 0xE0 SSTORE PUSH2 0x100 SSTORE PUSH2 0x120 SSTORE PUSH2 0x140 PUSH0 RETURN INVALID PUSH1 0x25 PUSH1 0x10 PUSH1 0x35 PUSH1 0x1 SWAP1 PUSH1 0x35 SWAP3 PUSH1 0x1 SWAP5 PUSH0 SSTORE PUSH1 0x20 SSTORE PUSH1 0x40 SSTORE PUSH1 0x60 SSTORE PUSH1 0x80 SSTORE PUSH1 0xA0 SSTORE PUSH1 0xC0 PUSH0 RETURN INVALID PUSH1 0xF PUSH1 0x1 SWAP1 PUSH0 SSTORE PUSH1 0x20 SSTORE PUSH1 0x40 PUSH0 RETURN INVALID INVALID INVALID INVALID PUSH1 0xF PUSH1 0x1 SWAP1 PUSH0 SSTORE PUSH1 0x20 SSTORE PUSH1 0x40 PUSH0 RETURN INVALID INVALID
-// SourceMappings: 57:15:0:-:0;96:13;133:15;172:13;210:17;252:15;292:17;;334:15;;375:19;;420:17;;450:14;457:1;450:14;484:2;477:15;512:2;505:15;540:2;533:15;568:3;561:17;598:3;591:17;628:3;621:17;658:3;651:17;688:3;681:18;719:3;712:18;753:3;750:1;743:14
+// SourceMappings: 37:15:0:-:0;68:13;97:15;128:13;158:17;192:15;224:17;;258:15;;291:19;;328:17;;351:14;358:1;351:14;377:2;370:15;397:2;390:15;417:2;410:15;437:3;430:17;459:3;452:17;481:3;474:17;503:3;496:17;525:3;518:18;548:3;541:18;574:3;571:1;564:14

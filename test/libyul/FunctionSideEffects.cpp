@@ -83,15 +83,13 @@ FunctionSideEffects::FunctionSideEffects(std::string const& _filename):
 TestCase::TestResult FunctionSideEffects::run(std::ostream& _stream, std::string const& _linePrefix, bool _formatted)
 {
 	Object obj;
-	auto parsingResult = yul::test::parse(m_source);
-	obj.setCode(parsingResult.first, parsingResult.second);
-	if (!obj.hasCode())
+	std::tie(obj.code, obj.analysisInfo) = yul::test::parse(m_source, false);
+	if (!obj.code)
 		BOOST_THROW_EXCEPTION(std::runtime_error("Parsing input failed."));
 
-	std::map<YulName, SideEffects> functionSideEffects = SideEffectsPropagator::sideEffects(
-		EVMDialect::strictAssemblyForEVMObjects(solidity::test::CommonOptions::get().evmVersion(),
-			solidity::test::CommonOptions::get().eofVersion()),
-		CallGraphGenerator::callGraph(obj.code()->root())
+	std::map<YulString, SideEffects> functionSideEffects = SideEffectsPropagator::sideEffects(
+		EVMDialect::strictAssemblyForEVMObjects(langutil::EVMVersion()),
+		CallGraphGenerator::callGraph(*obj.code)
 	);
 
 	std::map<std::string, std::string> functionSideEffectsStr;

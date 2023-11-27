@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "4144",
@@ -18,7 +19,8 @@ Note:
 
 ",
             "message": "BMC: Underflow (resulting value less than 0) happens here.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": "Counterexample:
   <result> = (- 1)
@@ -34,7 +36,8 @@ Note:
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 177,
                 "file": "A",
                 "start": 174
@@ -59,7 +62,8 @@ Note:
 
 ",
             "message": "BMC: Overflow (resulting value larger than 2**256 - 1) happens here.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": "Counterexample:
   <result> = 2**256
@@ -75,7 +79,8 @@ Note:
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 203,
                 "file": "A",
                 "start": 185
@@ -99,7 +104,8 @@ Note:
 
 ",
             "message": "BMC: Assertion violation happens here.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": "Counterexample:
   a = 0
@@ -114,7 +120,8 @@ Note:
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 258,
                 "file": "A",
                 "start": 245
@@ -122,8 +129,10 @@ Note:
             "type": "Warning"
         }
     ],
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

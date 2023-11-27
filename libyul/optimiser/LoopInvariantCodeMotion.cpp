@@ -32,10 +32,10 @@ using namespace solidity::yul;
 
 void LoopInvariantCodeMotion::run(OptimiserStepContext& _context, Block& _ast)
 {
-	std::map<YulName, SideEffects> functionSideEffects =
+	std::map<YulString, SideEffects> functionSideEffects =
 		SideEffectsPropagator::sideEffects(_context.dialect, CallGraphGenerator::callGraph(_ast));
 	bool containsMSize = MSizeFinder::containsMSize(_context.dialect, _ast);
-	std::set<YulName> ssaVars = SSAValueTracker::ssaVariables(_ast);
+	std::set<YulString> ssaVars = SSAValueTracker::ssaVariables(_ast);
 	LoopInvariantCodeMotion{_context.dialect, ssaVars, functionSideEffects, containsMSize}(_ast);
 }
 
@@ -56,7 +56,7 @@ void LoopInvariantCodeMotion::operator()(Block& _block)
 
 bool LoopInvariantCodeMotion::canBePromoted(
 	VariableDeclaration const& _varDecl,
-	std::set<YulName> const& _varsDefinedInCurrentScope,
+	std::set<YulString> const& _varsDefinedInCurrentScope,
 	SideEffects const& _forLoopSideEffects
 ) const
 {
@@ -90,7 +90,7 @@ std::optional<std::vector<Statement>> LoopInvariantCodeMotion::rewriteLoop(ForLo
 	std::vector<Statement> replacement;
 	for (Block* block: {&_for.post, &_for.body})
 	{
-		std::set<YulName> varsDefinedInScope;
+		std::set<YulString> varsDefinedInScope;
 		util::iterateReplacing(
 			block->statements,
 			[&](Statement& _s) -> std::optional<std::vector<Statement>>

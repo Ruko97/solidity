@@ -4,31 +4,6 @@ Language Features:
 
 
 Compiler Features:
- * Code Generator: Use ``MCOPY`` instead of ``MLOAD``/``MSTORE`` loop when copying byte arrays.
- * Yul Analyzer: Emit transient storage warning only for the first occurrence of ``tstore``.
-
-
-Bugfixes:
- * Assembler: Prevent incorrect calculation of tag sizes.
- * Commandline Interface: Do not run IR pipeline when ``--via-ir`` is used but no output that depends on the IR is requested.
- * EVM Assembly Import: Fix handling of missing source locations during import.
- * SMTChecker: Ensure query is properly flushed to a file before calling solver when using SMT-LIB interface.
- * SMTChecker: Fix internal error caused by not respecting the sign of an integer type when constructing zero-value SMT expressions.
- * SMTChecker: Run Eldarica only when explicitly requested with `--model-checker-solvers eld`, even when it is present on the system.
-
-
-### 0.8.24 (2024-01-25)
-
-Language Features:
- * Introduce global ``block.blobbasefee`` for retrieving the blob base fee of the current block.
- * Introduce global function ``blobhash(uint)`` for retrieving versioned hashes of blobs, akin to the homonymous Yul builtin.
- * Yul: Introduce builtin ``blobbasefee()`` for retrieving the blob base fee of the current block.
- * Yul: Introduce builtin ``blobhash()`` for retrieving versioned hashes of blobs associated with the transaction.
- * Yul: Introduce builtin ``mcopy()`` for cheaply copying data between memory areas.
- * Yul: Introduce builtins ``tload()`` and ``tstore()`` for transient storage access.
-
-
-Compiler Features:
  * EVM: Support for the EVM Version "Cancun".
 
 Bugfixes:
@@ -82,6 +57,8 @@ Important Bugfixes:
 
 Language Features:
  * Allow qualified access to events from other contracts.
+ * Relax restrictions on initialization of immutable variables. Reads and writes may now happen at any point at construction time outside of functions and modifiers. Explicit initialization is no longer mandatory.
+
 
 Compiler Features:
  * Commandline Interface: Add ``--ast-compact-json`` output in assembler mode.
@@ -147,10 +124,6 @@ AST Changes:
  * AST: Add the ``usedEvents`` field to ``ContractDefinition`` which contains the AST IDs of all events emitted by the contract as well as all events defined and inherited by the contract.
 
 
-AST Changes:
- * AST: add the ``internalFunctionID`` field to the AST nodes of functions that may be called via the internal dispatch. These IDs are always generated, but they are only used in via-IR code generation.
-
-
 ### 0.8.19 (2023-02-22)
 
 Language Features:
@@ -168,7 +141,6 @@ Bugfixes:
  * SMTChecker: Fix internal error caused by unhandled ``z3`` expressions that come from the solver when bitwise operators are used.
  * SMTChecker: Fix internal error when using the custom NatSpec annotation to abstract free functions.
  * TypeChecker: Also allow external library functions in ``using for``.
- * SMTChecker: Fix internal error caused by unhandled ``z3`` expressions that come from the solver when bitwise operators are used.
 
 
 AST Changes:

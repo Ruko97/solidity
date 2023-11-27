@@ -51,12 +51,10 @@ SMTEncoder::SMTEncoder(
 	ModelCheckerSettings _settings,
 	UniqueErrorReporter& _errorReporter,
 	UniqueErrorReporter& _unsupportedErrorReporter,
-	ErrorReporter& _provedSafeReporter,
 	langutil::CharStreamProvider const& _charStreamProvider
 ):
 	m_errorReporter(_errorReporter),
 	m_unsupportedErrors(_unsupportedErrorReporter),
-	m_provedSafeReporter(_provedSafeReporter),
 	m_context(_context),
 	m_settings(std::move(_settings)),
 	m_charStreamProvider(_charStreamProvider)
@@ -313,7 +311,7 @@ bool SMTEncoder::visit(InlineAssembly const& _inlineAsm)
 	{
 		AssignedExternalsCollector(InlineAssembly const& _inlineAsm): externalReferences(_inlineAsm.annotation().externalReferences)
 		{
-			this->operator()(_inlineAsm.operations().root());
+			this->operator()(_inlineAsm.operations());
 		}
 
 		std::map<yul::Identifier const*, InlineAssemblyAnnotation::ExternalIdentifierInfo> const& externalReferences;
@@ -330,7 +328,7 @@ bool SMTEncoder::visit(InlineAssembly const& _inlineAsm)
 		}
 	};
 
-	yul::SideEffectsCollector sideEffectsCollector(_inlineAsm.dialect(), _inlineAsm.operations().root());
+	yul::SideEffectsCollector sideEffectsCollector(_inlineAsm.dialect(), _inlineAsm.operations());
 	if (sideEffectsCollector.invalidatesMemory())
 		resetMemoryVariables();
 	if (sideEffectsCollector.invalidatesStorage())
@@ -653,9 +651,6 @@ void SMTEncoder::endVisit(FunctionCall const& _funCall)
 		if (publicGetter(_funCall.expression()))
 			visitPublicGetter(_funCall);
 		break;
-	case FunctionType::Kind::BytesConcat:
-		visitBytesConcat(_funCall);
-		break;
 	case FunctionType::Kind::ABIDecode:
 	case FunctionType::Kind::ABIEncode:
 	case FunctionType::Kind::ABIEncodePacked:
@@ -785,33 +780,6 @@ void SMTEncoder::visitRequire(FunctionCall const& _funCall)
 	addPathImpliedExpression(expr(*args.front()));
 }
 
-void SMTEncoder::visitBytesConcat(FunctionCall const& _funCall)
-{
-	auto const& args = _funCall.sortedArguments();
-
-	// bytes.concat call with no arguments returns an empty array
-	if (args.size() == 0)
-	{
-		defineExpr(_funCall, smt::zeroValue(TypeProvider::bytesMemory()));
-		return;
-	}
-
-	// bytes.concat with single argument of type bytes memory
-	if (args.size() == 1 && args.front()->annotation().type->category() == frontend::Type::Category::Array)
-	{
-		defineExpr(_funCall, expr(*args.front(), TypeProvider::bytesMemory()));
-		return;
-	}
-
-	auto const& [name, inTypes, outType] = state().bytesConcatFunctionTypes(&_funCall);
-	solAssert(inTypes.size() == args.size(), "");
-
-	auto symbFunction = state().bytesConcatFunction(&_funCall);
-	auto out = createSelectExpressionForFunction(symbFunction, args, inTypes, args.size());
-
-	defineExpr(_funCall, out);
-}
-
 void SMTEncoder::visitABIFunction(FunctionCall const& _funCall)
 {
 	auto symbFunction = state().abiFunction(&_funCall);
@@ -828,8 +796,24 @@ void SMTEncoder::visitABIFunction(FunctionCall const& _funCall)
 		defineExpr(_funCall, smt::zeroValue(TypeProvider::bytesMemory()));
 		return;
 	}
+	std::vector<smtutil::Expression> symbArgs;
+	for (unsigned i = 0; i < argsActualLength; ++i)
+		if (args.at(i))
+			symbArgs.emplace_back(expr(*args.at(i), inTypes.at(i)));
 
-	auto out = createSelectExpressionForFunction(symbFunction, args, inTypes, argsActualLength);
+	std::optional<smtutil::Expression> arg;
+	if (inTypes.size() == 1)
+		arg = expr(*args.at(0), inTypes.at(0));
+	else
+	{
+		auto inputSort = dynamic_cast<smtutil::ArraySort&>(*symbFunction.sort).domain;
+		arg = smtutil::Expression::tuple_constructor(
+			smtutil::Expression(std::make_shared<smtutil::SortSort>(inputSort), ""),
+			symbArgs
+		);
+	}
+
+	auto out = smtutil::Expression::select(symbFunction, *arg);
 	if (outTypes.size() == 1)
 		defineExpr(_funCall, out);
 	else
@@ -925,6 +909,7 @@ void SMTEncoder::visitObjectCreation(FunctionCall const& _funCall)
 
 	smtutil::Expression arraySize = expr(*args.front());
 	setSymbolicUnknownValue(arraySize, TypeProvider::uint256(), m_context);
+
 	auto symbArray = std::dynamic_pointer_cast<smt::SymbolicArrayVariable>(m_context.expression(_funCall));
 	solAssert(symbArray, "");
 	smt::setSymbolicZeroValue(*symbArray, m_context);
@@ -1298,27 +1283,8 @@ void SMTEncoder::addArrayLiteralAssertions(
 )
 {
 	m_context.addAssertion(_symArray.length() == _elementValues.size());
-
-	// Assert to the solver that _elementValues are exactly the elements at the beginning of the array.
-	// Since we create new symbolic representation for every array literal in the source file, we want to ensure that
-	// representations of two equal literals are also equal. For this reason we always start from constant-zero array.
-	// This ensures SMT-LIB arrays (which are infinite) are also equal beyond the length of the Solidity array literal.
-	auto type = _symArray.type();
-	smtAssert(type);
-	auto valueType = [&]() {
-		if (auto const* arrayType = dynamic_cast<ArrayType const*>(type))
-			return arrayType->baseType();
-		if (smt::isStringLiteral(*type))
-			return TypeProvider::stringMemory()->baseType();
-		smtAssert(false);
-	}();
-	auto tupleSort = std::dynamic_pointer_cast<smtutil::TupleSort>(smt::smtSort(*type));
-	auto sortSort = std::make_shared<smtutil::SortSort>(tupleSort->components.front());
-	smtutil::Expression arrayExpr = smtutil::Expression::const_array(smtutil::Expression(sortSort), smt::zeroValue(valueType));
-	smtAssert(arrayExpr.sort->kind == smtutil::Kind::Array);
 	for (size_t i = 0; i < _elementValues.size(); i++)
-		arrayExpr = smtutil::Expression::store(arrayExpr, smtutil::Expression(i), _elementValues[i]);
-	m_context.addAssertion(_symArray.elements() == arrayExpr);
+		m_context.addAssertion(smtutil::Expression::select(_symArray.elements(), i) == _elementValues[i]);
 }
 
 void SMTEncoder::bytesToFixedBytesAssertions(
@@ -3146,29 +3112,6 @@ std::set<FunctionCall const*, ASTCompareByID<FunctionCall>> SMTEncoder::collectA
 	return ABIFunctions(_node).abiCalls;
 }
 
-std::set<FunctionCall const*, ASTCompareByID<FunctionCall>> SMTEncoder::collectBytesConcatCalls(ASTNode const* _node)
-{
-	struct BytesConcatFunctions: public ASTConstVisitor
-	{
-		BytesConcatFunctions(ASTNode const* _node) { _node->accept(*this); }
-		void endVisit(FunctionCall const& _funCall)
-		{
-			if (*_funCall.annotation().kind == FunctionCallKind::FunctionCall)
-				switch (dynamic_cast<FunctionType const&>(*_funCall.expression().annotation().type).kind())
-				{
-				case FunctionType::Kind::BytesConcat:
-					bytesConcatCalls.insert(&_funCall);
-					break;
-				default: {}
-				}
-		}
-
-		std::set<FunctionCall const*, ASTCompareByID<FunctionCall>> bytesConcatCalls;
-	};
-
-	return BytesConcatFunctions(_node).bytesConcatCalls;
-}
-
 std::set<SourceUnit const*, ASTNode::CompareByID> SMTEncoder::sourceDependencies(SourceUnit const& _source)
 {
 	std::set<SourceUnit const*, ASTNode::CompareByID> sources;
@@ -3272,31 +3215,4 @@ void SMTEncoder::createFreeConstants(std::set<SourceUnit const*, ASTNode::Compar
 smt::SymbolicState& SMTEncoder::state()
 {
 	return m_context.state();
-}
-
-smtutil::Expression SMTEncoder::createSelectExpressionForFunction(
-	smtutil::Expression symbFunction,
-	std::vector<frontend::ASTPointer<frontend::Expression const>> const& args,
-	frontend::TypePointers const& inTypes,
-	unsigned long argsActualLength
-)
-{
-	solAssert(argsActualLength <= args.size() && inTypes.size() == argsActualLength);
-	if (inTypes.size() == 1)
-	{
-		smtutil::Expression arg = expr(*args.at(0), inTypes.at(0));
-		return smtutil::Expression::select(symbFunction, arg);
-	}
-
-	std::vector<smtutil::Expression> symbArgs;
-	for (unsigned i = 0; i < argsActualLength; ++i)
-		if (args.at(i))
-			symbArgs.emplace_back(expr(*args.at(i), inTypes.at(i)));
-
-	auto inputSort = dynamic_cast<smtutil::ArraySort&>(*symbFunction.sort).domain;
-	smtutil::Expression arg = smtutil::Expression::tuple_constructor(
-		smtutil::Expression(std::make_shared<smtutil::SortSort>(inputSort), ""),
-		symbArgs
-	);
-	return smtutil::Expression::select(symbFunction, arg);
 }

@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "formattedMessage": "Invalid model checker targets requested.",

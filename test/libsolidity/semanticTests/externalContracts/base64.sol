@@ -33,9 +33,9 @@ contract test {
 // EVMVersion: >=constantinople
 // ----
 // constructor()
-// gas irOptimized: 414909
-// gas legacy: 750723
-// gas legacyOptimized: 536620
+// gas irOptimized: 405832
+// gas legacy: 735054
+// gas legacyOptimized: 522722
 // encode_inline_asm(bytes): 0x20, 0 -> 0x20, 0
 // encode_inline_asm(bytes): 0x20, 1, "f" -> 0x20, 4, "Zg=="
 // encode_inline_asm(bytes): 0x20, 2, "fo" -> 0x20, 4, "Zm8="
@@ -51,10 +51,10 @@ contract test {
 // encode_no_asm(bytes): 0x20, 5, "fooba" -> 0x20, 8, "Zm9vYmE="
 // encode_no_asm(bytes): 0x20, 6, "foobar" -> 0x20, 8, "Zm9vYmFy"
 // encode_inline_asm_large()
-// gas irOptimized: 1374039
-// gas legacy: 1688033
-// gas legacyOptimized: 1205033
+// gas irOptimized: 1322025
+// gas legacy: 1554031
+// gas legacyOptimized: 1132031
 // encode_no_asm_large()
-// gas irOptimized: 3291100
-// gas legacy: 4765077
-// gas legacyOptimized: 2908077
+// gas irOptimized: 3206081
+// gas legacy: 4587075
+// gas legacyOptimized: 2823075

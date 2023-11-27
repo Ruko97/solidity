@@ -18,10 +18,11 @@
 
 #pragma once
 
+#include <libsolidity/formal/SymbolicVariables.h>
+#include <libsolidity/formal/SymbolicVariables.h>
 
 #include <libsolidity/ast/AST.h>
 
-#include <libsmtutil/SolverInterface.h>
 #include <libsmtutil/Sorts.h>
 
 #include <map>
@@ -35,11 +36,6 @@ class CharStreamProvider;
 
 namespace solidity::frontend
 {
-
-namespace smt
-{
-class EncodingContext;
-}
 
 enum class PredicateType
 {
@@ -73,10 +69,8 @@ public:
 	);
 
 	Predicate(
-		std::string _name,
-		smtutil::SortPointer _sort,
+		smt::SymbolicFunctionVariable&& _predicate,
 		PredicateType _type,
-		bool _bytesConcatFunctionInContext,
 		ASTNode const* _node = nullptr,
 		ContractDefinition const* _contractContext = nullptr,
 		std::vector<ScopeOpener const*> _scopeStack = {}
@@ -96,7 +90,11 @@ public:
 	smtutil::Expression operator()(std::vector<smtutil::Expression> const& _args) const;
 
 	/// @returns the function declaration of the predicate.
-	smtutil::Expression const& functor() const;
+	smtutil::Expression functor() const;
+	/// @returns the function declaration of the predicate with index _idx.
+	smtutil::Expression functor(unsigned _idx) const;
+	/// Increases the index of the function declaration of the predicate.
+	void newFunctor();
 
 	/// @returns the program node this predicate represents.
 	ASTNode const* programNode() const;
@@ -181,9 +179,15 @@ public:
 
 	/// @returns a substitution map from the arguments of _predExpr
 	/// to a Solidity-like expression.
-	std::map<std::string, std::string> expressionSubstitution(smtutil::Expression const& _predExprs) const;
+	std::map<std::string, std::string> expressionSubstitution(smtutil::Expression const& _predExpr) const;
 
 private:
+	/// @returns the formatted version of the given SMT expressions. Those expressions must be SMT constants.
+	std::vector<std::optional<std::string>> formatExpressions(std::vector<smtutil::Expression> const& _exprs, std::vector<Type const*> const& _types) const;
+
+	/// @returns a string representation of the SMT expression based on a Solidity type.
+	std::optional<std::string> expressionToString(smtutil::Expression const& _expr, Type const* _type) const;
+
 	/// Recursively fills _array from _expr.
 	/// _expr should have the form `store(store(...(const_array(x_0), i_0, e_0), i_m, e_m), i_k, e_k)`.
 	/// @returns true if the construction worked,
@@ -192,14 +196,8 @@ private:
 
 	std::map<std::string, std::optional<std::string>> readTxVars(smtutil::Expression const& _tx) const;
 
-	/// @returns index at which transaction values start in args list
-	size_t txValuesIndex() const { return m_bytesConcatFunctionInContext ? 5 : 4; }
-	/// @returns index at which function arguments start in args list
-	size_t firstArgIndex() const { return m_bytesConcatFunctionInContext ? 7 : 6; }
-	/// @returns index at which state variables values start in args list
-	size_t firstStateVarIndex() const { return m_bytesConcatFunctionInContext ? 8 : 7; }
-
-	smtutil::Expression m_functor;
+	/// The actual SMT expression.
+	smt::SymbolicFunctionVariable m_predicate;
 
 	/// The type of this predicate.
 	PredicateType m_type;
@@ -221,9 +219,6 @@ private:
 	/// The scope stack when the predicate was created.
 	/// Used to identify the subset of variables in scope.
 	std::vector<ScopeOpener const*> const m_scopeStack;
-
-	/// True iff there is a bytes concat function in contract scope
-	bool m_bytesConcatFunctionInContext;
 };
 
 struct PredicateCompare

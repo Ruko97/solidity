@@ -27,7 +27,7 @@ class RenameSymbol: public HandlerBase
 public:
 	explicit RenameSymbol(LanguageServer& _server): HandlerBase(_server) {}
 
-	void operator()(MessageID, Json const&);
+	void operator()(MessageID, Json::Value const&);
 protected:
 	// Nested class because otherwise `RenameSymbol` couldn't be easily used
 	// with LanguageServer::m_handlers as `ASTConstVisitor` deletes required

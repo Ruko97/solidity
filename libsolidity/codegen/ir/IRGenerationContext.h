@@ -37,7 +37,6 @@
 #include <set>
 #include <string>
 #include <memory>
-#include <deque>
 
 namespace solidity::frontend
 {
@@ -143,8 +142,7 @@ public:
 
 	RevertStrings revertStrings() const { return m_revertStrings; }
 
-	util::UniqueVector<ContractDefinition const*> const& subObjectsCreated() const { return m_subObjects; }
-	void addSubObject(ContractDefinition const* _contractDefinition) { m_subObjects.pushBack(_contractDefinition); }
+	std::set<ContractDefinition const*, ASTNode::CompareByID>& subObjectsCreated() { return m_subObjects; }
 
 	bool memoryUnsafeInlineAssemblySeen() const { return m_memoryUnsafeInlineAssemblySeen; }
 	void setMemoryUnsafeInlineAssemblySeen() { m_memoryUnsafeInlineAssemblySeen = true; }
@@ -196,7 +194,7 @@ private:
 	/// It will fail at runtime but the code must still compile.
 	InternalDispatchMap m_internalDispatchMap;
 
-	util::UniqueVector<ContractDefinition const*> m_subObjects;
+	std::set<ContractDefinition const*, ASTNode::CompareByID> m_subObjects;
 
 	langutil::DebugInfoSelection m_debugInfoSelection = {};
 	langutil::CharStreamProvider const* m_soliditySourceProvider = nullptr;

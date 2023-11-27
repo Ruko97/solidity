@@ -45,22 +45,22 @@ using namespace solidity::yul;
 DataFlowAnalyzer::DataFlowAnalyzer(
 	Dialect const& _dialect,
 	MemoryAndStorage _analyzeStores,
-	std::map<YulName, SideEffects> _functionSideEffects
+	std::map<YulString, SideEffects> _functionSideEffects
 ):
 	m_dialect(_dialect),
 	m_functionSideEffects(std::move(_functionSideEffects)),
-	m_knowledgeBase([this](YulName _var) { return variableValue(_var); }),
+	m_knowledgeBase([this](YulString _var) { return variableValue(_var); }),
 	m_analyzeStores(_analyzeStores == MemoryAndStorage::Analyze)
 {
 	if (m_analyzeStores)
 	{
-		if (auto const* builtin = _dialect.memoryStoreFunction())
+		if (auto const* builtin = _dialect.memoryStoreFunction(YulString{}))
 			m_storeFunctionName[static_cast<unsigned>(StoreLoadLocation::Memory)] = builtin->name;
-		if (auto const* builtin = _dialect.memoryLoadFunction())
+		if (auto const* builtin = _dialect.memoryLoadFunction(YulString{}))
 			m_loadFunctionName[static_cast<unsigned>(StoreLoadLocation::Memory)] = builtin->name;
-		if (auto const* builtin = _dialect.storageStoreFunction())
+		if (auto const* builtin = _dialect.storageStoreFunction(YulString{}))
 			m_storeFunctionName[static_cast<unsigned>(StoreLoadLocation::Storage)] = builtin->name;
-		if (auto const* builtin = _dialect.storageLoadFunction())
+		if (auto const* builtin = _dialect.storageLoadFunction(YulString{}))
 			m_loadFunctionName[static_cast<unsigned>(StoreLoadLocation::Storage)] = builtin->name;
 	}
 }
@@ -98,7 +98,7 @@ void DataFlowAnalyzer::operator()(ExpressionStatement& _statement)
 
 void DataFlowAnalyzer::operator()(Assignment& _assignment)
 {
-	std::set<YulName> names;
+	std::set<YulString> names;
 	for (auto const& var: _assignment.variableNames)
 		names.emplace(var.name);
 	assertThrow(_assignment.value, OptimizerException, "");
@@ -109,7 +109,7 @@ void DataFlowAnalyzer::operator()(Assignment& _assignment)
 
 void DataFlowAnalyzer::operator()(VariableDeclaration& _varDecl)
 {
-	std::set<YulName> names;
+	std::set<YulString> names;
 	for (auto const& var: _varDecl.variables)
 		names.emplace(var.name);
 	m_variableScopes.back().variables += names;
@@ -138,14 +138,14 @@ void DataFlowAnalyzer::operator()(Switch& _switch)
 {
 	clearKnowledgeIfInvalidated(*_switch.expression);
 	visit(*_switch.expression);
-	std::set<YulName> assignedVariables;
+	std::set<YulString> assignedVariables;
 	for (auto& _case: _switch.cases)
 	{
 		Environment preEnvironment = m_state.environment;
 		(*this)(_case.body);
 		joinKnowledge(preEnvironment);
 
-		std::set<YulName> variables = assignedVariableNames(_case.body);
+		std::set<YulString> variables = assignedVariableNames(_case.body);
 		assignedVariables += variables;
 		// This is a little too destructive, we could retain the old values.
 		clearValues(variables);
@@ -191,7 +191,7 @@ void DataFlowAnalyzer::operator()(ForLoop& _for)
 	AssignmentsSinceContinue assignmentsSinceCont;
 	assignmentsSinceCont(_for.body);
 
-	std::set<YulName> assignedVariables =
+	std::set<YulString> assignedVariables =
 		assignedVariableNames(_for.body) + assignedVariableNames(_for.post);
 	clearValues(assignedVariables);
 
@@ -222,31 +222,31 @@ void DataFlowAnalyzer::operator()(Block& _block)
 	assertThrow(numScopes == m_variableScopes.size(), OptimizerException, "");
 }
 
-std::optional<YulName> DataFlowAnalyzer::storageValue(YulName _key) const
+std::optional<YulString> DataFlowAnalyzer::storageValue(YulString _key) const
 {
-	if (YulName const* value = valueOrNullptr(m_state.environment.storage, _key))
+	if (YulString const* value = valueOrNullptr(m_state.environment.storage, _key))
 		return *value;
 	else
 		return std::nullopt;
 }
 
-std::optional<YulName> DataFlowAnalyzer::memoryValue(YulName _key) const
+std::optional<YulString> DataFlowAnalyzer::memoryValue(YulString _key) const
 {
-	if (YulName const* value = valueOrNullptr(m_state.environment.memory, _key))
+	if (YulString const* value = valueOrNullptr(m_state.environment.memory, _key))
 		return *value;
 	else
 		return std::nullopt;
 }
 
-std::optional<YulName> DataFlowAnalyzer::keccakValue(YulName _start, YulName _length) const
+std::optional<YulString> DataFlowAnalyzer::keccakValue(YulString _start, YulString _length) const
 {
-	if (YulName const* value = valueOrNullptr(m_state.environment.keccak, std::make_pair(_start, _length)))
+	if (YulString const* value = valueOrNullptr(m_state.environment.keccak, std::make_pair(_start, _length)))
 		return *value;
 	else
 		return std::nullopt;
 }
 
-void DataFlowAnalyzer::handleAssignment(std::set<YulName> const& _variables, Expression* _value, bool _isDeclaration)
+void DataFlowAnalyzer::handleAssignment(std::set<YulString> const& _variables, Expression* _value, bool _isDeclaration)
 {
 	if (!_isDeclaration)
 		clearValues(_variables);
@@ -260,7 +260,7 @@ void DataFlowAnalyzer::handleAssignment(std::set<YulName> const& _variables, Exp
 
 	if (_value && _variables.size() == 1)
 	{
-		YulName name = *_variables.begin();
+		YulString name = *_variables.begin();
 		// Expression has to be movable and cannot contain a reference
 		// to the variable that will be assigned to.
 		if (movableChecker.movable() && !movableChecker.referencedVariables().count(name))
@@ -289,7 +289,7 @@ void DataFlowAnalyzer::handleAssignment(std::set<YulName> const& _variables, Exp
 
 	if (_value && _variables.size() == 1)
 	{
-		YulName variable = *_variables.begin();
+		YulString variable = *_variables.begin();
 		if (!movableChecker.referencedVariables().count(variable))
 		{
 			// This might erase additional knowledge about the slot.
@@ -320,7 +320,7 @@ void DataFlowAnalyzer::popScope()
 	m_variableScopes.pop_back();
 }
 
-void DataFlowAnalyzer::clearValues(std::set<YulName> _variables)
+void DataFlowAnalyzer::clearValues(std::set<YulString> _variables)
 {
 	// All variables that reference variables to be cleared also have to be
 	// cleared, but not recursively, since only the value of the original
@@ -351,7 +351,7 @@ void DataFlowAnalyzer::clearValues(std::set<YulName> _variables)
 	});
 
 	// Also clear variables that reference variables to be cleared.
-	std::set<YulName> referencingVariables;
+	std::set<YulString> referencingVariables;
 	for (auto const& variableToClear: _variables)
 		for (auto const& [ref, names]: m_state.references)
 			if (names.count(variableToClear))
@@ -365,7 +365,7 @@ void DataFlowAnalyzer::clearValues(std::set<YulName> _variables)
 	}
 }
 
-void DataFlowAnalyzer::assignValue(YulName _variable, Expression const* _value)
+void DataFlowAnalyzer::assignValue(YulString _variable, Expression const* _value)
 {
 	m_state.value[_variable] = {_value, m_loopDepth};
 }
@@ -398,7 +398,7 @@ void DataFlowAnalyzer::clearKnowledgeIfInvalidated(Expression const& _expr)
 	}
 }
 
-bool DataFlowAnalyzer::inScope(YulName _variableName) const
+bool DataFlowAnalyzer::inScope(YulString _variableName) const
 {
 	for (auto const& scope: m_variableScopes | ranges::views::reverse)
 	{
@@ -410,15 +410,15 @@ bool DataFlowAnalyzer::inScope(YulName _variableName) const
 	return false;
 }
 
-std::optional<u256> DataFlowAnalyzer::valueOfIdentifier(YulName const& _name) const
+std::optional<u256> DataFlowAnalyzer::valueOfIdentifier(YulString const& _name) const
 {
 	if (AssignedValue const* value = variableValue(_name))
 		if (Literal const* literal = std::get_if<Literal>(value->value))
-			return literal->value.value();
+			return valueOfLiteral(*literal);
 	return std::nullopt;
 }
 
-std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isSimpleStore(
+std::optional<std::pair<YulString, YulString>> DataFlowAnalyzer::isSimpleStore(
 	StoreLoadLocation _location,
 	ExpressionStatement const& _statement
 ) const
@@ -431,7 +431,7 @@ std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isSimpleStore(
 	return {};
 }
 
-std::optional<YulName> DataFlowAnalyzer::isSimpleLoad(
+std::optional<YulString> DataFlowAnalyzer::isSimpleLoad(
 	StoreLoadLocation _location,
 	Expression const& _expression
 ) const
@@ -443,10 +443,10 @@ std::optional<YulName> DataFlowAnalyzer::isSimpleLoad(
 	return {};
 }
 
-std::optional<std::pair<YulName, YulName>> DataFlowAnalyzer::isKeccak(Expression const& _expression) const
+std::optional<std::pair<YulString, YulString>> DataFlowAnalyzer::isKeccak(Expression const& _expression) const
 {
 	if (FunctionCall const* funCall = std::get_if<FunctionCall>(&_expression))
-		if (funCall->functionName.name == m_dialect.hashFunction())
+		if (funCall->functionName.name == m_dialect.hashFunction({}))
 			if (Identifier const* start = std::get_if<Identifier>(&funCall->arguments.at(0)))
 				if (Identifier const* length = std::get_if<Identifier>(&funCall->arguments.at(1)))
 					return std::make_pair(start->name, length->name);
@@ -460,14 +460,14 @@ void DataFlowAnalyzer::joinKnowledge(Environment const& _olderEnvironment)
 	joinKnowledgeHelper(m_state.environment.storage, _olderEnvironment.storage);
 	joinKnowledgeHelper(m_state.environment.memory, _olderEnvironment.memory);
 	cxx20::erase_if(m_state.environment.keccak, mapTuple([&_olderEnvironment](auto&& key, auto&& currentValue) {
-		YulName const* oldValue = valueOrNullptr(_olderEnvironment.keccak, key);
+		YulString const* oldValue = valueOrNullptr(_olderEnvironment.keccak, key);
 		return !oldValue || *oldValue != currentValue;
 	}));
 }
 
 void DataFlowAnalyzer::joinKnowledgeHelper(
-	std::unordered_map<YulName, YulName>& _this,
-	std::unordered_map<YulName, YulName> const& _older
+	std::unordered_map<YulString, YulString>& _this,
+	std::unordered_map<YulString, YulString> const& _older
 )
 {
 	// We clear if the key does not exist in the older map or if the value is different.
@@ -475,7 +475,7 @@ void DataFlowAnalyzer::joinKnowledgeHelper(
 	// of m_state.environment.memory and thus any overlapping write would have cleared the keys
 	// that are not known to be different inside m_state.environment.memory already.
 	cxx20::erase_if(_this, mapTuple([&_older](auto&& key, auto&& currentValue){
-		YulName const* oldValue = valueOrNullptr(_older, key);
+		YulString const* oldValue = valueOrNullptr(_older, key);
 		return !oldValue || *oldValue != currentValue;
 	}));
 }

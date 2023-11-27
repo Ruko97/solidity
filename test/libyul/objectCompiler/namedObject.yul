@@ -1,12 +1,10 @@
 object "a" {
   code {}
 }
-// ====
-// EVMVersion: >=constantinople
 // ----
 // Assembly:
-//     /* "source":22:29   */
+//     /* "source":20:22   */
 //   stop
 // Bytecode: 00
 // Opcodes: STOP
-// SourceMappings: 22:7:0:-:0
+// SourceMappings: 20:2:0:-:0

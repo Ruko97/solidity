@@ -300,7 +300,7 @@ bool SyntaxChecker::visit(Literal const& _literal)
 
 	if (value.find("__") != ASTString::npos)
 	{
-		m_errorReporter.syntaxError(2990_error, _literal.location(), "Invalid use of underscores in number literal. Only one consecutive underscore between digits is allowed.");
+		m_errorReporter.syntaxError(2990_error, _literal.location(), "Invalid use of underscores in number literal. Only one consecutive underscores between digits allowed.");
 		return true;
 	}
 
@@ -354,7 +354,7 @@ bool SyntaxChecker::visit(InlineAssembly const& _inlineAssembly)
 	if (!m_useYulOptimizer)
 		return false;
 
-	if (yul::MSizeFinder::containsMSize(_inlineAssembly.dialect(), _inlineAssembly.operations().root()))
+	if (yul::MSizeFinder::containsMSize(_inlineAssembly.dialect(), _inlineAssembly.operations()))
 		m_errorReporter.syntaxError(
 			6553_error,
 			_inlineAssembly.location(),
@@ -443,9 +443,7 @@ bool SyntaxChecker::visit(UsingForDirective const& _usingFor)
 
 bool SyntaxChecker::visit(FunctionDefinition const& _function)
 {
-	if (m_sourceUnit && m_sourceUnit->experimentalSolidity())
-		// Handled in experimental::SyntaxRestrictor instead.
-		return true;
+	solAssert(_function.isFree() == (m_currentContractKind == std::nullopt), "");
 
 	if (!_function.isFree() && !_function.isConstructor() && _function.noVisibilitySpecified())
 	{
@@ -499,14 +497,4 @@ bool SyntaxChecker::visit(StructDefinition const& _struct)
 		m_errorReporter.syntaxError(5306_error, _struct.location(), "Defining empty structs is disallowed.");
 
 	return true;
-}
-
-bool SyntaxChecker::visitNode(ASTNode const& _node)
-{
-	if (_node.experimentalSolidityOnly())
-	{
-		solAssert(m_sourceUnit);
-		solAssert(m_sourceUnit->experimentalSolidity());
-	}
-	return ASTConstVisitor::visitNode(_node);
 }

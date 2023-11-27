@@ -51,22 +51,22 @@ static std::string const thirtyTwo{"@ 32"};
 
 void UnusedStoreEliminator::run(OptimiserStepContext& _context, Block& _ast)
 {
-	std::map<YulName, SideEffects> functionSideEffects = SideEffectsPropagator::sideEffects(
+	std::map<YulString, SideEffects> functionSideEffects = SideEffectsPropagator::sideEffects(
 		_context.dialect,
 		CallGraphGenerator::callGraph(_ast)
 	);
 
 	SSAValueTracker ssaValues;
 	ssaValues(_ast);
-	std::map<YulName, AssignedValue> values;
+	std::map<YulString, AssignedValue> values;
 	for (auto const& [name, expression]: ssaValues.values())
 		values[name] = AssignedValue{expression, {}};
-	Expression const zeroLiteral{Literal{{}, LiteralKind::Number, LiteralValue(u256{0})}};
-	Expression const oneLiteral{Literal{{}, LiteralKind::Number, LiteralValue(u256{1})}};
-	Expression const thirtyTwoLiteral{Literal{{}, LiteralKind::Number, LiteralValue(u256{32})}};
-	values[YulName{zero}] = AssignedValue{&zeroLiteral, {}};
-	values[YulName{one}] = AssignedValue{&oneLiteral, {}};
-	values[YulName{thirtyTwo}] = AssignedValue{&thirtyTwoLiteral, {}};
+	Expression const zeroLiteral{Literal{{}, LiteralKind::Number, YulString{"0"}, {}}};
+	Expression const oneLiteral{Literal{{}, LiteralKind::Number, YulString{"1"}, {}}};
+	Expression const thirtyTwoLiteral{Literal{{}, LiteralKind::Number, YulString{"32"}, {}}};
+	values[YulString{zero}] = AssignedValue{&zeroLiteral, {}};
+	values[YulString{one}] = AssignedValue{&oneLiteral, {}};
+	values[YulString{thirtyTwo}] = AssignedValue{&thirtyTwoLiteral, {}};
 
 	bool const ignoreMemory = MSizeFinder::containsMSize(_context.dialect, _ast);
 	UnusedStoreEliminator rse{
@@ -93,9 +93,9 @@ void UnusedStoreEliminator::run(OptimiserStepContext& _context, Block& _ast)
 
 UnusedStoreEliminator::UnusedStoreEliminator(
 	Dialect const& _dialect,
-	std::map<YulName, SideEffects> const& _functionSideEffects,
-	std::map<YulName, ControlFlowSideEffects> _controlFlowSideEffects,
-	std::map<YulName, AssignedValue> const& _ssaValues,
+	std::map<YulString, SideEffects> const& _functionSideEffects,
+	std::map<YulString, ControlFlowSideEffects> _controlFlowSideEffects,
+	std::map<YulString, AssignedValue> const& _ssaValues,
 	bool _ignoreMemory
 ):
 	UnusedStoreBase(_dialect),
@@ -172,12 +172,9 @@ void UnusedStoreEliminator::visit(Statement const& _statement)
 		*instruction == Instruction::CODECOPY ||
 		*instruction == Instruction::CALLDATACOPY ||
 		*instruction == Instruction::RETURNDATACOPY ||
-		// TODO: Removing MCOPY is complicated because it's not just a store but also a load.
-		//*instruction == Instruction::MCOPY ||
 		*instruction == Instruction::MSTORE ||
 		*instruction == Instruction::MSTORE8;
 	bool isCandidateForRemoval =
-		*instruction != Instruction::MCOPY &&
 		SemanticInformation::otherState(*instruction) != SemanticInformation::Write && (
 			SemanticInformation::storage(*instruction) == SemanticInformation::Write ||
 			(!m_ignoreMemory && SemanticInformation::memory(*instruction) == SemanticInformation::Write)
@@ -214,10 +211,7 @@ void UnusedStoreEliminator::visit(Statement const& _statement)
 		if (operations.front().location == Location::Storage)
 			activeStorageStores().insert(&_statement);
 		else
-		{
-			yulAssert(operations.front().location == Location::Memory, "");
 			activeMemoryStores().insert(&_statement);
-		}
 		m_storeOperations[&_statement] = std::move(operations.front());
 	}
 }
@@ -228,7 +222,7 @@ std::vector<UnusedStoreEliminator::Operation> UnusedStoreEliminator::operationsF
 {
 	using evmasm::Instruction;
 
-	YulName functionName = _functionCall.functionName.name;
+	YulString functionName = _functionCall.functionName.name;
 	SideEffects sideEffects;
 	if (BuiltinFunction const* f = m_dialect.builtin(functionName))
 		sideEffects = f->sideEffects;
@@ -263,8 +257,8 @@ std::vector<UnusedStoreEliminator::Operation> UnusedStoreEliminator::operationsF
 			if (_op.lengthConstant)
 				switch (*_op.lengthConstant)
 				{
-				case 1: ourOp.length = YulName(one); break;
-				case 32: ourOp.length = YulName(thirtyTwo); break;
+				case 1: ourOp.length = YulString(one); break;
+				case 32: ourOp.length = YulString(thirtyTwo); break;
 				default: yulAssert(false);
 				}
 			return ourOp;
@@ -435,7 +429,7 @@ void UnusedStoreEliminator::clearActive(
 		activeStorageStores() = {};
 }
 
-std::optional<YulName> UnusedStoreEliminator::identifierNameIfSSA(Expression const& _expression) const
+std::optional<YulString> UnusedStoreEliminator::identifierNameIfSSA(Expression const& _expression) const
 {
 	if (Identifier const* identifier = std::get_if<Identifier>(&_expression))
 		if (m_ssaValues.count(identifier->name))

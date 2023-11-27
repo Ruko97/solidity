@@ -57,7 +57,6 @@ public:
 		ModelCheckerSettings _settings,
 		langutil::UniqueErrorReporter& _errorReporter,
 		langutil::UniqueErrorReporter& _unsupportedErrorReporter,
-		langutil::ErrorReporter& _provedSafeReporter,
 		langutil::CharStreamProvider const& _charStreamProvider
 	);
 
@@ -123,26 +122,12 @@ public:
 	static RationalNumberType const* isConstant(Expression const& _expr);
 
 	static std::set<FunctionCall const*, ASTCompareByID<FunctionCall>> collectABICalls(ASTNode const* _node);
-	static std::set<FunctionCall const*, ASTCompareByID<FunctionCall>> collectBytesConcatCalls(ASTNode const* _node);
 
 	/// @returns all the sources that @param _source depends on,
 	/// including itself.
 	static std::set<SourceUnit const*, ASTNode::CompareByID> sourceDependencies(SourceUnit const& _source);
 
 protected:
-	struct TransientDataLocationChecker: ASTConstVisitor
-	{
-		TransientDataLocationChecker(ContractDefinition const& _contract) { _contract.accept(*this); }
-
-		void endVisit(VariableDeclaration const& _var)
-		{
-			solUnimplementedAssert(
-				_var.referenceLocation() != VariableDeclaration::Location::Transient,
-				"Transient storage variables are not supported."
-			);
-		}
-	};
-
 	void resetSourceAnalysis();
 
 	// TODO: Check that we do not have concurrent reads and writes to a variable,
@@ -226,7 +211,6 @@ protected:
 	void visitAssert(FunctionCall const& _funCall);
 	void visitRequire(FunctionCall const& _funCall);
 	void visitABIFunction(FunctionCall const& _funCall);
-	void visitBytesConcat(FunctionCall const& _funCall);
 	void visitCryptoFunction(FunctionCall const& _funCall);
 	void visitGasLeft(FunctionCall const& _funCall);
 	virtual void visitAddMulMod(FunctionCall const& _funCall);
@@ -291,7 +275,7 @@ protected:
 	/// @returns a pair of expressions representing _left / _right and _left mod _right, respectively.
 	/// Uses slack variables and additional constraints to express the results using only operations
 	/// more friendly to the SMT solver (multiplication, addition, subtraction and comparison).
-	std::pair<smtutil::Expression, smtutil::Expression> divModWithSlacks(
+	std::pair<smtutil::Expression, smtutil::Expression>	divModWithSlacks(
 		smtutil::Expression _left,
 		smtutil::Expression _right,
 		IntegerType const& _type
@@ -464,7 +448,6 @@ protected:
 
 	langutil::UniqueErrorReporter& m_errorReporter;
 	langutil::UniqueErrorReporter& m_unsupportedErrors;
-	langutil::ErrorReporter& m_provedSafeReporter;
 
 	/// Stores the current function/modifier call/invocation path.
 	std::vector<CallStackEntry> m_callStack;
@@ -517,14 +500,6 @@ protected:
 	langutil::CharStreamProvider const& m_charStreamProvider;
 
 	smt::SymbolicState& state();
-
-private:
-	smtutil::Expression createSelectExpressionForFunction(
-		smtutil::Expression symbFunction,
-		std::vector<frontend::ASTPointer<frontend::Expression const>> const& args,
-		frontend::TypePointers const& inTypes,
-		unsigned long argsActualLength
-	);
 };
 
 }

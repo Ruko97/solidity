@@ -24,8 +24,7 @@
 
 #include <libevmasm/Instruction.h>
 #include <libevmasm/Exceptions.h>
-#include <liblangutil/DebugData.h>
-#include <liblangutil/Exceptions.h>
+#include <liblangutil/SourceLocation.h>
 #include <libsolutil/Common.h>
 #include <libsolutil/Numeric.h>
 #include <libsolutil/Assertions.h>
@@ -51,10 +50,6 @@ enum AssemblyItemType
 	PushDeployTimeAddress, ///< Push an address to be filled at deploy time. Should not be touched by the optimizer.
 	PushImmutable, ///< Push the currently unknown value of an immutable variable. The actual value will be filled in by the constructor.
 	AssignImmutable, ///< Assigns the current value on the stack to an immutable variable. Only valid during creation code.
-
-	/// Loads 32 bytes from static auxiliary data of EOF data section. The offset does *not* have to be always from the beginning
-	/// of the data EOF section. More details here: https://github.com/ipsilon/eof/blob/main/spec/eof.md#data-section-lifecycle
-	AuxDataLoadN,
 	VerbatimBytecode ///< Contains data that is inserted into the bytecode code section without modification.
 };
 
@@ -69,16 +64,16 @@ class AssemblyItem
 public:
 	enum class JumpType { Ordinary, IntoFunction, OutOfFunction };
 
-	AssemblyItem(u256 _push, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create()):
-		AssemblyItem(Push, std::move(_push), std::move(_debugData)) { }
-	AssemblyItem(Instruction _i, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create()):
+	AssemblyItem(u256 _push, langutil::SourceLocation _location = langutil::SourceLocation()):
+		AssemblyItem(Push, std::move(_push), std::move(_location)) { }
+	AssemblyItem(Instruction _i, langutil::SourceLocation _location = langutil::SourceLocation()):
 		m_type(Operation),
 		m_instruction(_i),
-		m_debugData(std::move(_debugData))
+		m_location(std::move(_location))
 	{}
-	AssemblyItem(AssemblyItemType _type, u256 _data = 0, langutil::DebugData::ConstPtr _debugData = langutil::DebugData::create()):
+	AssemblyItem(AssemblyItemType _type, u256 _data = 0, langutil::SourceLocation _location = langutil::SourceLocation()):
 		m_type(_type),
-		m_debugData(std::move(_debugData))
+		m_location(std::move(_location))
 	{
 		if (m_type == Operation)
 			m_instruction = Instruction(uint8_t(_data));
@@ -88,8 +83,7 @@ public:
 	explicit AssemblyItem(bytes _verbatimData, size_t _arguments, size_t _returnVariables):
 		m_type(VerbatimBytecode),
 		m_instruction{},
-		m_verbatimBytecode{{_arguments, _returnVariables, std::move(_verbatimData)}},
-		m_debugData{langutil::DebugData::create()}
+		m_verbatimBytecode{{_arguments, _returnVariables, std::move(_verbatimData)}}
 	{}
 
 	AssemblyItem(AssemblyItem const&) = default;
@@ -165,11 +159,10 @@ public:
 
 	/// @returns an upper bound for the number of bytes required by this item, assuming that
 	/// the value of a jump tag takes @a _addressLength bytes.
-	/// @param _evmVersion the EVM version
 	/// @param _precision Whether to return a precise count (which involves
 	///                   counting immutable references which are only set after
 	///                   a call to `assemble()`) or an approx. count.
-	size_t bytesRequired(size_t _addressLength, langutil::EVMVersion _evmVersion, Precision _precision = Precision::Precise) const;
+	size_t bytesRequired(size_t _addressLength, Precision _precision = Precision::Precise) const;
 	size_t arguments() const;
 	size_t returnValues() const;
 	size_t deposit() const { return returnValues() - arguments(); }
@@ -177,29 +170,8 @@ public:
 	/// @returns true if the assembly item can be used in a functional context.
 	bool canBeFunctional() const;
 
-	void setLocation(langutil::SourceLocation const& _location)
-	{
-		solAssert(m_debugData);
-		m_debugData = langutil::DebugData::create(
-			_location,
-			m_debugData->originLocation,
-			m_debugData->astID
-		);
-	}
-
-	langutil::SourceLocation const& location() const
-	{
-		solAssert(m_debugData);
-		return m_debugData->nativeLocation;
-	}
-
-	void setDebugData(langutil::DebugData::ConstPtr _debugData)
-	{
-		solAssert(_debugData);
-		m_debugData = std::move(_debugData);
-	}
-
-	langutil::DebugData::ConstPtr debugData() const { return m_debugData; }
+	void setLocation(langutil::SourceLocation const& _location) { m_location = _location; }
+	langutil::SourceLocation const& location() const { return m_location; }
 
 	void setJumpType(JumpType _jumpType) { m_jumpType = _jumpType; }
 	static std::optional<JumpType> parseJumpType(std::string const& _jumpType);
@@ -224,7 +196,7 @@ private:
 	/// If m_type == VerbatimBytecode, this holds number of arguments, number of
 	/// return variables and verbatim bytecode.
 	std::optional<std::tuple<size_t, size_t, bytes>> m_verbatimBytecode;
-	langutil::DebugData::ConstPtr m_debugData;
+	langutil::SourceLocation m_location;
 	JumpType m_jumpType = JumpType::Ordinary;
 	/// Pushed value for operations with data to be determined during assembly stage,
 	/// e.g. PushSubSize, PushTag, PushSub, etc.
@@ -233,11 +205,11 @@ private:
 	mutable std::optional<size_t> m_immutableOccurrences;
 };
 
-inline size_t bytesRequired(AssemblyItems const& _items, size_t _addressLength, langutil::EVMVersion _evmVersion, Precision _precision = Precision::Precise)
+inline size_t bytesRequired(AssemblyItems const& _items, size_t _addressLength,  Precision _precision = Precision::Precise)
 {
 	size_t size = 0;
 	for (AssemblyItem const& item: _items)
-		size += item.bytesRequired(_addressLength, _evmVersion, _precision);
+		size += item.bytesRequired(_addressLength, _precision);
 	return size;
 }
 

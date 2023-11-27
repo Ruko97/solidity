@@ -1,8 +1,8 @@
 {
 	for {
-		for {} 1 { function f() {} }
+		for {} 1:bool { function f() {} }
 		{}
-	} 1 {}
+	} 1:bool {}
 	{}
 }
 // ----

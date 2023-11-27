@@ -18,6 +18,7 @@
 #include <libyul/optimiser/ControlFlowSimplifier.h>
 #include <libyul/optimiser/Semantics.h>
 #include <libyul/optimiser/OptimiserStep.h>
+#include <libyul/optimiser/TypeInfo.h>
 #include <libyul/AST.h>
 #include <libyul/Utilities.h>
 #include <libyul/Dialect.h>
@@ -36,7 +37,7 @@ namespace
 {
 
 ExpressionStatement makeDiscardCall(
-	langutil::DebugData::ConstPtr const& _debugData,
+	std::shared_ptr<DebugData const> const& _debugData,
 	BuiltinFunction const& _discardFunction,
 	Expression&& _expression
 )
@@ -71,7 +72,8 @@ void removeEmptyCasesFromSwitch(Switch& _switchStmt)
 
 void ControlFlowSimplifier::run(OptimiserStepContext& _context, Block& _ast)
 {
-	ControlFlowSimplifier{_context.dialect}(_ast);
+	TypeInfo typeInfo(_context.dialect, _ast);
+	ControlFlowSimplifier{_context.dialect, typeInfo}(_ast);
 }
 
 void ControlFlowSimplifier::operator()(Block& _block)
@@ -136,12 +138,12 @@ void ControlFlowSimplifier::simplify(std::vector<yul::Statement>& _statements)
 	GenericVisitor visitor{
 		VisitorFallback<OptionalStatements>{},
 		[&](If& _ifStmt) -> OptionalStatements {
-			if (_ifStmt.body.statements.empty() && m_dialect.discardFunction())
+			if (_ifStmt.body.statements.empty() && m_dialect.discardFunction(m_dialect.boolType))
 			{
 				OptionalStatements s = std::vector<Statement>{};
 				s->emplace_back(makeDiscardCall(
 					_ifStmt.debugData,
-					*m_dialect.discardFunction(),
+					*m_dialect.discardFunction(m_dialect.boolType),
 					std::move(*_ifStmt.condition)
 				));
 				return s;
@@ -178,7 +180,7 @@ OptionalStatements ControlFlowSimplifier::reduceNoCaseSwitch(Switch& _switchStmt
 {
 	yulAssert(_switchStmt.cases.empty(), "Expected no case!");
 	BuiltinFunction const* discardFunction =
-		m_dialect.discardFunction();
+		m_dialect.discardFunction(m_typeInfo.typeOf(*_switchStmt.expression));
 	if (!discardFunction)
 		return {};
 
@@ -194,16 +196,17 @@ OptionalStatements ControlFlowSimplifier::reduceSingleCaseSwitch(Switch& _switch
 	yulAssert(_switchStmt.cases.size() == 1, "Expected only one case!");
 
 	auto& switchCase = _switchStmt.cases.front();
-	langutil::DebugData::ConstPtr debugData = debugDataOf(*_switchStmt.expression);
+	std::shared_ptr<DebugData const> debugData = debugDataOf(*_switchStmt.expression);
+	YulString type = m_typeInfo.typeOf(*_switchStmt.expression);
 	if (switchCase.value)
 	{
-		if (!m_dialect.equalityFunction())
+		if (!m_dialect.equalityFunction(type))
 			return {};
 		return make_vector<Statement>(If{
 			std::move(_switchStmt.debugData),
 			std::make_unique<Expression>(FunctionCall{
 				debugData,
-				Identifier{debugData, m_dialect.equalityFunction()->name},
+				Identifier{debugData, m_dialect.equalityFunction(type)->name},
 				{std::move(*switchCase.value), std::move(*_switchStmt.expression)}
 			}),
 			std::move(switchCase.body)
@@ -211,13 +214,13 @@ OptionalStatements ControlFlowSimplifier::reduceSingleCaseSwitch(Switch& _switch
 	}
 	else
 	{
-		if (!m_dialect.discardFunction())
+		if (!m_dialect.discardFunction(type))
 			return {};
 
 		return make_vector<Statement>(
 			makeDiscardCall(
 				debugData,
-				*m_dialect.discardFunction(),
+				*m_dialect.discardFunction(type),
 				std::move(*_switchStmt.expression)
 			),
 			std::move(switchCase.body)

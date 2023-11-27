@@ -62,12 +62,15 @@
 namespace solidity::langutil
 {
 
+class AstRawString;
+class AstValueFactory;
+class ParserRecorder;
+
 enum class ScannerKind
 {
 	Solidity,
 	Yul,
-	ExperimentalSolidity,
-	SpecialComment
+	ExperimentalSolidity
 };
 
 enum class ScannerError
@@ -99,13 +102,11 @@ class Scanner
 {
 	friend class LiteralScope;
 public:
-	explicit Scanner(CharStream& _source, ScannerKind _kind = ScannerKind::Solidity):
+	explicit Scanner(CharStream& _source):
 		m_source(_source),
 		m_sourceName{std::make_shared<std::string>(_source.name())}
 	{
 		reset();
-		if (_kind != ScannerKind::Solidity)
-			setScannerMode(_kind);
 	}
 
 	/// Resets scanner to the start of input.

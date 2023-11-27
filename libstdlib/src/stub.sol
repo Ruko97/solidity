@@ -3,6 +3,7 @@ pragma solidity >=0.0;
 
 pragma experimental solidity;
 
-function identity()
+function identity(uint256 x) pure returns (uint256)
 {
+  return x;
 }

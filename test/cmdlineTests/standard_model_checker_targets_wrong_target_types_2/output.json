@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "formattedMessage": "settings.modelChecker.targets must be an array.",

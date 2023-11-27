@@ -20,7 +20,6 @@ function h() pure returns (uint) {
 
 contract C {
     uint z = 0;
-    uint transient t;
 
     function modifyStateVarZ() public returns (uint) {
         z = type(uint).max;
@@ -118,12 +117,6 @@ contract C {
         for (z = 1; z < 2048; ++z) {
             modifyStateVarZ();
         }
-        /// StorageStateVarCounter: isSimpleCounterLoop
-        for (z = 1; z < 2048; ++z) {
-        }
-        /// TransientStateVarCounter: isSimpleCounterLoop
-        for (t = 1; t < 2048; ++t) {
-        }
         /// NonIntegerCounter: isSimpleCounterLoop
         for (address i = address(0x123); i < address(this); i = address(0x123 + 1)) {
         }
@@ -142,8 +135,6 @@ contract C {
         }
     }
 }
-// ====
-// EVMVersion: >=cancun
 // ----
 // AdditionLoopExpression: false
 // ShortHandAdditionLoopExpression: false
@@ -169,8 +160,6 @@ contract C {
 // LiteralDifferentCommonTypeConditionRHS: false
 // StateVarCounterModifiedFunctionConditionRHS: false
 // StateVarCounterModifiedFunctionLoopBody: false
-// StorageStateVarCounter: false
-// TransientStateVarCounter: false
 // NonIntegerCounter: false
 // AssemblyAfterAssignmentToCounter: false
 // ExpressionIncrement: false

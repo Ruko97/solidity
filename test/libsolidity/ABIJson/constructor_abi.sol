@@ -5,7 +5,8 @@ contract test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "uint256",
 //         "name": "param1",

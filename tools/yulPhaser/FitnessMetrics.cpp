@@ -22,6 +22,7 @@
 
 #include <cmath>
 
+using namespace std;
 using namespace solidity::util;
 using namespace solidity::yul;
 using namespace solidity::phaser;
@@ -61,7 +62,7 @@ size_t ProgramSize::evaluate(Chromosome const& _chromosome)
 
 size_t RelativeProgramSize::evaluate(Chromosome const& _chromosome)
 {
-	double const scalingFactor = std::pow(10, m_fixedPointPrecision);
+	double const scalingFactor = pow(10, m_fixedPointPrecision);
 
 	size_t unoptimisedSize = optimisedProgram(Chromosome("")).codeSize(codeWeights());
 	if (unoptimisedSize == 0)
@@ -69,7 +70,7 @@ size_t RelativeProgramSize::evaluate(Chromosome const& _chromosome)
 
 	size_t optimisedSize = optimisedProgram(_chromosome).codeSize(codeWeights());
 
-	return static_cast<size_t>(std::round(
+	return static_cast<size_t>(round(
 		double(optimisedSize) / double(unoptimisedSize) * scalingFactor
 	));
 }
@@ -102,7 +103,7 @@ size_t FitnessMetricMaximum::evaluate(Chromosome const& _chromosome)
 
 	size_t maximum = m_metrics[0]->evaluate(_chromosome);
 	for (size_t i = 1; i < m_metrics.size(); ++i)
-		maximum = std::max(maximum, m_metrics[i]->evaluate(_chromosome));
+		maximum = max(maximum, m_metrics[i]->evaluate(_chromosome));
 
 	return maximum;
 }
@@ -113,7 +114,7 @@ size_t FitnessMetricMinimum::evaluate(Chromosome const& _chromosome)
 
 	size_t minimum = m_metrics[0]->evaluate(_chromosome);
 	for (size_t i = 1; i < m_metrics.size(); ++i)
-		minimum = std::min(minimum, m_metrics[i]->evaluate(_chromosome));
+		minimum = min(minimum, m_metrics[i]->evaluate(_chromosome));
 
 	return minimum;
 }

@@ -11,7 +11,6 @@ object "Contract" {
 }
 
 // ====
-// EVMVersion: >=shanghai
 // optimizationPreset: none
 // ----
 // Assembly:

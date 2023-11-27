@@ -30,16 +30,17 @@ using namespace solidity::yul::unusedFunctionsCommon;
 FunctionDefinition unusedFunctionsCommon::createLinkingFunction(
 	FunctionDefinition const& _original,
 	std::pair<std::vector<bool>, std::vector<bool>> const& _usedParametersAndReturns,
-	YulName const& _originalFunctionName,
-	YulName const& _linkingFunctionName,
+	YulString const& _originalFunctionName,
+	YulString const& _linkingFunctionName,
 	NameDispenser& _nameDispenser
 )
 {
-	auto generateTypedName = [&](NameWithDebugData t)
+	auto generateTypedName = [&](TypedName t)
 	{
-		return NameWithDebugData{
+		return TypedName{
 			t.debugData,
-			_nameDispenser.newName(t.name)
+			_nameDispenser.newName(t.name),
+			t.type
 		};
 	};
 

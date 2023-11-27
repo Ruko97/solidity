@@ -6,4 +6,4 @@ contract C {
 }
 
 // ----
-// UnimplementedFeatureError 1834: Copying nested calldata dynamic arrays to storage is not implemented in the old code generator.
+// UnimplementedFeatureError: Copying nested calldata dynamic arrays to storage is not implemented in the old code generator.

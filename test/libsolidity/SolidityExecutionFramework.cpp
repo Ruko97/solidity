@@ -60,6 +60,7 @@ bytes SolidityExecutionFramework::multiSourceCompileContract(
 	m_compiler.setEVMVersion(m_evmVersion);
 	m_compiler.setEOFVersion(m_eofVersion);
 	m_compiler.setOptimiserSettings(m_optimiserSettings);
+	m_compiler.enableEvmBytecodeGeneration(true);
 	m_compiler.setViaIR(m_compileViaYul);
 	m_compiler.setRevertStringBehaviour(m_revertStrings);
 	if (!m_appendCBORMetadata) {

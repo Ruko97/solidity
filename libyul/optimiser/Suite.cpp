@@ -72,21 +72,64 @@
 #include <libyul/backends/evm/NoOutputAssembly.h>
 
 #include <libsolutil/CommonData.h>
-#include <libsolutil/Profiler.h>
 
 #include <libyul/CompilabilityChecker.h>
 
 #include <range/v3/view/map.hpp>
 #include <range/v3/action/remove.hpp>
-#include <range/v3/algorithm/count.hpp>
-#include <range/v3/algorithm/none_of.hpp>
 
 #include <limits>
 #include <tuple>
 
+#ifdef PROFILE_OPTIMIZER_STEPS
+#include <chrono>
+#include <fmt/format.h>
+#endif
+
 using namespace solidity;
 using namespace solidity::yul;
+#ifdef PROFILE_OPTIMIZER_STEPS
+using namespace std::chrono;
+#endif
 using namespace std::string_literals;
+
+namespace
+{
+
+#ifdef PROFILE_OPTIMIZER_STEPS
+void outputPerformanceMetrics(map<string, int64_t> const& _metrics)
+{
+	vector<pair<string, int64_t>> durations(_metrics.begin(), _metrics.end());
+	sort(
+		durations.begin(),
+		durations.end(),
+		[](pair<string, int64_t> const& _lhs, pair<string, int64_t> const& _rhs) -> bool
+		{
+			return _lhs.second < _rhs.second;
+		}
+	);
+
+	int64_t totalDurationInMicroseconds = 0;
+	for (auto&& [step, durationInMicroseconds]: durations)
+		totalDurationInMicroseconds += durationInMicroseconds;
+
+	cerr << "Performance metrics of optimizer steps" << endl;
+	cerr << "======================================" << endl;
+	constexpr double microsecondsInSecond = 1000000;
+	for (auto&& [step, durationInMicroseconds]: durations)
+	{
+		double percentage = 100.0 * static_cast<double>(durationInMicroseconds) / static_cast<double>(totalDurationInMicroseconds);
+		double sec = static_cast<double>(durationInMicroseconds) / microsecondsInSecond;
+		cerr << fmt::format("{:>7.3f}% ({} s): {}", percentage, sec, step) << endl;
+	}
+	double totalDurationInSeconds = static_cast<double>(totalDurationInMicroseconds) / microsecondsInSecond;
+	cerr << "--------------------------------------" << endl;
+	cerr << fmt::format("{:>7}% ({:.3f} s)", 100, totalDurationInSeconds) << endl;
+}
+#endif
+
+}
+
 
 void OptimiserSuite::run(
 	Dialect const& _dialect,
@@ -96,7 +139,7 @@ void OptimiserSuite::run(
 	std::string_view _optimisationSequence,
 	std::string_view _optimisationCleanupSequence,
 	std::optional<size_t> _expectedExecutionsPerDeployment,
-	std::set<YulName> const& _externallyUsedIdentifiers
+	std::set<YulString> const& _externallyUsedIdentifiers
 )
 {
 	EVMDialect const* evmDialect = dynamic_cast<EVMDialect const*>(&_dialect);
@@ -105,106 +148,78 @@ void OptimiserSuite::run(
 		evmDialect &&
 		evmDialect->evmVersion().canOverchargeGasForCall() &&
 		evmDialect->providesObjectAccess();
-	std::set<YulName> reservedIdentifiers = _externallyUsedIdentifiers;
+	std::set<YulString> reservedIdentifiers = _externallyUsedIdentifiers;
 	reservedIdentifiers += _dialect.fixedFunctionNames();
 
-	Block astRoot;
-	{
-		PROFILER_PROBE("Disambiguator", probe);
-		astRoot = std::get<Block>(Disambiguator(
-			_dialect,
-			*_object.analysisInfo,
-			reservedIdentifiers
-		)(_object.code()->root()));
-	}
+	*_object.code = std::get<Block>(Disambiguator(
+		_dialect,
+		*_object.analysisInfo,
+		reservedIdentifiers
+	)(*_object.code));
+	Block& ast = *_object.code;
 
-	NameDispenser dispenser{_dialect, astRoot, reservedIdentifiers};
+	NameDispenser dispenser{_dialect, ast, reservedIdentifiers};
 	OptimiserStepContext context{_dialect, dispenser, reservedIdentifiers, _expectedExecutionsPerDeployment};
 
 	OptimiserSuite suite(context, Debug::None);
 
 	// Some steps depend on properties ensured by FunctionHoister, BlockFlattener, FunctionGrouper and
 	// ForLoopInitRewriter. Run them first to be able to run arbitrary sequences safely.
-	suite.runSequence("hgfo", astRoot);
+	suite.runSequence("hgfo", ast);
 
-	{
-		PROFILER_PROBE("NameSimplifier", probe);
-		NameSimplifier::run(suite.m_context, astRoot);
-	}
+	NameSimplifier::run(suite.m_context, ast);
 	// Now the user-supplied part
-	suite.runSequence(_optimisationSequence, astRoot);
+	suite.runSequence(_optimisationSequence, ast);
 
 	// This is a tuning parameter, but actually just prevents infinite loops.
 	size_t stackCompressorMaxIterations = 16;
-	suite.runSequence("g", astRoot);
+	suite.runSequence("g", ast);
 
 	// We ignore the return value because we will get a much better error
 	// message once we perform code generation.
 	if (!usesOptimizedCodeGenerator)
-	{
-		PROFILER_PROBE("StackCompressor", probe);
-		_object.setCode(std::make_shared<AST>(std::move(astRoot)));
-		astRoot = std::get<1>(StackCompressor::run(
+		StackCompressor::run(
 			_dialect,
 			_object,
 			_optimizeStackAllocation,
 			stackCompressorMaxIterations
-		));
-	}
+		);
 
 	// Run the user-supplied clean up sequence
-	suite.runSequence(_optimisationCleanupSequence, astRoot);
+	suite.runSequence(_optimisationCleanupSequence, ast);
 	// Hard-coded FunctionGrouper step is used to bring the AST into a canonical form required by the StackCompressor
 	// and StackLimitEvader. This is hard-coded as the last step, as some previously executed steps may break the
 	// aforementioned form, thus causing the StackCompressor/StackLimitEvader to throw.
-	suite.runSequence("g", astRoot);
+	suite.runSequence("g", ast);
 
 	if (evmDialect)
 	{
 		yulAssert(_meter, "");
-		{
-			PROFILER_PROBE("ConstantOptimiser", probe);
-			ConstantOptimiser{*evmDialect, *_meter}(astRoot);
-		}
+		ConstantOptimiser{*evmDialect, *_meter}(ast);
 		if (usesOptimizedCodeGenerator)
 		{
-			{
-				PROFILER_PROBE("StackCompressor", probe);
-				_object.setCode(std::make_shared<AST>(std::move(astRoot)));
-				astRoot = std::get<1>(StackCompressor::run(
-					_dialect,
-					_object,
-					_optimizeStackAllocation,
-					stackCompressorMaxIterations
-				));
-			}
+			StackCompressor::run(
+				_dialect,
+				_object,
+				_optimizeStackAllocation,
+				stackCompressorMaxIterations
+			);
 			if (evmDialect->providesObjectAccess())
-			{
-				PROFILER_PROBE("StackLimitEvader", probe);
-				_object.setCode(std::make_shared<AST>(std::move(astRoot)));
-				astRoot = StackLimitEvader::run(suite.m_context, _object);
-			}
+				StackLimitEvader::run(suite.m_context, _object);
 		}
 		else if (evmDialect->providesObjectAccess() && _optimizeStackAllocation)
-		{
-			PROFILER_PROBE("StackLimitEvader", probe);
-			_object.setCode(std::make_shared<AST>(std::move(astRoot)));
-			astRoot = StackLimitEvader::run(suite.m_context, _object);
-		}
+			StackLimitEvader::run(suite.m_context, _object);
 	}
 
-	dispenser.reset(astRoot);
-	{
-		PROFILER_PROBE("NameSimplifier", probe);
-		NameSimplifier::run(suite.m_context, astRoot);
-	}
-	{
-		PROFILER_PROBE("VarNameCleaner", probe);
-		VarNameCleaner::run(suite.m_context, astRoot);
-	}
+	dispenser.reset(ast);
+	NameSimplifier::run(suite.m_context, ast);
+	VarNameCleaner::run(suite.m_context, ast);
 
-	_object.setCode(std::make_shared<AST>(std::move(astRoot)));
-	_object.analysisInfo = std::make_shared<AsmAnalysisInfo>(AsmAnalyzer::analyzeStrictAssertCorrect(_dialect, _object));
+#ifdef PROFILE_OPTIMIZER_STEPS
+	outputPerformanceMetrics(suite.m_durationPerStepInMicroseconds);
+#endif
+
+	*_object.analysisInfo = AsmAnalyzer::analyzeStrictAssertCorrect(_dialect, _object);
 }
 
 namespace
@@ -370,9 +385,21 @@ void OptimiserSuite::validateSequence(std::string_view _stepAbbreviations)
 
 bool OptimiserSuite::isEmptyOptimizerSequence(std::string const& _sequence)
 {
-	return
-		ranges::count(_sequence, ':') == 1 &&
-		ranges::none_of(_sequence, [](auto _step) { return _step != ':' && _step != ' ' && _step != '\n'; });
+	size_t delimiterCount{0};
+	for (char const step: _sequence)
+		switch (step)
+		{
+		case ':':
+			if (++delimiterCount > 1)
+				return false;
+			break;
+		case ' ':
+		case '\n':
+			break;
+		default:
+			return false;
+		}
+	return true;
 }
 
 void OptimiserSuite::runSequence(std::string_view _stepAbbreviations, Block& _ast, bool _repeatUntilStable)
@@ -445,9 +472,7 @@ void OptimiserSuite::runSequence(std::string_view _stepAbbreviations, Block& _as
 			subsequences.push_back({subsequence, true});
 	}
 
-	// NOTE: If _repeatUntilStable is false, the value will not be used so do not calculate it.
-	size_t codeSize = (_repeatUntilStable ? CodeSize::codeSizeIncludingFunctions(_ast) : 0);
-
+	size_t codeSize = 0;
 	for (size_t round = 0; round < MaxRounds; ++round)
 	{
 		for (auto const& [subsequence, repeat]: subsequences)
@@ -477,12 +502,14 @@ void OptimiserSuite::runSequence(std::vector<std::string> const& _steps, Block& 
 	{
 		if (m_debug == Debug::PrintStep)
 			std::cout << "Running " << step << std::endl;
-
-		{
-			PROFILER_PROBE(step, probe);
-			allSteps().at(step)->run(m_context, _ast);
-		}
-
+#ifdef PROFILE_OPTIMIZER_STEPS
+		steady_clock::time_point startTime = steady_clock::now();
+#endif
+		allSteps().at(step)->run(m_context, _ast);
+#ifdef PROFILE_OPTIMIZER_STEPS
+		steady_clock::time_point endTime = steady_clock::now();
+		m_durationPerStepInMicroseconds[step] += duration_cast<microseconds>(endTime - startTime).count();
+#endif
 		if (m_debug == Debug::PrintChanges)
 		{
 			// TODO should add switch to also compare variable names!

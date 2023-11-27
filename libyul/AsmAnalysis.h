@@ -61,7 +61,7 @@ public:
 		langutil::ErrorReporter& _errorReporter,
 		Dialect const& _dialect,
 		ExternalIdentifierAccess::Resolver _resolver = ExternalIdentifierAccess::Resolver(),
-		std::set<std::string> _dataNames = {}
+		std::set<YulString> _dataNames = {}
 	):
 		m_resolver(std::move(_resolver)),
 		m_info(_analysisInfo),
@@ -70,10 +70,7 @@ public:
 		m_dataNames(std::move(_dataNames))
 	{
 		if (EVMDialect const* evmDialect = dynamic_cast<EVMDialect const*>(&m_dialect))
-		{
 			m_evmVersion = evmDialect->evmVersion();
-			m_eofVersion = evmDialect->eofVersion();
-		}
 	}
 
 	bool analyze(Block const& _block);
@@ -81,19 +78,14 @@ public:
 	/// Performs analysis on the outermost code of the given object and returns the analysis info.
 	/// Asserts on failure.
 	static AsmAnalysisInfo analyzeStrictAssertCorrect(Dialect const& _dialect, Object const& _object);
-	static AsmAnalysisInfo analyzeStrictAssertCorrect(
-		Dialect const& _dialect,
-		Block const& _astRoot,
-		std::set<std::string> const& _qualifiedDataNames
-	);
 
-	size_t operator()(Literal const& _literal);
-	size_t operator()(Identifier const&);
+	std::vector<YulString> operator()(Literal const& _literal);
+	std::vector<YulString> operator()(Identifier const&);
 	void operator()(ExpressionStatement const&);
 	void operator()(Assignment const& _assignment);
 	void operator()(VariableDeclaration const& _variableDeclaration);
 	void operator()(FunctionDefinition const& _functionDefinition);
-	size_t operator()(FunctionCall const& _functionCall);
+	std::vector<YulString> operator()(FunctionCall const& _functionCall);
 	void operator()(If const& _if);
 	void operator()(Switch const& _switch);
 	void operator()(ForLoop const& _forLoop);
@@ -105,16 +97,22 @@ public:
 	/// @returns the worst side effects encountered during analysis (including within defined functions).
 	SideEffects const& sideEffects() const { return m_sideEffects; }
 private:
-	/// Visits the expression, expects that it evaluates to exactly one value.
-	/// Reports errors otherwise.
-	void expectExpression(Expression const& _expr);
-	void expectUnlimitedStringLiteral(Literal const& _literal);
+	/// Visits the expression, expects that it evaluates to exactly one value and
+	/// returns the type. Reports errors on errors and returns the default type.
+	YulString expectExpression(Expression const& _expr);
+	YulString expectUnlimitedStringLiteral(Literal const& _literal);
+	/// Visits the expression and expects it to return a single boolean value.
+	/// Reports an error otherwise.
+	void expectBoolExpression(Expression const& _expr);
 
-	/// Verifies that a variable to be assigned to exists and can be assigned to.
-	void checkAssignment(Identifier const& _variable);
+	/// Verifies that a variable to be assigned to exists, can be assigned to
+	/// and has the same type as the value.
+	void checkAssignment(Identifier const& _variable, YulString _valueType);
 
 	Scope& scope(Block const* _block);
-	void expectValidIdentifier(YulName _identifier, langutil::SourceLocation const& _location);
+	void expectValidIdentifier(YulString _identifier, langutil::SourceLocation const& _location);
+	void expectValidType(YulString _type, langutil::SourceLocation const& _location);
+	void expectType(YulString _expectedType, YulString _givenType, langutil::SourceLocation const& _location);
 
 	bool validateInstructions(evmasm::Instruction _instr, langutil::SourceLocation const& _location);
 	bool validateInstructions(std::string const& _instrIdentifier, langutil::SourceLocation const& _location);
@@ -128,10 +126,9 @@ private:
 	AsmAnalysisInfo& m_info;
 	langutil::ErrorReporter& m_errorReporter;
 	langutil::EVMVersion m_evmVersion;
-	std::optional<uint8_t> m_eofVersion;
 	Dialect const& m_dialect;
 	/// Names of data objects to be referenced by builtin functions with literal arguments.
-	std::set<std::string> m_dataNames;
+	std::set<YulString> m_dataNames;
 	ForLoop const* m_currentForLoop = nullptr;
 	/// Worst side effects encountered during analysis (including within defined functions).
 	SideEffects m_sideEffects;

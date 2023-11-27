@@ -18,15 +18,12 @@
 
 #include <test/libsolidity/MemoryGuardTest.h>
 
-#include <test/Common.h>
 #include <test/libyul/Common.h>
 #include <libsolidity/codegen/ir/Common.h>
 #include <libsolutil/Algorithms.h>
-#include <libsolutil/StringUtils.h>
 #include <libyul/Object.h>
 #include <libyul/backends/evm/EVMDialect.h>
 #include <libyul/optimiser/FunctionCallFinder.h>
-#include <libyul/AST.h>
 #include <fstream>
 #include <memory>
 #include <stdexcept>
@@ -37,7 +34,6 @@ using namespace solidity::util::formatting;
 using namespace solidity::langutil;
 using namespace solidity::frontend;
 using namespace solidity::frontend::test;
-using namespace solidity::test;
 using namespace yul;
 
 void MemoryGuardTest::setupCompiler(CompilerStack& _compiler)
@@ -52,7 +48,7 @@ TestCase::TestResult MemoryGuardTest::run(std::ostream& _stream, std::string con
 {
 	if (!runFramework(m_source, PipelineStage::Compilation))
 	{
-		printPrefixed(_stream, formatErrors(filteredErrors(), _formatted), _linePrefix);
+		_stream << formatErrors(filteredErrors(), _formatted);
 		return TestResult::FatalError;
 	}
 
@@ -60,30 +56,27 @@ TestCase::TestResult MemoryGuardTest::run(std::ostream& _stream, std::string con
 	for (std::string contractName: compiler().contractNames())
 	{
 		ErrorList errors;
-		std::optional<std::string> const& ir = compiler().yulIR(contractName);
-		solAssert(ir);
 		auto [object, analysisInfo] = yul::test::parse(
-			*ir,
-			EVMDialect::strictAssemblyForEVMObjects(CommonOptions::get().evmVersion(), CommonOptions::get().eofVersion()),
+			compiler().yulIR(contractName),
+			EVMDialect::strictAssemblyForEVMObjects({}),
 			errors
 		);
 
 		if (!object || !analysisInfo || Error::containsErrors(errors))
 		{
-			AnsiColorized(_stream, _formatted, {formatting::BOLD, formatting::RED}) << _linePrefix << "Error parsing IR:" << std::endl;
-			printPrefixed(_stream, formatErrors(filterErrors(errors), _formatted), _linePrefix);
+			AnsiColorized(_stream, _formatted, {formatting::BOLD, formatting::RED}) << _linePrefix << "Error parsing IR." << std::endl;
 			return TestResult::FatalError;
 		}
 
 		auto handleObject = [&](std::string const& _kind, Object const& _object) {
-			m_obtainedResult += contractName + "(" + _kind + ") " + (findFunctionCalls(
-				_object.code()->root(),
-				"memoryguard"_yulname
+			m_obtainedResult += contractName + "(" + _kind + ") " + (FunctionCallFinder::run(
+				*_object.code,
+				"memoryguard"_yulstring
 			).empty() ? "false" : "true") + "\n";
 		};
 		handleObject("creation", *object);
 		size_t deployedIndex = object->subIndexByName.at(
-			IRNames::deployedObject(compiler().contractDefinition(contractName))
+			YulString(IRNames::deployedObject(compiler().contractDefinition(contractName)))
 		);
 		handleObject("runtime", dynamic_cast<Object const&>(*object->subObjects[deployedIndex]));
 	}

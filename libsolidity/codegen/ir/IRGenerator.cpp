@@ -30,16 +30,15 @@
 #include <libsolidity/codegen/ABIFunctions.h>
 #include <libsolidity/codegen/CompilerUtils.h>
 
-#include <libyul/Object.h>
+#include <libyul/YulStack.h>
 #include <libyul/Utilities.h>
 
 #include <libsolutil/Algorithms.h>
 #include <libsolutil/CommonData.h>
 #include <libsolutil/StringUtils.h>
 #include <libsolutil/Whiskers.h>
-#include <libsolutil/JSON.h>
 
-#include <range/v3/algorithm/all_of.hpp>
+#include <json/json.h>
 
 #include <sstream>
 #include <variant>
@@ -103,10 +102,10 @@ std::string IRGenerator::generate(
 	std::map<ContractDefinition const*, std::string_view const> const& _otherYulSources
 )
 {
-	auto subObjectSources = [&_otherYulSources](UniqueVector<ContractDefinition const*> const& _subObjects) -> std::string
+	auto subObjectSources = [&_otherYulSources](std::set<ContractDefinition const*, ASTNode::CompareByID> const& subObjects) -> std::string
 	{
 		std::string subObjectsSources;
-		for (ContractDefinition const* subObject: _subObjects)
+		for (ContractDefinition const* subObject: subObjects)
 			subObjectsSources += _otherYulSources.at(subObject);
 		return subObjectsSources;
 	};
@@ -294,8 +293,8 @@ InternalDispatchMap IRGenerator::generateInternalDispatchFunctions(ContractDefin
 				solAssert(caseValues.count(function->id()) == 0, "Duplicate function ID");
 				solAssert(m_context.functionCollector().contains(IRNames::function(*function)), "");
 
-				cases.emplace_back(map<string, string>{
-					{"funID", to_string(*function->annotation().internalFunctionID)},
+				cases.emplace_back(std::map<std::string, std::string>{
+					{"funID", std::to_string(m_context.mostDerivedContract().annotation().internalFunctionIDs.at(function))},
 					{"name", IRNames::function(*function)}
 				});
 				caseValues.insert(function->id());
@@ -664,7 +663,7 @@ std::string IRGenerator::generateGetter(VariableDeclaration const& _varDecl)
 					<ret> := <readStorage>(add(slot, <slotOffset>))
 				)")
 				("ret", joinHumanReadable(retVars))
-				("readStorage", m_utils.readFromStorage(*returnTypes[i], offsets.second, true, _varDecl.referenceLocation()))
+				("readStorage", m_utils.readFromStorage(*returnTypes[i], offsets.second, true))
 				("slotOffset", offsets.first.str())
 				.render();
 			}
@@ -681,7 +680,7 @@ std::string IRGenerator::generateGetter(VariableDeclaration const& _varDecl)
 				<ret> := <readStorage>(slot, offset)
 			)")
 			("ret", joinHumanReadable(retVars))
-			("readStorage", m_utils.readFromStorageDynamic(*returnTypes.front(), true, _varDecl.referenceLocation()))
+			("readStorage", m_utils.readFromStorageDynamic(*returnTypes.front(), true))
 			.render();
 		}
 
@@ -823,10 +822,8 @@ std::string IRGenerator::initStateVariables(ContractDefinition const& _contract)
 {
 	IRGeneratorForStatements generator{m_context, m_utils, m_optimiserSettings};
 	for (VariableDeclaration const* variable: _contract.stateVariables())
-	{
 		if (!variable->isConstant())
 			generator.initializeStateVar(*variable);
-	}
 
 	return generator.code();
 }
@@ -1104,9 +1101,8 @@ void IRGenerator::resetContext(ContractDefinition const& _contract, ExecutionCon
 	m_context = std::move(newContext);
 
 	m_context.setMostDerivedContract(_contract);
-	for (auto const location: {DataLocation::Storage, DataLocation::Transient})
-		for (auto const& var: ContractType(_contract).stateVariables(location))
-			m_context.addStateVariable(*std::get<0>(var), std::get<1>(var), std::get<2>(var));
+	for (auto const& var: ContractType(_contract).stateVariables())
+		m_context.addStateVariable(*std::get<0>(var), std::get<1>(var), std::get<2>(var));
 }
 
 std::string IRGenerator::dispenseLocationComment(ASTNode const& _node)

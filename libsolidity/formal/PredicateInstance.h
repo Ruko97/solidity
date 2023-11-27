@@ -19,7 +19,6 @@
 #pragma once
 
 #include <libsolidity/formal/Predicate.h>
-#include <libsolidity/formal/SymbolicState.h>
 
 namespace solidity::frontend::smt
 {
@@ -95,10 +94,4 @@ std::vector<smtutil::Expression> currentBlockVariables(
 	EncodingContext& _context
 );
 
-std::vector<smtutil::Expression> getStateExpressionsForInterfacePre(SymbolicState const& _state);
-std::vector<smtutil::Expression> getStateExpressionsForInterface(SymbolicState  const& _state);
-std::vector<smtutil::Expression> getStateExpressionsForNondetInterface(SymbolicState  const& _state);
-std::vector<smtutil::Expression> getStateExpressionsForConstructor(SymbolicState  const& _state);
-std::vector<smtutil::Expression> getStateExpressionsForCall(SymbolicState  const& _state, bool _internal);
-std::vector<smtutil::Expression> getStateExpressionsForDefinition(SymbolicState  const& _state);
 }

@@ -224,7 +224,7 @@ void ArrayUtils::copyArrayToStorage(ArrayType const& _targetType, ArrayType cons
 				else if (sourceBaseType->isValueType())
 					CompilerUtils(_context).loadFromMemoryDynamic(*sourceBaseType, fromCalldata, true, false);
 				else
-					solUnimplemented("Copying of type " + _sourceType.toString(false) + " to storage is not supported in legacy (only supported by the IR pipeline). Hint: try compiling with `--via-ir` (CLI) or the equivalent `viaIR: true` (Standard JSON)");
+					solUnimplemented("Copying of type " + _sourceType.toString(false) + " to storage not yet supported.");
 				// stack: target_ref target_data_end source_data_pos target_data_pos source_data_end [target_byte_offset] [source_byte_offset] <source_value>...
 				assertThrow(
 					2 + byteOffsetSize + sourceBaseType->sizeOnStack() <= 16,
@@ -524,7 +524,7 @@ void ArrayUtils::copyArrayToMemory(ArrayType const& _sourceType, bool _padToWord
 		{
 			// memory_end_offset - start is the actual length (we want to compute the ceil of).
 			// memory_offset - start is its next multiple of 32, but it might be off by 32.
-			// so we compute: memory_end_offset += (memory_offset - memory_end_offset) & 31
+			// so we compute: memory_end_offset += (memory_offset - memory_end_offest) & 31
 			m_context << Instruction::DUP3 << Instruction::SWAP1 << Instruction::SUB;
 			m_context << u256(31) << Instruction::AND;
 			m_context << Instruction::DUP3 << Instruction::ADD;
@@ -1021,9 +1021,6 @@ void ArrayUtils::retrieveLength(ArrayType const& _arrayType, unsigned _stackDept
 			if (_arrayType.isByteArrayOrString())
 				m_context.callYulFunction(m_context.utilFunctions().extractByteArrayLengthFunction(), 1, 1);
 			break;
-		case DataLocation::Transient:
-			solUnimplemented("Transient data location is only supported for value types.");
-			break;
 		}
 	}
 }
@@ -1121,9 +1118,6 @@ void ArrayUtils::accessIndex(ArrayType const& _arrayType, bool _doBoundsCheck, b
 		m_context << endTag;
 		break;
 	}
-	case DataLocation::Transient:
-		solUnimplemented("Transient data location is only supported for value types.");
-		break;
 	}
 }
 

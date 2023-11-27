@@ -39,7 +39,7 @@ bool Z3Interface::available()
 }
 
 Z3Interface::Z3Interface(std::optional<unsigned> _queryTimeout):
-	BMCSolverInterface(_queryTimeout),
+	SolverInterface(_queryTimeout),
 	m_solver(m_context)
 {
 	// These need to be set globally.
@@ -168,12 +168,6 @@ z3::expr Z3Interface::toZ3Expr(Expression const& _expr)
 				auto sortSort = std::dynamic_pointer_cast<SortSort>(_expr.sort);
 				smtAssert(sortSort, "");
 				return m_context.constant(n.c_str(), z3Sort(*sortSort->inner));
-			}
-			else if (n == "tuple_constructor")
-			{
-				auto constructor = z3::func_decl(m_context, Z3_get_tuple_sort_mk_decl(m_context, z3Sort(*_expr.sort)));
-				smtAssert(constructor.arity() == arguments.size());
-				return constructor();
 			}
 			else
 				try
@@ -392,8 +386,6 @@ Expression Z3Interface::fromZ3Expr(z3::expr const& _expr)
 		kind == Z3_OP_RECURSIVE
 	)
 		return Expression(_expr.decl().name().str(), arguments, fromZ3Sort(_expr.get_sort()));
-	else if (kind == Z3_OP_CONCAT)
-		return Expression("concat", arguments, sort);
 
 	smtAssert(false);
 

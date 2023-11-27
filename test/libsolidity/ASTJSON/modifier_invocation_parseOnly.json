@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 15,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,13 +13,16 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 5,
             "nodeType": "Block",
             "src": "32:6:1",
-            "statements": [
+            "statements":
+            [
               {
                 "id": 4,
                 "nodeType": "PlaceholderStatement",
@@ -30,10 +34,12 @@
           "name": "M",
           "nameLocation": "22:1:1",
           "nodeType": "ModifierDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 3,
             "nodeType": "ParameterList",
-            "parameters": [
+            "parameters":
+            [
               {
                 "constant": false,
                 "id": 2,
@@ -45,7 +51,8 @@
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {},
-                "typeName": {
+                "typeName":
+                {
                   "id": 1,
                   "name": "uint",
                   "nodeType": "ElementaryTypeName",
@@ -62,7 +69,8 @@
           "visibility": "internal"
         },
         {
-          "body": {
+          "body":
+          {
             "id": 12,
             "nodeType": "Block",
             "src": "64:2:1",
@@ -71,9 +79,11 @@
           "id": 13,
           "implemented": true,
           "kind": "function",
-          "modifiers": [
+          "modifiers":
+          [
             {
-              "arguments": [
+              "arguments":
+              [
                 {
                   "hexValue": "31",
                   "id": 9,
@@ -85,10 +95,12 @@
                 }
               ],
               "id": 10,
-              "modifierName": {
+              "modifierName":
+              {
                 "id": 8,
                 "name": "M",
-                "nameLocations": [
+                "nameLocations":
+                [
                   "52:1:1"
                 ],
                 "nodeType": "IdentifierPath",
@@ -101,13 +113,15 @@
           "name": "F",
           "nameLocation": "48:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 7,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "49:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 11,
             "nodeType": "ParameterList",
             "parameters": [],

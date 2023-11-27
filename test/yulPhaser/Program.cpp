@@ -34,6 +34,7 @@
 #include <cassert>
 #include <string>
 
+using namespace std;
 using namespace solidity::langutil;
 using namespace solidity::util;
 using namespace solidity::yul;
@@ -46,7 +47,7 @@ namespace
 	/// If the block isn't redundant it just returns it immediately.
 	Block const& skipRedundantBlocks(Block const& _block)
 	{
-		if (_block.statements.size() == 1 && std::holds_alternative<Block>(_block.statements[0]))
+		if (_block.statements.size() == 1 && holds_alternative<Block>(_block.statements[0]))
 			return skipRedundantBlocks(get<Block>(_block.statements[0]));
 		else
 			return _block;
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_SUITE(ProgramTest)
 
 BOOST_AUTO_TEST_CASE(copy_constructor_should_make_deep_copy_of_ast)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    let x := 1\n"
 		"}\n"
@@ -81,7 +82,7 @@ BOOST_AUTO_TEST_CASE(copy_constructor_should_make_deep_copy_of_ast)
 
 BOOST_AUTO_TEST_CASE(load_should_rewind_the_stream)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    let x := 1\n"
 		"    let y := 2\n"
@@ -97,7 +98,7 @@ BOOST_AUTO_TEST_CASE(load_should_rewind_the_stream)
 
 BOOST_AUTO_TEST_CASE(load_should_disambiguate)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    {\n"
 		"        let x := 1\n"
@@ -125,7 +126,7 @@ BOOST_AUTO_TEST_CASE(load_should_disambiguate)
 
 BOOST_AUTO_TEST_CASE(load_should_do_function_grouping_and_hoisting)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    function foo() -> result\n"
 		"    {\n"
@@ -143,14 +144,14 @@ BOOST_AUTO_TEST_CASE(load_should_do_function_grouping_and_hoisting)
 	Program program = get<Program>(Program::load(sourceStream));
 
 	BOOST_TEST(program.ast().statements.size() == 3);
-	BOOST_TEST(std::holds_alternative<Block>(program.ast().statements[0]));
-	BOOST_TEST(std::holds_alternative<FunctionDefinition>(program.ast().statements[1]));
-	BOOST_TEST(std::holds_alternative<FunctionDefinition>(program.ast().statements[2]));
+	BOOST_TEST(holds_alternative<Block>(program.ast().statements[0]));
+	BOOST_TEST(holds_alternative<FunctionDefinition>(program.ast().statements[1]));
+	BOOST_TEST(holds_alternative<FunctionDefinition>(program.ast().statements[2]));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_do_loop_init_rewriting)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    for { let i := 0 } true {}\n"
 		"    {\n"
@@ -162,35 +163,35 @@ BOOST_AUTO_TEST_CASE(load_should_do_loop_init_rewriting)
 
 	// skipRedundantBlocks() makes the test independent of whether load() includes function grouping or not.
 	Block const& parentBlock = skipRedundantBlocks(program.ast());
-	BOOST_TEST(std::holds_alternative<VariableDeclaration>(parentBlock.statements[0]));
-	BOOST_TEST(std::holds_alternative<ForLoop>(parentBlock.statements[1]));
+	BOOST_TEST(holds_alternative<VariableDeclaration>(parentBlock.statements[0]));
+	BOOST_TEST(holds_alternative<ForLoop>(parentBlock.statements[1]));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_throw_InvalidProgram_if_program_cant_be_parsed)
 {
-	std::string sourceCode("invalid program\n");
+	string sourceCode("invalid program\n");
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 
-	BOOST_TEST(std::holds_alternative<ErrorList>(Program::load(sourceStream)));
+	BOOST_TEST(holds_alternative<ErrorList>(Program::load(sourceStream)));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_throw_InvalidProgram_if_program_cant_be_analyzed)
 {
 	// This should be parsed just fine but fail the analysis with:
 	//     Error: Variable not found or variable not lvalue.
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    x := 1\n"
 		"}\n"
 	);
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 
-	BOOST_TEST(std::holds_alternative<ErrorList>(Program::load(sourceStream)));
+	BOOST_TEST(holds_alternative<ErrorList>(Program::load(sourceStream)));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_accept_yul_objects_as_input)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        mstore(64, 128)\n"
@@ -202,12 +203,12 @@ BOOST_AUTO_TEST_CASE(load_should_accept_yul_objects_as_input)
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<Program>(programOrErrors));
+	BOOST_TEST(holds_alternative<Program>(programOrErrors));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_return_errors_if_analysis_of_object_code_fails)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        return(0, datasize(\"C_178_deployed\"))\n"
@@ -217,12 +218,12 @@ BOOST_AUTO_TEST_CASE(load_should_return_errors_if_analysis_of_object_code_fails)
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<ErrorList>(programOrErrors));
+	BOOST_TEST(holds_alternative<ErrorList>(programOrErrors));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_return_errors_if_parsing_of_nested_object_fails)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        return(0, datasize(\"C_178_deployed\"))\n"
@@ -242,12 +243,12 @@ BOOST_AUTO_TEST_CASE(load_should_return_errors_if_parsing_of_nested_object_fails
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<ErrorList>(programOrErrors));
+	BOOST_TEST(holds_alternative<ErrorList>(programOrErrors));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_extract_nested_object_with_deployed_suffix_if_present)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        return(0, datasize(\"C_178_deployed\"))\n"
@@ -264,12 +265,12 @@ BOOST_AUTO_TEST_CASE(load_should_extract_nested_object_with_deployed_suffix_if_p
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<Program>(programOrErrors));
+	BOOST_TEST(holds_alternative<Program>(programOrErrors));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_fall_back_to_parsing_the_whole_object_if_there_is_no_subobject_with_the_right_name)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        mstore(64, 128)\n"
@@ -291,16 +292,16 @@ BOOST_AUTO_TEST_CASE(load_should_fall_back_to_parsing_the_whole_object_if_there_
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<Program>(programOrErrors));
+	BOOST_TEST(holds_alternative<Program>(programOrErrors));
 
 	Block const& parentBlock = skipRedundantBlocks(get<Program>(programOrErrors).ast());
 	BOOST_TEST(parentBlock.statements.size() == 1);
-	BOOST_TEST(std::holds_alternative<ExpressionStatement>(parentBlock.statements[0]));
+	BOOST_TEST(holds_alternative<ExpressionStatement>(parentBlock.statements[0]));
 }
 
 BOOST_AUTO_TEST_CASE(load_should_ignore_data_in_objects)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"object \"C_178\" {\n"
 		"    code {\n"
 		"        mstore(64, 128)\n"
@@ -311,12 +312,12 @@ BOOST_AUTO_TEST_CASE(load_should_ignore_data_in_objects)
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	auto programOrErrors = Program::load(sourceStream);
 
-	BOOST_TEST(std::holds_alternative<Program>(programOrErrors));
+	BOOST_TEST(holds_alternative<Program>(programOrErrors));
 }
 
 BOOST_AUTO_TEST_CASE(optimise)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    {\n"
 		"        if 1 { let x := 1 }\n"
@@ -329,22 +330,22 @@ BOOST_AUTO_TEST_CASE(optimise)
 
 	[[maybe_unused]] Block const& parentBlockBefore = skipRedundantBlocks(program.ast());
 	assert(parentBlockBefore.statements.size() == 2);
-	assert(std::holds_alternative<If>(parentBlockBefore.statements[0]));
-	assert(std::holds_alternative<If>(parentBlockBefore.statements[1]));
+	assert(holds_alternative<If>(parentBlockBefore.statements[0]));
+	assert(holds_alternative<If>(parentBlockBefore.statements[1]));
 
 	program.optimise({StructuralSimplifier::name, BlockFlattener::name});
 
 	Block const& parentBlockAfter = program.ast();
 	BOOST_TEST(parentBlockAfter.statements.size() == 1);
-	BOOST_TEST(std::holds_alternative<Block>(parentBlockAfter.statements[0]));
+	BOOST_TEST(holds_alternative<Block>(parentBlockAfter.statements[0]));
 	Block const& innerBlock = get<Block>(parentBlockAfter.statements[0]);
 	BOOST_TEST(innerBlock.statements.size() == 1);
-	BOOST_TEST(std::holds_alternative<VariableDeclaration>(innerBlock.statements[0]));
+	BOOST_TEST(holds_alternative<VariableDeclaration>(innerBlock.statements[0]));
 }
 
 BOOST_AUTO_TEST_CASE(output_operator)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    let factor := 13\n"
 		"    {\n"
@@ -368,7 +369,7 @@ BOOST_AUTO_TEST_CASE(output_operator)
 
 BOOST_AUTO_TEST_CASE(toJson)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    let a := 3\n"
 		"    if a\n"
@@ -380,15 +381,15 @@ BOOST_AUTO_TEST_CASE(toJson)
 	CharStream sourceStream(sourceCode, current_test_case().p_name);
 	Program program = get<Program>(Program::load(sourceStream));
 
-	Json parsingResult;
-	std::string errors;
+	Json::Value parsingResult;
+	string errors;
 	BOOST_TEST(jsonParseStrict(program.toJson(), parsingResult, &errors));
 	BOOST_TEST(errors.empty());
 }
 
 BOOST_AUTO_TEST_CASE(codeSize)
 {
-	std::string sourceCode(
+	string sourceCode(
 		"{\n"
 		"    function foo() -> result\n"
 		"    {\n"

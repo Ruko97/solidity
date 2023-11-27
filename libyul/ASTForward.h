@@ -28,8 +28,8 @@
 namespace solidity::yul
 {
 
+struct DebugData;
 enum class LiteralKind;
-class LiteralValue;
 struct Literal;
 struct Label;
 struct Identifier;
@@ -46,9 +46,8 @@ struct Continue;
 struct Leave;
 struct ExpressionStatement;
 struct Block;
-class AST;
 
-struct NameWithDebugData;
+struct TypedName;
 
 using Expression = std::variant<FunctionCall, Identifier, Literal>;
 using Statement = std::variant<ExpressionStatement, Assignment, VariableDeclaration, FunctionDefinition, If, Switch, ForLoop, Break, Continue, Leave, Block>;

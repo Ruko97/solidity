@@ -24,6 +24,8 @@
 
 #include <cassert>
 
+using namespace std;
+
 namespace solidity::phaser::test
 {
 
@@ -41,12 +43,12 @@ BOOST_AUTO_TEST_CASE(bernoulliTrial_should_produce_samples_with_right_expected_v
 	constexpr double expectedValue = successProbability;
 	constexpr double variance = successProbability * (1 - successProbability);
 
-	std::vector<uint32_t> samples;
+	vector<uint32_t> samples;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples.push_back(static_cast<uint32_t>(SimulationRNG::bernoulliTrial(successProbability)));
 
-	BOOST_TEST(std::abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
-	BOOST_TEST(std::abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
+	BOOST_TEST(abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
+	BOOST_TEST(abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
 }
 
 BOOST_AUTO_TEST_CASE(bernoulliTrial_can_be_reset)
@@ -55,21 +57,21 @@ BOOST_AUTO_TEST_CASE(bernoulliTrial_can_be_reset)
 	constexpr double successProbability = 0.4;
 
 	SimulationRNG::reset(1);
-	std::vector<uint32_t> samples1;
+	vector<uint32_t> samples1;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples1.push_back(static_cast<uint32_t>(SimulationRNG::bernoulliTrial(successProbability)));
 
-	std::vector<uint32_t> samples2;
+	vector<uint32_t> samples2;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples2.push_back(static_cast<uint32_t>(SimulationRNG::bernoulliTrial(successProbability)));
 
 	SimulationRNG::reset(1);
-	std::vector<uint32_t> samples3;
+	vector<uint32_t> samples3;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples3.push_back(static_cast<uint32_t>(SimulationRNG::bernoulliTrial(successProbability)));
 
 	SimulationRNG::reset(2);
-	std::vector<uint32_t> samples4;
+	vector<uint32_t> samples4;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples4.push_back(static_cast<uint32_t>(SimulationRNG::bernoulliTrial(successProbability)));
 
@@ -93,12 +95,12 @@ BOOST_AUTO_TEST_CASE(uniformInt_returns_different_values_when_called_multiple_ti
 	constexpr double expectedValue = (minValue + maxValue) / 2.0;
 	constexpr double variance = ((maxValue - minValue + 1) * (maxValue - minValue + 1) - 1) / 12.0;
 
-	std::vector<size_t> samples;
+	vector<size_t> samples;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples.push_back(SimulationRNG::uniformInt(minValue, maxValue));
 
-	BOOST_TEST(std::abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
-	BOOST_TEST(std::abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
+	BOOST_TEST(abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
+	BOOST_TEST(abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
 }
 
 BOOST_AUTO_TEST_CASE(uniformInt_can_be_reset)
@@ -108,21 +110,21 @@ BOOST_AUTO_TEST_CASE(uniformInt_can_be_reset)
 	constexpr uint32_t maxValue = 80;
 
 	SimulationRNG::reset(1);
-	std::vector<size_t> samples1;
+	vector<size_t> samples1;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples1.push_back(SimulationRNG::uniformInt(minValue, maxValue));
 
-	std::vector<size_t> samples2;
+	vector<size_t> samples2;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples2.push_back(SimulationRNG::uniformInt(minValue, maxValue));
 
 	SimulationRNG::reset(1);
-	std::vector<size_t> samples3;
+	vector<size_t> samples3;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples3.push_back(SimulationRNG::uniformInt(minValue, maxValue));
 
 	SimulationRNG::reset(2);
-	std::vector<size_t> samples4;
+	vector<size_t> samples4;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples4.push_back(SimulationRNG::uniformInt(minValue, maxValue));
 
@@ -146,12 +148,12 @@ BOOST_AUTO_TEST_CASE(binomialInt_should_produce_samples_with_right_expected_valu
 	constexpr double expectedValue = numTrials * successProbability;
 	constexpr double variance = numTrials * successProbability * (1 - successProbability);
 
-	std::vector<size_t> samples;
+	vector<size_t> samples;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples.push_back(SimulationRNG::binomialInt(numTrials, successProbability));
 
-	BOOST_TEST(std::abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
-	BOOST_TEST(std::abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
+	BOOST_TEST(abs(mean(samples) - expectedValue) < expectedValue * relativeTolerance);
+	BOOST_TEST(abs(meanSquaredError(samples, expectedValue) - variance) < variance * relativeTolerance);
 }
 
 BOOST_AUTO_TEST_CASE(binomialInt_can_be_reset)
@@ -161,21 +163,21 @@ BOOST_AUTO_TEST_CASE(binomialInt_can_be_reset)
 	constexpr double successProbability = 0.6;
 
 	SimulationRNG::reset(1);
-	std::vector<size_t> samples1;
+	vector<size_t> samples1;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples1.push_back(SimulationRNG::binomialInt(numTrials, successProbability));
 
-	std::vector<size_t> samples2;
+	vector<size_t> samples2;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples2.push_back(SimulationRNG::binomialInt(numTrials, successProbability));
 
 	SimulationRNG::reset(1);
-	std::vector<size_t> samples3;
+	vector<size_t> samples3;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples3.push_back(SimulationRNG::binomialInt(numTrials, successProbability));
 
 	SimulationRNG::reset(2);
-	std::vector<size_t> samples4;
+	vector<size_t> samples4;
 	for (uint32_t i = 0; i < numSamples; ++i)
 		samples4.push_back(SimulationRNG::binomialInt(numTrials, successProbability));
 

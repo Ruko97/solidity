@@ -1,6 +1,8 @@
 {
-	let a function f() {}
+	let a:u256 function f() {}
 }
+// ====
+// dialect: yul
 // ----
 // step: functionGrouper
 //

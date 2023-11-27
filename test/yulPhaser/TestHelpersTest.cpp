@@ -24,6 +24,7 @@
 
 #include <set>
 
+using namespace std;
 using namespace solidity::yul;
 using namespace boost::test_tools;
 
@@ -42,7 +43,7 @@ BOOST_AUTO_TEST_CASE(ChromosomeLengthMetric_evaluate_should_return_chromosome_le
 
 BOOST_AUTO_TEST_CASE(wholeChromosomeReplacement_should_replace_whole_chromosome_with_another)
 {
-	std::function<Mutation> mutation = wholeChromosomeReplacement(Chromosome("aaa"));
+	function<Mutation> mutation = wholeChromosomeReplacement(Chromosome("aaa"));
 	BOOST_TEST(mutation(Chromosome("ccc")) == Chromosome("aaa"));
 }
 
@@ -50,22 +51,22 @@ BOOST_AUTO_TEST_CASE(geneSubstitution_should_change_a_single_gene_at_a_given_ind
 {
 	Chromosome chromosome("aaccff");
 
-	std::function<Mutation> mutation1 = geneSubstitution(0, chromosome.optimisationSteps()[5]);
+	function<Mutation> mutation1 = geneSubstitution(0, chromosome.optimisationSteps()[5]);
 	BOOST_TEST(mutation1(chromosome) == Chromosome("faccff"));
 
-	std::function<Mutation> mutation2 = geneSubstitution(5, chromosome.optimisationSteps()[0]);
+	function<Mutation> mutation2 = geneSubstitution(5, chromosome.optimisationSteps()[0]);
 	BOOST_TEST(mutation2(chromosome) == Chromosome("aaccfa"));
 }
 
 BOOST_AUTO_TEST_CASE(chromosomeLengths_should_return_lengths_of_all_chromosomes_in_a_population)
 {
-	std::shared_ptr<FitnessMetric> fitnessMetric = std::make_shared<ChromosomeLengthMetric>();
+	shared_ptr<FitnessMetric> fitnessMetric = make_shared<ChromosomeLengthMetric>();
 
 	Population population1(fitnessMetric, {Chromosome(), Chromosome("a"), Chromosome("aa"), Chromosome("aaa")});
-	BOOST_TEST((chromosomeLengths(population1) == std::vector<size_t>{0, 1, 2, 3}));
+	BOOST_TEST((chromosomeLengths(population1) == vector<size_t>{0, 1, 2, 3}));
 
 	Population population2(fitnessMetric);
-	BOOST_TEST((chromosomeLengths(population2) == std::vector<size_t>{}));
+	BOOST_TEST((chromosomeLengths(population2) == vector<size_t>{}));
 }
 
 BOOST_AUTO_TEST_CASE(countDifferences_should_return_zero_for_identical_chromosomes)
@@ -98,11 +99,11 @@ BOOST_AUTO_TEST_CASE(countDifferences_should_count_missing_characters_as_differe
 
 BOOST_AUTO_TEST_CASE(enumerateOptimisationSteps_should_assing_indices_to_all_available_optimisation_steps)
 {
-	std::map<std::string, char> stepsAndAbbreviations = OptimiserSuite::stepNameToAbbreviationMap();
-	std::map<std::string, size_t> stepsAndIndices = enumerateOptmisationSteps();
+	map<string, char> stepsAndAbbreviations = OptimiserSuite::stepNameToAbbreviationMap();
+	map<string, size_t> stepsAndIndices = enumerateOptmisationSteps();
 	BOOST_TEST(stepsAndIndices.size() == stepsAndAbbreviations.size());
 
-	std::set<std::string> stepsSoFar;
+	set<string> stepsSoFar;
 	for (auto& [name, index]: stepsAndIndices)
 	{
 		BOOST_TEST(index >= 0);

@@ -113,7 +113,7 @@ struct ModelCheckerInvariants
 	std::set<InvariantType> invariants;
 };
 
-enum class VerificationTargetType { ConstantCondition, Underflow, Overflow, DivByZero, Balance, Assert, PopEmptyArray, OutOfBounds };
+enum class VerificationTargetType { ConstantCondition, Underflow, Overflow, UnderOverflow, DivByZero, Balance, Assert, PopEmptyArray, OutOfBounds };
 
 struct ModelCheckerTargets
 {
@@ -175,7 +175,7 @@ struct ModelCheckerSettings
 	bool showUnsupported = false;
 	smtutil::SMTSolverChoice solvers = smtutil::SMTSolverChoice::Z3();
 	ModelCheckerTargets targets = ModelCheckerTargets::Default();
-	std::optional<unsigned> timeout; // in milliseconds
+	std::optional<unsigned> timeout;
 
 	bool operator!=(ModelCheckerSettings const& _other) const noexcept { return !(*this == _other); }
 	bool operator==(ModelCheckerSettings const& _other) const noexcept

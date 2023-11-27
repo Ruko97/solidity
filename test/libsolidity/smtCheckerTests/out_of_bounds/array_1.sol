@@ -18,6 +18,11 @@ contract C {
 }
 // ====
 // SMTEngine: all
-// SMTTargets: outOfBounds
+// SMTIgnoreOS: macos
 // ----
-// Warning 6368: (259-263): CHC: Out of bounds access happens here.\nCounterexample:\na = [0], l = 1\n = 0\n\nTransaction trace:\nC.constructor()\nState: a = [], l = 0\nC.p()\nState: a = [0], l = 1\nC.r()
+// Warning 4984: (112-115): CHC: Overflow (resulting value larger than 2**256 - 1) might happen here.
+// Warning 3944: (181-184): CHC: Underflow (resulting value less than 0) might happen here.
+// Warning 6368: (259-263): CHC: Out of bounds access happens here.
+// Info 1391: CHC: 2 verification condition(s) proved safe! Enable the model checker option "show proved safe" to see all of them.
+// Warning 2661: (112-115): BMC: Overflow (resulting value larger than 2**256 - 1) happens here.
+// Warning 4144: (181-184): BMC: Underflow (resulting value less than 0) happens here.

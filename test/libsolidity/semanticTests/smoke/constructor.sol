@@ -12,12 +12,9 @@ contract C {
 }
 // ----
 // constructor(), 2 wei: 3 ->
-// gas irOptimized: 78996
-// gas irOptimized code: 25400
-// gas legacy: 83055
-// gas legacy code: 65200
-// gas legacyOptimized: 78898
-// gas legacyOptimized code: 27800
+// gas irOptimized: 104412
+// gas legacy: 148308
+// gas legacyOptimized: 106727
 // state() -> 3
 // balance() -> 2
 // balance -> 2

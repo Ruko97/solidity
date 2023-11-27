@@ -33,6 +33,7 @@ namespace solidity::yul
 
 struct Dialect;
 struct OptimiserStepContext;
+class TypeInfo;
 
 /**
  * Optimiser component that modifies an AST in place, turning complex
@@ -70,10 +71,12 @@ public:
 private:
 	explicit ExpressionSplitter(
 		Dialect const& _dialect,
-		NameDispenser& _nameDispenser
+		NameDispenser& _nameDispenser,
+		TypeInfo& _typeInfo
 	):
 		m_dialect(_dialect),
-		m_nameDispenser(_nameDispenser)
+		m_nameDispenser(_nameDispenser),
+		m_typeInfo(_typeInfo)
 	{ }
 
 	/// Replaces the expression by a variable if it is a function call or functional
@@ -86,6 +89,7 @@ private:
 	std::vector<Statement> m_statementsToPrefix;
 	Dialect const& m_dialect;
 	NameDispenser& m_nameDispenser;
+	TypeInfo& m_typeInfo;
 };
 
 }

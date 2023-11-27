@@ -112,21 +112,6 @@ bool ReferencesResolver::visit(VariableDeclaration const& _varDecl)
 	if (_varDecl.documentation())
 		resolveInheritDoc(*_varDecl.documentation(), _varDecl.annotation());
 
-	if (m_resolver.experimentalSolidity())
-	{
-		solAssert(!_varDecl.hasTypeName());
-		if (_varDecl.typeExpression())
-		{
-			ScopedSaveAndRestore typeContext{m_typeContext, true};
-			_varDecl.typeExpression()->accept(*this);
-		}
-		if (_varDecl.overrides())
-			_varDecl.overrides()->accept(*this);
-		if (_varDecl.value())
-			_varDecl.value()->accept(*this);
-		return false;
-	}
-
 	return true;
 }
 
@@ -135,8 +120,6 @@ bool ReferencesResolver::visit(Identifier const& _identifier)
 	auto declarations = m_resolver.nameFromCurrentScope(_identifier.name());
 	if (declarations.empty())
 	{
-		if (m_resolver.experimentalSolidity() && m_typeContext)
-			return false;
 		std::string suggestions = m_resolver.similarNameSuggestions(_identifier.name());
 		std::string errorMessage = "Undeclared identifier.";
 		if (!suggestions.empty())
@@ -157,7 +140,7 @@ bool ReferencesResolver::visit(Identifier const& _identifier)
 
 bool ReferencesResolver::visit(FunctionDefinition const& _functionDefinition)
 {
-	m_functionDefinitions.push_back(&_functionDefinition);
+	m_returnParameters.push_back(_functionDefinition.returnParameterList().get());
 
 	if (_functionDefinition.documentation())
 		resolveInheritDoc(*_functionDefinition.documentation(), _functionDefinition.annotation());
@@ -167,13 +150,13 @@ bool ReferencesResolver::visit(FunctionDefinition const& _functionDefinition)
 
 void ReferencesResolver::endVisit(FunctionDefinition const&)
 {
-	solAssert(!m_functionDefinitions.empty(), "");
-	m_functionDefinitions.pop_back();
+	solAssert(!m_returnParameters.empty(), "");
+	m_returnParameters.pop_back();
 }
 
 bool ReferencesResolver::visit(ModifierDefinition const& _modifierDefinition)
 {
-	m_functionDefinitions.push_back(nullptr);
+	m_returnParameters.push_back(nullptr);
 
 	if (_modifierDefinition.documentation())
 		resolveInheritDoc(*_modifierDefinition.documentation(), _modifierDefinition.annotation());
@@ -183,8 +166,8 @@ bool ReferencesResolver::visit(ModifierDefinition const& _modifierDefinition)
 
 void ReferencesResolver::endVisit(ModifierDefinition const&)
 {
-	solAssert(!m_functionDefinitions.empty(), "");
-	m_functionDefinitions.pop_back();
+	solAssert(!m_returnParameters.empty(), "");
+	m_returnParameters.pop_back();
 }
 
 void ReferencesResolver::endVisit(IdentifierPath const& _path)
@@ -236,7 +219,7 @@ bool ReferencesResolver::visit(UsingForDirective const& _usingFor)
 bool ReferencesResolver::visit(InlineAssembly const& _inlineAssembly)
 {
 	m_yulAnnotation = &_inlineAssembly.annotation();
-	(*this)(_inlineAssembly.operations().root());
+	(*this)(_inlineAssembly.operations());
 	m_yulAnnotation = nullptr;
 
 	return false;
@@ -244,35 +227,16 @@ bool ReferencesResolver::visit(InlineAssembly const& _inlineAssembly)
 
 bool ReferencesResolver::visit(Return const& _return)
 {
-	solAssert(!m_functionDefinitions.empty(), "");
-	_return.annotation().function = m_functionDefinitions.back();
-	_return.annotation().functionReturnParameters = m_functionDefinitions.back() ? m_functionDefinitions.back()->returnParameterList().get() : nullptr;
+	solAssert(!m_returnParameters.empty(), "");
+	_return.annotation().functionReturnParameters = m_returnParameters.back();
 	return true;
-}
-
-bool ReferencesResolver::visit(BinaryOperation const& _binaryOperation)
-{
-	if (m_resolver.experimentalSolidity())
-	{
-		_binaryOperation.leftExpression().accept(*this);
-		if (_binaryOperation.getOperator() == Token::Colon)
-		{
-			ScopedSaveAndRestore typeContext(m_typeContext, !m_typeContext);
-			_binaryOperation.rightExpression().accept(*this);
-		}
-		else
-			_binaryOperation.rightExpression().accept(*this);
-		return false;
-	}
-	else
-		return ASTConstVisitor::visit(_binaryOperation);
 }
 
 void ReferencesResolver::operator()(yul::FunctionDefinition const& _function)
 {
 	solAssert(nativeLocationOf(_function) == originLocationOf(_function), "");
 	validateYulIdentifierName(_function.name, nativeLocationOf(_function));
-	for (yul::NameWithDebugData const& varName: _function.parameters + _function.returnVariables)
+	for (yul::TypedName const& varName: _function.parameters + _function.returnVariables)
 	{
 		solAssert(nativeLocationOf(varName) == originLocationOf(varName), "");
 		validateYulIdentifierName(varName.name, nativeLocationOf(varName));
@@ -287,47 +251,6 @@ void ReferencesResolver::operator()(yul::FunctionDefinition const& _function)
 void ReferencesResolver::operator()(yul::Identifier const& _identifier)
 {
 	solAssert(nativeLocationOf(_identifier) == originLocationOf(_identifier), "");
-
-	if (m_resolver.experimentalSolidity())
-	{
-		std::vector<std::string> splitName;
-		boost::split(splitName, _identifier.name.str(), boost::is_any_of("."));
-		solAssert(!splitName.empty());
-		if (splitName.size() > 2)
-		{
-			m_errorReporter.declarationError(
-				4955_error,
-				nativeLocationOf(_identifier),
-				"Unsupported identifier in inline assembly."
-			);
-			return;
-		}
-		std::string name = splitName.front();
-		auto declarations = m_resolver.nameFromCurrentScope(name);
-		switch (declarations.size())
-		{
-		case 0:
-			if (splitName.size() > 1)
-				m_errorReporter.declarationError(
-					7531_error,
-					nativeLocationOf(_identifier),
-					"Unsupported identifier in inline assembly."
-				);
-			break;
-		case 1:
-			m_yulAnnotation->externalReferences[&_identifier].declaration = declarations.front();
-			m_yulAnnotation->externalReferences[&_identifier].suffix = splitName.size() > 1 ? splitName.back() : "";
-			break;
-		default:
-			m_errorReporter.declarationError(
-				5387_error,
-				nativeLocationOf(_identifier),
-				"Multiple matching identifiers. Resolving overloaded identifiers is not supported."
-			);
-			break;
-		}
-		return;
-	}
 
 	static std::set<std::string> suffixes{"slot", "offset", "length", "address", "selector"};
 	std::string suffix;
@@ -370,7 +293,7 @@ void ReferencesResolver::operator()(yul::Identifier const& _identifier)
 			m_errorReporter.declarationError(
 				9467_error,
 				nativeLocationOf(_identifier),
-				"Identifier not found. Use \".slot\" and \".offset\" to access storage or transient storage variables."
+				"Identifier not found. Use \".slot\" and \".offset\" to access storage variables."
 			);
 		return;
 	}
@@ -488,7 +411,7 @@ void ReferencesResolver::resolveInheritDoc(StructuredDocumentation const& _docum
 	}
 }
 
-void ReferencesResolver::validateYulIdentifierName(yul::YulName _name, SourceLocation const& _location)
+void ReferencesResolver::validateYulIdentifierName(yul::YulString _name, SourceLocation const& _location)
 {
 	if (util::contains(_name.str(), '.'))
 		m_errorReporter.declarationError(

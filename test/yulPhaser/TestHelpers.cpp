@@ -22,21 +22,22 @@
 
 #include <regex>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::yul;
 using namespace solidity::phaser;
 using namespace solidity::phaser::test;
 
-std::function<Mutation> phaser::test::wholeChromosomeReplacement(Chromosome _newChromosome)
+function<Mutation> phaser::test::wholeChromosomeReplacement(Chromosome _newChromosome)
 {
 	return [_newChromosome = std::move(_newChromosome)](Chromosome const&) { return _newChromosome; };
 }
 
-std::function<Mutation> phaser::test::geneSubstitution(size_t _geneIndex, std::string _geneValue)
+function<Mutation> phaser::test::geneSubstitution(size_t _geneIndex, string _geneValue)
 {
 	return [=](Chromosome const& _chromosome)
 	{
-		std::vector<std::string> newGenes = _chromosome.optimisationSteps();
+		vector<string> newGenes = _chromosome.optimisationSteps();
 		assert(_geneIndex < newGenes.size());
 		newGenes[_geneIndex] = _geneValue;
 
@@ -44,18 +45,18 @@ std::function<Mutation> phaser::test::geneSubstitution(size_t _geneIndex, std::s
 	};
 }
 
-std::vector<size_t> phaser::test::chromosomeLengths(Population const& _population)
+vector<size_t> phaser::test::chromosomeLengths(Population const& _population)
 {
-	std::vector<size_t> lengths;
+	vector<size_t> lengths;
 	for (auto const& individual: _population.individuals())
 		lengths.push_back(individual.chromosome.length());
 
 	return lengths;
 }
 
-std::map<std::string, size_t> phaser::test::enumerateOptmisationSteps()
+map<string, size_t> phaser::test::enumerateOptmisationSteps()
 {
-	std::map<std::string, size_t> stepIndices;
+	map<string, size_t> stepIndices;
 	size_t i = 0;
 	for (auto const& nameAndAbbreviation: OptimiserSuite::stepNameToAbbreviationMap())
 		stepIndices.insert({nameAndAbbreviation.first, i++});
@@ -66,29 +67,29 @@ std::map<std::string, size_t> phaser::test::enumerateOptmisationSteps()
 size_t phaser::test::countDifferences(Chromosome const& _chromosome1, Chromosome const& _chromosome2)
 {
 	size_t count = 0;
-	for (size_t i = 0; i < std::min(_chromosome1.length(), _chromosome2.length()); ++i)
+	for (size_t i = 0; i < min(_chromosome1.length(), _chromosome2.length()); ++i)
 		if (_chromosome1.optimisationSteps()[i] != _chromosome2.optimisationSteps()[i])
 			++count;
 
-	return count + static_cast<size_t>(std::abs(
+	return count + static_cast<size_t>(abs(
 		static_cast<long>(_chromosome1.length()) -
 		static_cast<long>(_chromosome2.length())
 	));
 }
 
-std::string phaser::test::stripWhitespace(std::string const& input)
+string phaser::test::stripWhitespace(string const& input)
 {
-	std::regex whitespaceRegex("\\s+");
+	regex whitespaceRegex("\\s+");
 	return regex_replace(input, whitespaceRegex, "");
 }
 
-size_t phaser::test::countSubstringOccurrences(std::string const& _inputString, std::string const& _substring)
+size_t phaser::test::countSubstringOccurrences(string const& _inputString, string const& _substring)
 {
 	assert(_substring.size() > 0);
 
 	size_t count = 0;
 	size_t lastOccurrence = 0;
-	while ((lastOccurrence = _inputString.find(_substring, lastOccurrence)) != std::string::npos)
+	while ((lastOccurrence = _inputString.find(_substring, lastOccurrence)) != string::npos)
 	{
 		++count;
 		lastOccurrence += _substring.size();

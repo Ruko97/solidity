@@ -133,9 +133,9 @@ bool ScopeFiller::operator()(Block const& _block)
 	return success;
 }
 
-bool ScopeFiller::registerVariable(NameWithDebugData const& _name, SourceLocation const& _location, Scope& _scope)
+bool ScopeFiller::registerVariable(TypedName const& _name, SourceLocation const& _location, Scope& _scope)
 {
-	if (!_scope.registerVariable(_name.name))
+	if (!_scope.registerVariable(_name.name, _name.type))
 	{
 		//@TODO secondary location
 		m_errorReporter.declarationError(
@@ -150,7 +150,13 @@ bool ScopeFiller::registerVariable(NameWithDebugData const& _name, SourceLocatio
 
 bool ScopeFiller::registerFunction(FunctionDefinition const& _funDef)
 {
-	if (!m_currentScope->registerFunction(_funDef.name, _funDef.parameters.size(), _funDef.returnVariables.size()))
+	std::vector<Scope::YulType> parameters;
+	for (auto const& parameter: _funDef.parameters)
+		parameters.emplace_back(parameter.type);
+	std::vector<Scope::YulType> returns;
+	for (auto const& returnVariable: _funDef.returnVariables)
+		returns.emplace_back(returnVariable.type);
+	if (!m_currentScope->registerFunction(_funDef.name, std::move(parameters), std::move(returns)))
 	{
 		//@TODO secondary location
 		m_errorReporter.declarationError(

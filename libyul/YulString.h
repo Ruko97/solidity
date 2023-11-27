@@ -66,7 +66,7 @@ public:
 
 		return Handle{id, h};
 	}
-	std::string const& idToString(size_t _id) const { return *m_strings.at(_id); }
+	std::string const& idToString(size_t _id) const	{ return *m_strings.at(_id); }
 
 	static std::uint64_t hash(std::string const& v)
 	{
@@ -162,11 +162,30 @@ private:
 	YulStringRepository::Handle m_handle{ 0, YulStringRepository::emptyHash() };
 };
 
-inline YulString operator "" _yulname(char const* _string, std::size_t _size)
+inline YulString operator "" _yulstring(char const* _string, std::size_t _size)
 {
 	return YulString(std::string(_string, _size));
 }
 
+}
+
+namespace fmt
+{
+template <>
+struct formatter<solidity::yul::YulString>
+{
+	template <typename ParseContext>
+	constexpr auto parse(ParseContext& _context)
+	{
+		return _context.begin();
+	}
+
+	template <typename FormatContext>
+	auto format(solidity::yul::YulString _value, FormatContext& _context)
+	{
+		return format_to(_context.out(), "{}", _value.str());
+	}
+};
 }
 
 namespace std

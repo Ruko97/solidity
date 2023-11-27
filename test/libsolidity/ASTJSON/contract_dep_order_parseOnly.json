@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 14,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -19,12 +20,15 @@
     },
     {
       "abstract": false,
-      "baseContracts": [
+      "baseContracts":
+      [
         {
-          "baseName": {
+          "baseName":
+          {
             "id": 2,
             "name": "A",
-            "nameLocations": [
+            "nameLocations":
+            [
               "29:1:1"
             ],
             "nodeType": "IdentifierPath",
@@ -48,12 +52,15 @@
     },
     {
       "abstract": false,
-      "baseContracts": [
+      "baseContracts":
+      [
         {
-          "baseName": {
+          "baseName":
+          {
             "id": 5,
             "name": "B",
-            "nameLocations": [
+            "nameLocations":
+            [
               "49:1:1"
             ],
             "nodeType": "IdentifierPath",
@@ -77,12 +84,15 @@
     },
     {
       "abstract": false,
-      "baseContracts": [
+      "baseContracts":
+      [
         {
-          "baseName": {
+          "baseName":
+          {
             "id": 8,
             "name": "C",
-            "nameLocations": [
+            "nameLocations":
+            [
               "69:1:1"
             ],
             "nodeType": "IdentifierPath",
@@ -106,12 +116,15 @@
     },
     {
       "abstract": false,
-      "baseContracts": [
+      "baseContracts":
+      [
         {
-          "baseName": {
+          "baseName":
+          {
             "id": 11,
             "name": "D",
-            "nameLocations": [
+            "nameLocations":
+            [
               "89:1:1"
             ],
             "nodeType": "IdentifierPath",

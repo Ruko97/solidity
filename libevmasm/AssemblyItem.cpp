@@ -102,13 +102,9 @@ std::pair<std::string, std::string> AssemblyItem::nameAndData(langutil::EVMVersi
 		return {"PUSH data", toStringInHex(data())};
 	case VerbatimBytecode:
 		return {"VERBATIM", util::toHex(verbatimData())};
-	case AuxDataLoadN:
-		return {"AUXDATALOADN", util::toString(data())};
-	case UndefinedItem:
-		solAssert(false);
+	default:
+		assertThrow(false, InvalidOpcode, "");
 	}
-
-	util::unreachable();
 }
 
 void AssemblyItem::setPushTagSubIdAndTag(size_t _subId, size_t _tag)
@@ -120,7 +116,7 @@ void AssemblyItem::setPushTagSubIdAndTag(size_t _subId, size_t _tag)
 	setData(data);
 }
 
-size_t AssemblyItem::bytesRequired(size_t _addressLength, langutil::EVMVersion _evmVersion, Precision _precision) const
+size_t AssemblyItem::bytesRequired(size_t _addressLength, Precision _precision) const
 {
 	switch (m_type)
 	{
@@ -128,12 +124,10 @@ size_t AssemblyItem::bytesRequired(size_t _addressLength, langutil::EVMVersion _
 	case Tag: // 1 byte for the JUMPDEST
 		return 1;
 	case Push:
-		return
-			1 +
-			std::max<size_t>((_evmVersion.hasPush0() ? 0 : 1), numberEncodingSize(data()));
+		return 1 + std::max<size_t>(1, numberEncodingSize(data()));
 	case PushSubSize:
 	case PushProgramSize:
-		return 1 + 4; // worst case: a 16MB program
+		return 1 + 4;		// worst case: a 16MB program
 	case PushTag:
 	case PushData:
 	case PushSub:
@@ -165,13 +159,10 @@ size_t AssemblyItem::bytesRequired(size_t _addressLength, langutil::EVMVersion _
 	}
 	case VerbatimBytecode:
 		return std::get<2>(*m_verbatimBytecode).size();
-	case AuxDataLoadN:
-		return 1 + 2;
-	case UndefinedItem:
-		solAssert(false);
+	default:
+		break;
 	}
-
-	util::unreachable();
+	assertThrow(false, InvalidOpcode, "");
 }
 
 size_t AssemblyItem::arguments() const
@@ -210,10 +201,7 @@ size_t AssemblyItem::returnValues() const
 		return 0;
 	case VerbatimBytecode:
 		return std::get<1>(*m_verbatimBytecode);
-	case AuxDataLoadN:
-		return 1;
-	case AssignImmutable:
-	case UndefinedItem:
+	default:
 		break;
 	}
 	return 0;
@@ -236,13 +224,10 @@ bool AssemblyItem::canBeFunctional() const
 	case PushLibraryAddress:
 	case PushDeployTimeAddress:
 	case PushImmutable:
-	case AuxDataLoadN:
 		return true;
 	case Tag:
 		return false;
-	case AssignImmutable:
-	case VerbatimBytecode:
-	case UndefinedItem:
+	default:
 		break;
 	}
 	return false;
@@ -340,10 +325,8 @@ std::string AssemblyItem::toAssemblyText(Assembly const& _assembly) const
 	case VerbatimBytecode:
 		text = std::string("verbatimbytecode_") + util::toHex(std::get<2>(*m_verbatimBytecode));
 		break;
-	case AuxDataLoadN:
-		assertThrow(data() <= std::numeric_limits<size_t>::max(), AssemblyException, "Invalid auxdataloadn argument.");
-		text = "auxdataloadn(" +  std::to_string(static_cast<size_t>(data())) + ")";
-		break;
+	default:
+		assertThrow(false, InvalidOpcode, "");
 	}
 	if (m_jumpType == JumpType::IntoFunction || m_jumpType == JumpType::OutOfFunction)
 	{
@@ -411,12 +394,11 @@ std::ostream& solidity::evmasm::operator<<(std::ostream& _out, AssemblyItem cons
 	case VerbatimBytecode:
 		_out << " Verbatim " << util::toHex(_item.verbatimData());
 		break;
-	case AuxDataLoadN:
-		_out << " AuxDataLoadN " << util::toString(_item.data());
-		break;
 	case UndefinedItem:
 		_out << " ???";
 		break;
+	default:
+		assertThrow(false, InvalidOpcode, "");
 	}
 	return _out;
 }
@@ -466,10 +448,9 @@ std::string AssemblyItem::computeSourceMapping(
 			static_cast<int>(_sourceIndicesMap.at(*location.sourceName)) :
 			-1;
 		char jump = '-';
-		// TODO: Uncomment when EOF functions introduced.
-		if (item.getJumpType() == evmasm::AssemblyItem::JumpType::IntoFunction /*|| item.type() == CallF || item.type() == JumpF*/)
+		if (item.getJumpType() == evmasm::AssemblyItem::JumpType::IntoFunction)
 			jump = 'i';
-		else if (item.getJumpType() == evmasm::AssemblyItem::JumpType::OutOfFunction /*|| item.type() == RetF*/)
+		else if (item.getJumpType() == evmasm::AssemblyItem::JumpType::OutOfFunction)
 			jump = 'o';
 		int modifierDepth = static_cast<int>(item.m_modifierDepth);
 

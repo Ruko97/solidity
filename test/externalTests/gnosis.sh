@@ -37,7 +37,8 @@ function test_fn { npm test; }
 function gnosis_safe_test
 {
     local repo="https://github.com/safe-global/safe-contracts.git"
-    local ref="<latest-release>"
+    local ref_type=branch
+    local ref=main
     local config_file="hardhat.config.ts"
     local config_var=userConfig
 
@@ -57,7 +58,7 @@ function gnosis_safe_test
     print_presets_or_exit "$SELECTED_PRESETS"
 
     setup_solc "$DIR" "$BINARY_TYPE" "$BINARY_PATH"
-    download_project "$repo" "$ref" "$DIR"
+    download_project "$repo" "$ref_type" "$ref" "$DIR"
     [[ $BINARY_TYPE == native ]] && replace_global_solc "$BINARY_PATH"
 
     # NOTE: The patterns below intentionally have hard-coded versions.

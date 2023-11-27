@@ -24,20 +24,19 @@
 #include <libyul/AST.h>
 #include <libyul/AsmParser.h>
 #include <libyul/Exceptions.h>
-#include <libyul/Utilities.h>
 #include <liblangutil/ErrorReporter.h>
 #include <liblangutil/Exceptions.h>
 #include <liblangutil/Scanner.h>
-#include <liblangutil/Common.h>
 #include <libsolutil/Common.h>
 #include <libsolutil/Visitor.h>
+
+#include <range/v3/view/subrange.hpp>
 
 #include <boost/algorithm/string.hpp>
 
 #include <algorithm>
 #include <regex>
 
-using namespace std::string_literals;
 using namespace solidity;
 using namespace solidity::util;
 using namespace solidity::langutil;
@@ -52,7 +51,7 @@ std::optional<int> toInt(std::string const& _value)
 	{
 		return stoi(_value);
 	}
-	catch (std::out_of_range const&)
+	catch (...)
 	{
 		return std::nullopt;
 	}
@@ -60,7 +59,7 @@ std::optional<int> toInt(std::string const& _value)
 
 }
 
-langutil::DebugData::ConstPtr Parser::createDebugData() const
+std::shared_ptr<DebugData const> Parser::createDebugData() const
 {
 	switch (m_useSourceLocationFrom)
 	{
@@ -75,7 +74,7 @@ langutil::DebugData::ConstPtr Parser::createDebugData() const
 }
 
 void Parser::updateLocationEndFrom(
-	langutil::DebugData::ConstPtr& _debugData,
+	std::shared_ptr<DebugData const>& _debugData,
 	SourceLocation const& _location
 ) const
 {
@@ -104,15 +103,15 @@ void Parser::updateLocationEndFrom(
 	}
 }
 
-std::unique_ptr<AST> Parser::parse(CharStream& _charStream)
+std::unique_ptr<Block> Parser::parse(CharStream& _charStream)
 {
 	m_scanner = std::make_shared<Scanner>(_charStream);
-	std::unique_ptr<AST> ast = parseInline(m_scanner);
+	std::unique_ptr<Block> block = parseInline(m_scanner);
 	expectToken(Token::EOS);
-	return ast;
+	return block;
 }
 
-std::unique_ptr<AST> Parser::parseInline(std::shared_ptr<Scanner> const& _scanner)
+std::unique_ptr<Block> Parser::parseInline(std::shared_ptr<Scanner> const& _scanner)
 {
 	m_recursionDepth = 0;
 
@@ -125,11 +124,11 @@ std::unique_ptr<AST> Parser::parseInline(std::shared_ptr<Scanner> const& _scanne
 		m_scanner = _scanner;
 		if (m_useSourceLocationFrom == UseSourceLocationFrom::Comments)
 			fetchDebugDataFromComment();
-		return std::make_unique<AST>(parseBlock());
+		return std::make_unique<Block>(parseBlock());
 	}
-	catch (FatalError const& error)
+	catch (FatalError const&)
 	{
-		yulAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		yulAssert(!m_errorReporter.errors().empty(), "Fatal error detected, but no error is reported.");
 	}
 
 	return nullptr;
@@ -192,41 +191,13 @@ std::optional<std::pair<std::string_view, SourceLocation>> Parser::parseSrcComme
 	langutil::SourceLocation const& _commentLocation
 )
 {
-	CharStream argumentStream(std::string(_arguments), "");
-	Scanner scanner(argumentStream, ScannerKind::SpecialComment);
-
-	std::string_view tail{_arguments.substr(_arguments.size())};
-	auto const parseLocationComponent = [](Scanner& _scanner, bool expectTrailingColon) -> std::optional<std::string>
-	{
-		bool negative = false;
-		if (_scanner.currentToken() == Token::Sub)
-		{
-			negative = true;
-			_scanner.next();
-		}
-		if (_scanner.currentToken() != Token::Number)
-			return std::nullopt;
-		if (expectTrailingColon && _scanner.peekNextToken() != Token::Colon)
-			return std::nullopt;
-		if (!isValidDecimal(_scanner.currentLiteral()))
-			return std::nullopt;
-		std::string decimal = (negative ? "-" : "") + _scanner.currentLiteral();
-		_scanner.next();
-		if (expectTrailingColon)
-			_scanner.next();
-		return decimal;
-	};
-	std::optional<std::string> rawSourceIndex = parseLocationComponent(scanner, true);
-	std::optional<std::string> rawStart = parseLocationComponent(scanner, true);
-	std::optional<std::string> rawEnd = parseLocationComponent(scanner, false);
-
-	size_t const snippetStart = static_cast<size_t>(scanner.currentLocation().start);
-	bool const locationScannedSuccessfully = rawSourceIndex && rawStart && rawEnd;
-	bool const locationIsWhitespaceSeparated =
-		scanner.peekNextToken() == Token::EOS ||
-		(snippetStart > 0 && langutil::isWhiteSpace(_arguments[snippetStart - 1]));
-
-	if (!locationScannedSuccessfully || !locationIsWhitespaceSeparated)
+	static std::regex const argsRegex = std::regex(
+		R"~~(^(-1|\d+):(-1|\d+):(-1|\d+)(?:\s+|$))~~"  // index and location, e.g.: 1:234:-1
+		R"~~(("(?:[^"\\]|\\.)*"?)?)~~",                // optional code snippet, e.g.: "string memory s = \"abc\";..."
+		std::regex_constants::ECMAScript | std::regex_constants::optimize
+	);
+	std::match_results<std::string_view::const_iterator> match;
+	if (!regex_search(_arguments.cbegin(), _arguments.cend(), match, argsRegex))
 	{
 		m_errorReporter.syntaxError(
 			8387_error,
@@ -236,16 +207,13 @@ std::optional<std::pair<std::string_view, SourceLocation>> Parser::parseSrcComme
 		return std::nullopt;
 	}
 
-	// captures error cases `"test` (illegal end quote) and `"test\` (illegal escape sequence / dangling backslash)
-	bool const illegalLiteral = scanner.currentToken() == Token::Illegal && (scanner.currentError() == ScannerError::IllegalStringEndQuote || scanner.currentError() == ScannerError::IllegalEscapeSequence);
-	if (scanner.currentToken() == Token::StringLiteral || illegalLiteral)
-		tail = _arguments.substr(static_cast<size_t>(scanner.currentLocation().end));
-	else
-		tail = _arguments.substr(static_cast<size_t>(scanner.currentLocation().start));
+	solAssert(match.size() == 5, "");
+	std::string_view tail = _arguments.substr(static_cast<size_t>(match.position() + match.length()));
 
-	// Other scanner errors may occur if there is no string literal which follows
-	// (f.ex. IllegalHexDigit, IllegalCommentTerminator), but these are ignored
-	if (illegalLiteral)
+	if (match[4].matched && (
+		!boost::algorithm::ends_with(match[4].str(), "\"") ||
+		boost::algorithm::ends_with(match[4].str(), "\\\"")
+	))
 	{
 		m_errorReporter.syntaxError(
 			1544_error,
@@ -255,15 +223,11 @@ std::optional<std::pair<std::string_view, SourceLocation>> Parser::parseSrcComme
 		return {{tail, SourceLocation{}}};
 	}
 
-	std::optional<int> const sourceIndex = toInt(*rawSourceIndex);
-	std::optional<int> const start = toInt(*rawStart);
-	std::optional<int> const end = toInt(*rawEnd);
+	std::optional<int> const sourceIndex = toInt(match[1].str());
+	std::optional<int> const start = toInt(match[2].str());
+	std::optional<int> const end = toInt(match[3].str());
 
-	if (
-		!sourceIndex.has_value() || *sourceIndex < -1 ||
-		!start.has_value() || *start < -1 ||
-		!end.has_value() || *end < -1
-	)
+	if (!sourceIndex.has_value() || !start.has_value() || !end.has_value())
 		m_errorReporter.syntaxError(
 			6367_error,
 			_commentLocation,
@@ -271,8 +235,8 @@ std::optional<std::pair<std::string_view, SourceLocation>> Parser::parseSrcComme
 			"Expected non-negative integer values or -1 for source index and location."
 		);
 	else if (sourceIndex == -1)
-		return {{tail, SourceLocation{*start, *end, nullptr}}};
-	else if (!(sourceIndex >= 0 && m_sourceNames->count(static_cast<unsigned>(*sourceIndex))))
+		return {{tail, SourceLocation{start.value(), end.value(), nullptr}}};
+	else if (!(sourceIndex >= 0 && m_sourceNames->count(static_cast<unsigned>(sourceIndex.value()))))
 		m_errorReporter.syntaxError(
 			2674_error,
 			_commentLocation,
@@ -280,9 +244,9 @@ std::optional<std::pair<std::string_view, SourceLocation>> Parser::parseSrcComme
 		);
 	else
 	{
-		std::shared_ptr<std::string const> sourceName = m_sourceNames->at(static_cast<unsigned>(*sourceIndex));
+		std::shared_ptr<std::string const> sourceName = m_sourceNames->at(static_cast<unsigned>(sourceIndex.value()));
 		solAssert(sourceName, "");
-		return {{tail, SourceLocation{*start, *end, std::move(sourceName)}}};
+		return {{tail, SourceLocation{start.value(), end.value(), std::move(sourceName)}}};
 	}
 	return {{tail, SourceLocation{}}};
 }
@@ -322,7 +286,7 @@ std::optional<std::pair<std::string_view, std::optional<int>>> Parser::parseASTI
 Block Parser::parseBlock()
 {
 	RecursionGuard recursionGuard(*this);
-	Block block = createWithDebugData<Block>();
+	Block block = createWithLocation<Block>();
 	expectToken(Token::LBrace);
 	while (currentToken() != Token::RBrace)
 		block.statements.emplace_back(parseStatement());
@@ -344,7 +308,7 @@ Statement Parser::parseStatement()
 		return parseBlock();
 	case Token::If:
 	{
-		If _if = createWithDebugData<If>();
+		If _if = createWithLocation<If>();
 		advance();
 		_if.condition = std::make_unique<Expression>(parseExpression());
 		_if.body = parseBlock();
@@ -353,7 +317,7 @@ Statement Parser::parseStatement()
 	}
 	case Token::Switch:
 	{
-		Switch _switch = createWithDebugData<Switch>();
+		Switch _switch = createWithLocation<Switch>();
 		advance();
 		_switch.expression = std::make_unique<Expression>(parseExpression());
 		while (currentToken() == Token::Case)
@@ -373,21 +337,21 @@ Statement Parser::parseStatement()
 		return parseForLoop();
 	case Token::Break:
 	{
-		Statement stmt{createWithDebugData<Break>()};
+		Statement stmt{createWithLocation<Break>()};
 		checkBreakContinuePosition("break");
 		advance();
 		return stmt;
 	}
 	case Token::Continue:
 	{
-		Statement stmt{createWithDebugData<Continue>()};
+		Statement stmt{createWithLocation<Continue>()};
 		checkBreakContinuePosition("continue");
 		advance();
 		return stmt;
 	}
 	case Token::Leave:
 	{
-		Statement stmt{createWithDebugData<Leave>()};
+		Statement stmt{createWithLocation<Leave>()};
 		if (!m_insideFunction)
 			m_errorReporter.syntaxError(8149_error, currentLocation(), "Keyword \"leave\" can only be used inside a function.");
 		advance();
@@ -464,7 +428,7 @@ Statement Parser::parseStatement()
 Case Parser::parseCase()
 {
 	RecursionGuard recursionGuard(*this);
-	Case _case = createWithDebugData<Case>();
+	Case _case = createWithLocation<Case>();
 	if (currentToken() == Token::Default)
 		advance();
 	else if (currentToken() == Token::Case)
@@ -488,7 +452,7 @@ ForLoop Parser::parseForLoop()
 
 	ForLoopComponent outerForLoopComponent = m_currentForLoopComponent;
 
-	ForLoop forLoop = createWithDebugData<ForLoop>();
+	ForLoop forLoop = createWithLocation<ForLoop>();
 	expectToken(Token::For);
 	m_currentForLoopComponent = ForLoopComponent::ForLoopPre;
 	forLoop.pre = parseBlock();
@@ -505,11 +469,11 @@ ForLoop Parser::parseForLoop()
 	return forLoop;
 }
 
-Expression Parser::parseExpression(bool _unlimitedLiteralArgument)
+Expression Parser::parseExpression()
 {
 	RecursionGuard recursionGuard(*this);
 
-	std::variant<Literal, Identifier> operation = parseLiteralOrIdentifier(_unlimitedLiteralArgument);
+	std::variant<Literal, Identifier> operation = parseLiteralOrIdentifier();
 	return visit(GenericVisitor{
 		[&](Identifier& _identifier) -> Expression
 		{
@@ -530,14 +494,14 @@ Expression Parser::parseExpression(bool _unlimitedLiteralArgument)
 	}, operation);
 }
 
-std::variant<Literal, Identifier> Parser::parseLiteralOrIdentifier(bool _unlimitedLiteralArgument)
+std::variant<Literal, Identifier> Parser::parseLiteralOrIdentifier()
 {
 	RecursionGuard recursionGuard(*this);
 	switch (currentToken())
 	{
 	case Token::Identifier:
 	{
-		Identifier identifier{createDebugData(), YulName{currentLiteral()}};
+		Identifier identifier{createDebugData(), YulString{currentLiteral()}};
 		advance();
 		return identifier;
 	}
@@ -567,20 +531,18 @@ std::variant<Literal, Identifier> Parser::parseLiteralOrIdentifier(bool _unlimit
 			break;
 		}
 
-		auto const literalLocation = currentLocation();
 		Literal literal{
 			createDebugData(),
 			kind,
-			valueOfLiteral(currentLiteral(), kind, _unlimitedLiteralArgument && kind == LiteralKind::String)
+			YulString{currentLiteral()},
+			kind == LiteralKind::Boolean ? m_dialect.boolType : m_dialect.defaultType
 		};
 		advance();
 		if (currentToken() == Token::Colon)
 		{
 			expectToken(Token::Colon);
 			updateLocationEndFrom(literal.debugData, currentLocation());
-			auto const typedLiteralLocation = SourceLocation::smallestCovering(literalLocation, currentLocation());
-			std::ignore = expectAsmIdentifier();
-			raiseUnsupportedTypesError(typedLiteralLocation);
+			literal.type = expectAsmIdentifier();
 		}
 
 		return literal;
@@ -597,11 +559,11 @@ std::variant<Literal, Identifier> Parser::parseLiteralOrIdentifier(bool _unlimit
 VariableDeclaration Parser::parseVariableDeclaration()
 {
 	RecursionGuard recursionGuard(*this);
-	VariableDeclaration varDecl = createWithDebugData<VariableDeclaration>();
+	VariableDeclaration varDecl = createWithLocation<VariableDeclaration>();
 	expectToken(Token::Let);
 	while (true)
 	{
-		varDecl.variables.emplace_back(parseNameWithDebugData());
+		varDecl.variables.emplace_back(parseTypedName());
 		if (currentToken() == Token::Comma)
 			expectToken(Token::Comma);
 		else
@@ -633,13 +595,13 @@ FunctionDefinition Parser::parseFunctionDefinition()
 	ForLoopComponent outerForLoopComponent = m_currentForLoopComponent;
 	m_currentForLoopComponent = ForLoopComponent::None;
 
-	FunctionDefinition funDef = createWithDebugData<FunctionDefinition>();
+	FunctionDefinition funDef = createWithLocation<FunctionDefinition>();
 	expectToken(Token::Function);
 	funDef.name = expectAsmIdentifier();
 	expectToken(Token::LParen);
 	while (currentToken() != Token::RParen)
 	{
-		funDef.parameters.emplace_back(parseNameWithDebugData());
+		funDef.parameters.emplace_back(parseTypedName());
 		if (currentToken() == Token::RParen)
 			break;
 		expectToken(Token::Comma);
@@ -650,7 +612,7 @@ FunctionDefinition Parser::parseFunctionDefinition()
 		expectToken(Token::RightArrow);
 		while (true)
 		{
-			funDef.returnVariables.emplace_back(parseNameWithDebugData());
+			funDef.returnVariables.emplace_back(parseTypedName());
 			if (currentToken() == Token::LBrace)
 				break;
 			expectToken(Token::Comma);
@@ -676,20 +638,15 @@ FunctionCall Parser::parseCall(std::variant<Literal, Identifier>&& _initialOp)
 	FunctionCall ret;
 	ret.functionName = std::move(std::get<Identifier>(_initialOp));
 	ret.debugData = ret.functionName.debugData;
-	auto const isUnlimitedLiteralArgument = [f=m_dialect.builtin(ret.functionName.name)](size_t const index) {
-		if (f && index < f->literalArguments.size())
-			return f->literalArgument(index).has_value();
-		return false;
-	};
-	size_t argumentIndex {0};
+
 	expectToken(Token::LParen);
 	if (currentToken() != Token::RParen)
 	{
-		ret.arguments.emplace_back(parseExpression(isUnlimitedLiteralArgument(argumentIndex++)));
+		ret.arguments.emplace_back(parseExpression());
 		while (currentToken() != Token::RParen)
 		{
 			expectToken(Token::Comma);
-			ret.arguments.emplace_back(parseExpression(isUnlimitedLiteralArgument(argumentIndex++)));
+			ret.arguments.emplace_back(parseExpression());
 		}
 	}
 	updateLocationEndFrom(ret.debugData, currentLocation());
@@ -697,27 +654,26 @@ FunctionCall Parser::parseCall(std::variant<Literal, Identifier>&& _initialOp)
 	return ret;
 }
 
-NameWithDebugData Parser::parseNameWithDebugData()
+TypedName Parser::parseTypedName()
 {
 	RecursionGuard recursionGuard(*this);
-	NameWithDebugData typedName = createWithDebugData<NameWithDebugData>();
-	auto const nameLocation = currentLocation();
+	TypedName typedName = createWithLocation<TypedName>();
 	typedName.name = expectAsmIdentifier();
 	if (currentToken() == Token::Colon)
 	{
 		expectToken(Token::Colon);
 		updateLocationEndFrom(typedName.debugData, currentLocation());
-		auto const typedNameLocation = SourceLocation::smallestCovering(nameLocation, currentLocation());
-		std::ignore = expectAsmIdentifier();
-		raiseUnsupportedTypesError(typedNameLocation);
+		typedName.type = expectAsmIdentifier();
 	}
+	else
+		typedName.type = m_dialect.defaultType;
 
 	return typedName;
 }
 
-YulName Parser::expectAsmIdentifier()
+YulString Parser::expectAsmIdentifier()
 {
-	YulName name{currentLiteral()};
+	YulString name{currentLiteral()};
 	if (currentToken() == Token::Identifier && m_dialect.builtin(name))
 		fatalParserError(5568_error, "Cannot use builtin function name \"" + name.str() + "\" as identifier name.");
 	// NOTE: We keep the expectation here to ensure the correct source location for the error above.
@@ -758,9 +714,4 @@ bool Parser::isValidNumberLiteral(std::string const& _literal)
 		return true;
 	else
 		return _literal.find_first_not_of("0123456789") == std::string::npos;
-}
-
-void Parser::raiseUnsupportedTypesError(SourceLocation const& _location) const
-{
-	m_errorReporter.parserError(5473_error, _location, "Types are not supported in untyped Yul.");
 }

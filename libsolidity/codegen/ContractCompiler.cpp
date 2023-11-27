@@ -38,7 +38,7 @@
 #include <libyul/optimiser/Suite.h>
 #include <libyul/Object.h>
 #include <libyul/optimiser/ASTCopier.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 
 #include <libevmasm/Instruction.h>
 #include <libevmasm/Assembly.h>
@@ -570,9 +570,8 @@ void ContractCompiler::appendReturnValuePacker(TypePointers const& _typeParamete
 
 void ContractCompiler::registerStateVariables(ContractDefinition const& _contract)
 {
-	for (auto const location: {DataLocation::Storage, DataLocation::Transient})
-		for (auto const& var: ContractType(_contract).stateVariables(location))
-			m_context.addStateVariable(*std::get<0>(var), std::get<1>(var), std::get<2>(var));
+	for (auto const& var: ContractType(_contract).stateVariables())
+		m_context.addStateVariable(*std::get<0>(var), std::get<1>(var), std::get<2>(var));
 }
 
 void ContractCompiler::registerImmutableVariables(ContractDefinition const& _contract)
@@ -586,11 +585,8 @@ void ContractCompiler::initializeStateVariables(ContractDefinition const& _contr
 {
 	solAssert(!_contract.isLibrary(), "Tried to initialize state variables of library.");
 	for (VariableDeclaration const* variable: _contract.stateVariables())
-	{
-		solAssert(variable->referenceLocation() != VariableDeclaration::Location::Transient || !variable->value());
 		if (variable->value() && !variable->isConstant())
 			ExpressionCompiler(m_context, m_optimiserSettings.runOrderLiterals).appendStateVariableInitialization(*variable);
-	}
 }
 
 bool ContractCompiler::visit(VariableDeclaration const& _variableDeclaration)
@@ -927,7 +923,7 @@ bool ContractCompiler::visit(InlineAssembly const& _inlineAssembly)
 		}
 	};
 
-	yul::AST const* code = &_inlineAssembly.operations();
+	yul::Block const* code = &_inlineAssembly.operations();
 	yul::AsmAnalysisInfo* analysisInfo = _inlineAssembly.annotation().analysisInfo.get();
 
 	// Only used in the scope below, but required to live outside to keep the
@@ -944,21 +940,20 @@ bool ContractCompiler::visit(InlineAssembly const& _inlineAssembly)
 		solAssert(dialect, "");
 
 		// Create a modifiable copy of the code and analysis
-		object.setCode(std::make_shared<yul::AST>(yul::ASTCopier().translate(code->root())));
+		object.code = std::make_shared<yul::Block>(yul::ASTCopier().translate(*code));
 		object.analysisInfo = std::make_shared<yul::AsmAnalysisInfo>(yul::AsmAnalyzer::analyzeStrictAssertCorrect(*dialect, object));
 
 		m_context.optimizeYul(object, *dialect, m_optimiserSettings);
 
-		code = object.code().get();
+		code = object.code.get();
 		analysisInfo = object.analysisInfo.get();
 	}
 
 	yul::CodeGenerator::assemble(
-		code->root(),
+		*code,
 		*analysisInfo,
 		*m_context.assemblyPtr(),
 		m_context.evmVersion(),
-		std::nullopt,
 		identifierAccessCodeGen,
 		false,
 		m_optimiserSettings.optimizeStackAllocation
@@ -1397,7 +1392,7 @@ bool ContractCompiler::visit(PlaceholderStatement const& _placeholderStatement)
 {
 	StackHeightChecker checker(m_context);
 	CompilerContext::LocationSetter locationSetter(m_context, _placeholderStatement);
-	solAssert(m_context.arithmetic() == Arithmetic::Checked, "Placeholder cannot be used inside unchecked block.");
+	solAssert(m_context.arithmetic() == Arithmetic::Checked, "Placeholder cannot be used inside checked block.");
 	appendModifierOrFunctionCode();
 	solAssert(m_context.arithmetic() == Arithmetic::Checked, "Arithmetic not reset to 'checked'.");
 	checker.check();

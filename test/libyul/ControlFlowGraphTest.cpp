@@ -45,11 +45,7 @@ ControlFlowGraphTest::ControlFlowGraphTest(std::string const& _filename):
 {
 	m_source = m_reader.source();
 	auto dialectName = m_reader.stringSetting("dialect", "evm");
-	m_dialect = &dialect(
-		dialectName,
-		solidity::test::CommonOptions::get().evmVersion(),
-		solidity::test::CommonOptions::get().eofVersion()
-	);
+	m_dialect = &dialect(dialectName, solidity::test::CommonOptions::get().evmVersion());
 	m_expectation = m_reader.simpleExpectations();
 }
 
@@ -134,6 +130,7 @@ private:
 				},
 				[&](CFG::BuiltinCall const& _call) {
 					m_stream << _call.functionCall.get().functionName.name.str() << ": ";
+
 				},
 				[&](CFG::Assignment const& _assignment) {
 					m_stream << "Assignment(";
@@ -209,7 +206,7 @@ TestCase::TestResult ControlFlowGraphTest::run(std::ostream& _stream, std::strin
 
 	std::ostringstream output;
 
-	std::unique_ptr<CFG> cfg = ControlFlowGraphBuilder::build(*analysisInfo, *m_dialect, object->code()->root());
+	std::unique_ptr<CFG> cfg = ControlFlowGraphBuilder::build(*analysisInfo, *m_dialect, *object->code);
 
 	output << "digraph CFG {\nnodesep=0.7;\nnode[shape=box];\n\n";
 	ControlFlowGraphPrinter printer{output};

@@ -53,22 +53,22 @@ StackLayout StackLayoutGenerator::run(CFG const& _cfg)
 	StackLayoutGenerator{stackLayout, nullptr}.processEntryPoint(*_cfg.entry);
 
 	for (auto& functionInfo: _cfg.functionInfo | ranges::views::values)
-		StackLayoutGenerator{stackLayout}.processEntryPoint(*functionInfo.entry, &functionInfo);
+		StackLayoutGenerator{stackLayout, &functionInfo}.processEntryPoint(*functionInfo.entry, &functionInfo);
 
 	return stackLayout;
 }
 
-std::map<YulName, std::vector<StackLayoutGenerator::StackTooDeep>> StackLayoutGenerator::reportStackTooDeep(CFG const& _cfg)
+std::map<YulString, std::vector<StackLayoutGenerator::StackTooDeep>> StackLayoutGenerator::reportStackTooDeep(CFG const& _cfg)
 {
-	std::map<YulName, std::vector<StackLayoutGenerator::StackTooDeep>> stackTooDeepErrors;
-	stackTooDeepErrors[YulName{}] = reportStackTooDeep(_cfg, YulName{});
+	std::map<YulString, std::vector<StackLayoutGenerator::StackTooDeep>> stackTooDeepErrors;
+	stackTooDeepErrors[YulString{}] = reportStackTooDeep(_cfg, YulString{});
 	for (auto const& function: _cfg.functions)
 		if (auto errors = reportStackTooDeep(_cfg, function->name); !errors.empty())
 			stackTooDeepErrors[function->name] = std::move(errors);
 	return stackTooDeepErrors;
 }
 
-std::vector<StackLayoutGenerator::StackTooDeep> StackLayoutGenerator::reportStackTooDeep(CFG const& _cfg, YulName _functionName)
+std::vector<StackLayoutGenerator::StackTooDeep> StackLayoutGenerator::reportStackTooDeep(CFG const& _cfg, YulString _functionName)
 {
 	StackLayout stackLayout;
 	CFG::FunctionInfo const* functionInfo = nullptr;
@@ -102,7 +102,7 @@ std::vector<StackLayoutGenerator::StackTooDeep> findStackTooDeep(Stack const& _s
 	Stack currentStack = _source;
 	std::vector<StackLayoutGenerator::StackTooDeep> stackTooDeepErrors;
 	auto getVariableChoices = [](auto&& _range) {
-		std::vector<YulName> result;
+		std::vector<YulString> result;
 		for (auto const& slot: _range)
 			if (auto const* variableSlot = std::get_if<VariableSlot>(&slot))
 				if (!util::contains(result, variableSlot->variable.get().name))
@@ -539,7 +539,7 @@ void StackLayoutGenerator::stitchConditionalJumps(CFG::BasicBlock const& _block)
 				_addChild(_conditionalJump.zero);
 				_addChild(_conditionalJump.nonZero);
 			},
-			[&](CFG::BasicBlock::FunctionReturn const&) {},
+			[&](CFG::BasicBlock::FunctionReturn const&)	{},
 			[&](CFG::BasicBlock::Terminated const&) { },
 		}, _block->exit);
 	});
@@ -771,7 +771,7 @@ void StackLayoutGenerator::fillInJunk(CFG::BasicBlock const& _block, CFG::Functi
 					yulAssert(util::contains(m_currentFunctionInfo->returnVariables, std::get<VariableSlot>(_slot)));
 					// Strictly speaking the cost of the PUSH0 depends on the targeted EVM version, but the difference
 					// will not matter here.
-					opGas += evmasm::GasMeter::pushGas(u256(0), langutil::EVMVersion());
+					opGas += evmasm::GasMeter::runGas(evmasm::pushInstruction(0), langutil::EVMVersion());;
 				}
 			}
 		};

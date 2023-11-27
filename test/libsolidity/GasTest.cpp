@@ -21,7 +21,6 @@
 #include <test/Common.h>
 #include <libsolutil/CommonIO.h>
 #include <libsolutil/JSON.h>
-#include <libsolutil/StringUtils.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -82,18 +81,18 @@ void GasTest::parseExpectations(std::istream& _stream)
 
 void GasTest::printUpdatedExpectations(std::ostream& _stream, std::string const& _linePrefix) const
 {
-	Json estimates = compiler().gasEstimates(compiler().lastContractName());
-	for (auto& [key, group] : estimates.items())
+	Json::Value estimates = compiler().gasEstimates(compiler().lastContractName());
+	for (auto groupIt = estimates.begin(); groupIt != estimates.end(); ++groupIt)
 	{
-		_stream << _linePrefix << key << ":" << std::endl;
-		for (auto& [elementKey, value] : group.items())
+		_stream << _linePrefix << groupIt.key().asString() << ":" << std::endl;
+		for (auto it = groupIt->begin(); it != groupIt->end(); ++it)
 		{
 			_stream << _linePrefix << "  ";
-			if (elementKey.empty())
+			if (it.key().asString().empty())
 				_stream << "fallback";
 			else
-				_stream << elementKey;
-			_stream << ": " << value.get<std::string>() << std::endl;
+				_stream << it.key().asString();
+			_stream << ": " << it->asString() << std::endl;
 		}
 	}
 }
@@ -124,18 +123,18 @@ TestCase::TestResult GasTest::run(std::ostream& _stream, std::string const& _lin
 {
 	if (!runFramework(withPreamble(m_source), PipelineStage::Compilation))
 	{
-		util::printPrefixed(_stream, formatErrors(filteredErrors(), _formatted), _linePrefix);
+		_stream << formatErrors(filteredErrors(), _formatted);
 		return TestResult::FatalError;
 	}
 
-	Json estimateGroups = compiler().gasEstimates(compiler().lastContractName());
+	Json::Value estimateGroups = compiler().gasEstimates(compiler().lastContractName());
 	if (
 		m_expectations.size() == estimateGroups.size() &&
 		boost::all(m_expectations, [&](auto const& expectations) {
 		auto const& estimates = estimateGroups[expectations.first];
 		return estimates.size() == expectations.second.size() &&
 			boost::all(expectations.second, [&](auto const& entry) {
-				return entry.second == estimates[entry.first].template get<std::string>();
+				return entry.second == estimates[entry.first].asString();
 			});
 		})
 	)

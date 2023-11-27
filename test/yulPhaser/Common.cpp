@@ -30,6 +30,7 @@
 #include <sstream>
 #include <string>
 
+using namespace std;
 using namespace boost::test_tools;
 using namespace solidity::util;
 
@@ -55,7 +56,7 @@ enum class TestEnum
 	GH,
 };
 
-std::map<TestEnum, std::string> const TestEnumToStringMap =
+map<TestEnum, string> const TestEnumToStringMap =
 {
 	{TestEnum::A, "a"},
 	{TestEnum::B, "b"},
@@ -63,7 +64,7 @@ std::map<TestEnum, std::string> const TestEnumToStringMap =
 	{TestEnum::CD, "c-d"},
 	{TestEnum::EF, "e f"},
 };
-std::map<std::string, TestEnum> const StringToTestEnumMap = invertMap(TestEnumToStringMap);
+map<string, TestEnum> const StringToTestEnumMap = invertMap(TestEnumToStringMap);
 
 }
 
@@ -73,29 +74,29 @@ BOOST_AUTO_TEST_SUITE(CommonTest)
 BOOST_FIXTURE_TEST_CASE(readLinesFromFile_should_return_all_lines_from_a_text_file_as_strings_without_newlines, ReadLinesFromFileFixture)
 {
 	{
-		std::ofstream tmpFile((m_tempDir.path() / "test-file.txt").string());
-		tmpFile << std::endl << "Line 1" << std::endl << std::endl << std::endl << "Line 2" << std::endl << "#" << std::endl << std::endl;
+		ofstream tmpFile((m_tempDir.path() / "test-file.txt").string());
+		tmpFile << endl << "Line 1" << endl << endl << endl << "Line 2" << endl << "#" << endl << endl;
 	}
 
-	std::vector<std::string> lines = readLinesFromFile((m_tempDir.path() / "test-file.txt").string());
-	BOOST_TEST((lines == std::vector<std::string>{"", "Line 1", "", "", "Line 2", "#", ""}));
+	vector<string> lines = readLinesFromFile((m_tempDir.path() / "test-file.txt").string());
+	BOOST_TEST((lines == vector<string>{"", "Line 1", "", "", "Line 2", "#", ""}));
 }
 
 BOOST_AUTO_TEST_CASE(deserializeChoice_should_convert_string_to_enum)
 {
-	std::istringstream aStream("a");
+	istringstream aStream("a");
 	TestEnum aResult;
 	deserializeChoice(aStream, aResult, StringToTestEnumMap);
 	BOOST_CHECK(aResult == TestEnum::A);
 	BOOST_TEST(!aStream.fail());
 
-	std::istringstream bStream("b");
+	istringstream bStream("b");
 	TestEnum bResult;
 	deserializeChoice(bStream, bResult, StringToTestEnumMap);
 	BOOST_CHECK(bResult == TestEnum::B);
 	BOOST_TEST(!bStream.fail());
 
-	std::istringstream cdStream("c-d");
+	istringstream cdStream("c-d");
 	TestEnum cdResult;
 	deserializeChoice(cdStream, cdResult, StringToTestEnumMap);
 	BOOST_CHECK(cdResult == TestEnum::CD);
@@ -104,7 +105,7 @@ BOOST_AUTO_TEST_CASE(deserializeChoice_should_convert_string_to_enum)
 
 BOOST_AUTO_TEST_CASE(deserializeChoice_should_set_failbit_if_there_is_no_enum_corresponding_to_string)
 {
-	std::istringstream xyzStream("xyz");
+	istringstream xyzStream("xyz");
 	TestEnum xyzResult;
 	deserializeChoice(xyzStream, xyzResult, StringToTestEnumMap);
 	BOOST_TEST(xyzStream.fail());
@@ -112,13 +113,13 @@ BOOST_AUTO_TEST_CASE(deserializeChoice_should_set_failbit_if_there_is_no_enum_co
 
 BOOST_AUTO_TEST_CASE(deserializeChoice_does_not_have_to_support_strings_with_spaces)
 {
-	std::istringstream abStream("a b");
+	istringstream abStream("a b");
 	TestEnum abResult;
 	deserializeChoice(abStream, abResult, StringToTestEnumMap);
 	BOOST_CHECK(abResult == TestEnum::A);
 	BOOST_TEST(!abStream.fail());
 
-	std::istringstream efStream("e f");
+	istringstream efStream("e f");
 	TestEnum efResult;
 	deserializeChoice(efStream, efResult, StringToTestEnumMap);
 	BOOST_TEST(efStream.fail());

@@ -24,11 +24,9 @@
 #pragma once
 
 #include <libyul/ASTForward.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 
-#include <liblangutil/DebugData.h>
-
-#include <libsolutil/Numeric.h>
+#include <liblangutil/SourceLocation.h>
 
 #include <memory>
 #include <optional>
@@ -36,80 +34,79 @@
 namespace solidity::yul
 {
 
-struct NameWithDebugData { langutil::DebugData::ConstPtr debugData; YulName name; };
-using NameWithDebugDataList = std::vector<NameWithDebugData>;
+using Type = YulString;
+
+struct DebugData
+{
+	explicit DebugData(
+		langutil::SourceLocation _nativeLocation,
+		langutil::SourceLocation _originLocation = {},
+		std::optional<int64_t> _astID = {}
+	):
+		nativeLocation(std::move(_nativeLocation)),
+		originLocation(std::move(_originLocation)),
+		astID(std::move(_astID))
+	{}
+
+	static std::shared_ptr<DebugData const> create(
+		langutil::SourceLocation _nativeLocation = {},
+		langutil::SourceLocation _originLocation = {},
+		std::optional<int64_t> _astID = {}
+	)
+	{
+		return std::make_shared<DebugData const>(
+			std::move(_nativeLocation),
+			std::move(_originLocation),
+			std::move(_astID)
+		);
+	}
+
+	/// Location in the Yul code.
+	langutil::SourceLocation nativeLocation;
+	/// Location in the original source that the Yul code was produced from.
+	/// Optional. Only present if the Yul source contains location annotations.
+	langutil::SourceLocation originLocation;
+	/// ID in the (Solidity) source AST.
+	std::optional<int64_t> astID;
+};
+
+struct TypedName { std::shared_ptr<DebugData const> debugData; YulString name; Type type; };
+using TypedNameList = std::vector<TypedName>;
 
 /// Literal number or string (up to 32 bytes)
 enum class LiteralKind { Number, Boolean, String };
-/// Literal value that holds a u256 word of data, can be of LiteralKind type and - in case of arguments to
-/// builtins - exceed the u256 word (32 bytes), in which case the value is stored as string. The former is constructed
-/// via u256 word and optional hint and leads to unlimited == false, the latter is
-/// constructed via the string constructor and leads to unlimited == true.
-class LiteralValue {
-public:
-	using Data = u256;
-	using BuiltinStringLiteralData = std::string;
-	using RepresentationHint = std::shared_ptr<std::string>;
-
-	LiteralValue() = default;
-	explicit LiteralValue(std::string _builtinStringLiteralValue);
-	explicit LiteralValue(Data const& _data, std::optional<std::string> const& _hint = std::nullopt);
-
-	bool operator==(LiteralValue const& _rhs) const;
-	bool operator<(LiteralValue const& _rhs) const;
-	Data const& value() const;
-	BuiltinStringLiteralData const& builtinStringLiteralValue() const;
-	bool unlimited() const;
-	RepresentationHint const& hint() const;
-
-private:
-	std::optional<Data> m_numericValue;
-	std::shared_ptr<std::string> m_stringValue;
-};
-struct Literal { langutil::DebugData::ConstPtr debugData; LiteralKind kind; LiteralValue value; };
+struct Literal { std::shared_ptr<DebugData const> debugData; LiteralKind kind; YulString value; Type type; };
 /// External / internal identifier or label reference
-struct Identifier { langutil::DebugData::ConstPtr debugData; YulName name; };
+struct Identifier { std::shared_ptr<DebugData const> debugData; YulString name; };
 /// Assignment ("x := mload(20:u256)", expects push-1-expression on the right hand
 /// side and requires x to occupy exactly one stack slot.
 ///
 /// Multiple assignment ("x, y := f()"), where the left hand side variables each occupy
 /// a single stack slot and expects a single expression on the right hand returning
 /// the same amount of items as the number of variables.
-struct Assignment { langutil::DebugData::ConstPtr debugData; std::vector<Identifier> variableNames; std::unique_ptr<Expression> value; };
-struct FunctionCall { langutil::DebugData::ConstPtr debugData; Identifier functionName; std::vector<Expression> arguments; };
+struct Assignment { std::shared_ptr<DebugData const> debugData; std::vector<Identifier> variableNames; std::unique_ptr<Expression> value; };
+struct FunctionCall { std::shared_ptr<DebugData const> debugData; Identifier functionName; std::vector<Expression> arguments; };
 /// Statement that contains only a single expression
-struct ExpressionStatement { langutil::DebugData::ConstPtr debugData; Expression expression; };
+struct ExpressionStatement { std::shared_ptr<DebugData const> debugData; Expression expression; };
 /// Block-scope variable declaration ("let x:u256 := mload(20:u256)"), non-hoisted
-struct VariableDeclaration { langutil::DebugData::ConstPtr debugData; NameWithDebugDataList variables; std::unique_ptr<Expression> value; };
+struct VariableDeclaration { std::shared_ptr<DebugData const> debugData; TypedNameList variables; std::unique_ptr<Expression> value; };
 /// Block that creates a scope (frees declared stack variables)
-struct Block { langutil::DebugData::ConstPtr debugData; std::vector<Statement> statements; };
+struct Block { std::shared_ptr<DebugData const> debugData; std::vector<Statement> statements; };
 /// Function definition ("function f(a, b) -> (d, e) { ... }")
-struct FunctionDefinition { langutil::DebugData::ConstPtr debugData; YulName name; NameWithDebugDataList parameters; NameWithDebugDataList returnVariables; Block body; };
+struct FunctionDefinition { std::shared_ptr<DebugData const> debugData; YulString name; TypedNameList parameters; TypedNameList returnVariables; Block body; };
 /// Conditional execution without "else" part.
-struct If { langutil::DebugData::ConstPtr debugData; std::unique_ptr<Expression> condition; Block body; };
+struct If { std::shared_ptr<DebugData const> debugData; std::unique_ptr<Expression> condition; Block body; };
 /// Switch case or default case
-struct Case { langutil::DebugData::ConstPtr debugData; std::unique_ptr<Literal> value; Block body; };
+struct Case { std::shared_ptr<DebugData const> debugData; std::unique_ptr<Literal> value; Block body; };
 /// Switch statement
-struct Switch { langutil::DebugData::ConstPtr debugData; std::unique_ptr<Expression> expression; std::vector<Case> cases; };
-struct ForLoop { langutil::DebugData::ConstPtr debugData; Block pre; std::unique_ptr<Expression> condition; Block post; Block body; };
+struct Switch { std::shared_ptr<DebugData const> debugData; std::unique_ptr<Expression> expression; std::vector<Case> cases; };
+struct ForLoop { std::shared_ptr<DebugData const> debugData; Block pre; std::unique_ptr<Expression> condition; Block post; Block body; };
 /// Break statement (valid within for loop)
-struct Break { langutil::DebugData::ConstPtr debugData; };
+struct Break { std::shared_ptr<DebugData const> debugData; };
 /// Continue statement (valid within for loop)
-struct Continue { langutil::DebugData::ConstPtr debugData; };
+struct Continue { std::shared_ptr<DebugData const> debugData; };
 /// Leave statement (valid within function)
-struct Leave { langutil::DebugData::ConstPtr debugData; };
-
-/// Immutable AST comprised of its top-level block
-class AST
-{
-public:
-	explicit AST(Block _root): m_root(std::move(_root)) {}
-
-	[[nodiscard]] Block const& root() const { return m_root; }
-private:
-	Block m_root;
-};
-
+struct Leave { std::shared_ptr<DebugData const> debugData; };
 
 /// Extracts the IR source location from a Yul node.
 template <class T> inline langutil::SourceLocation nativeLocationOf(T const& _node)
@@ -136,13 +133,13 @@ template <class... Args> inline langutil::SourceLocation originLocationOf(std::v
 }
 
 /// Extracts the debug data from a Yul node.
-template <class T> inline langutil::DebugData::ConstPtr debugDataOf(T const& _node)
+template <class T> inline std::shared_ptr<DebugData const> debugDataOf(T const& _node)
 {
 	return _node.debugData;
 }
 
 /// Extracts the debug data from a Yul node.
-template <class... Args> inline langutil::DebugData::ConstPtr debugDataOf(std::variant<Args...> const& _node)
+template <class... Args> inline std::shared_ptr<DebugData const> debugDataOf(std::variant<Args...> const& _node)
 {
 	return std::visit([](auto const& _arg) { return debugDataOf(_arg); }, _node);
 }

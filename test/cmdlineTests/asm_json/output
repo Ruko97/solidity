@@ -2,7 +2,8 @@
 ======= asm_json/input.sol:C =======
 EVM assembly:
 {
-  ".code": [
+  ".code":
+  [
     {
       "begin": 60,
       "end": 160,
@@ -64,9 +65,8 @@ EVM assembly:
     {
       "begin": 60,
       "end": 160,
-      "name": "PUSH",
-      "source": 0,
-      "value": "0"
+      "name": "DUP1",
+      "source": 0
     },
     {
       "begin": 60,
@@ -140,10 +140,13 @@ EVM assembly:
       "source": 0
     }
   ],
-  ".data": {
-    "0": {
+  ".data":
+  {
+    "0":
+    {
       ".auxdata": "<BYTECODE REMOVED>",
-      ".code": [
+      ".code":
+      [
         {
           "begin": 60,
           "end": 160,
@@ -205,9 +208,8 @@ EVM assembly:
         {
           "begin": 60,
           "end": 160,
-          "name": "PUSH",
-          "source": 0,
-          "value": "0"
+          "name": "DUP1",
+          "source": 0
         },
         {
           "begin": 60,
@@ -347,9 +349,8 @@ EVM assembly:
         {
           "begin": 60,
           "end": 160,
-          "name": "PUSH",
-          "source": 0,
-          "value": "0"
+          "name": "DUP1",
+          "source": 0
         },
         {
           "begin": 60,
@@ -625,9 +626,8 @@ EVM assembly:
         {
           "begin": 135,
           "end": 151,
-          "name": "PUSH",
-          "source": 0,
-          "value": "0"
+          "name": "DUP1",
+          "source": 0
         },
         {
           "begin": 135,
@@ -684,9 +684,8 @@ EVM assembly:
         {
           "begin": 194,
           "end": 195,
-          "name": "PUSH",
-          "source": 1,
-          "value": "0"
+          "name": "DUP1",
+          "source": 1
         },
         {
           "begin": 187,
@@ -845,9 +844,8 @@ EVM assembly:
         {
           "begin": 526,
           "end": 527,
-          "name": "PUSH",
-          "source": 1,
-          "value": "0"
+          "name": "DUP1",
+          "source": 1
         },
         {
           "begin": 519,
@@ -1572,7 +1570,8 @@ EVM assembly:
       ]
     }
   },
-  "sourceList": [
+  "sourceList":
+  [
     "asm_json/input.sol",
     "#utility.yul"
   ]

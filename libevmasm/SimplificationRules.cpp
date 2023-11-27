@@ -126,12 +126,12 @@ bool Pattern::matches(Expression const& _expr, ExpressionClasses const& _classes
 	return true;
 }
 
-AssemblyItem Pattern::toAssemblyItem(langutil::DebugData::ConstPtr _debugData) const
+AssemblyItem Pattern::toAssemblyItem(SourceLocation const& _location) const
 {
 	if (m_type == Operation)
-		return AssemblyItem(m_instruction, std::move(_debugData));
+		return AssemblyItem(m_instruction, _location);
 	else
-		return AssemblyItem(m_type, data(), std::move(_debugData));
+		return AssemblyItem(m_type, data(), _location);
 }
 
 std::string Pattern::toString() const
@@ -199,7 +199,7 @@ u256 const& Pattern::data() const
 	return *m_data;
 }
 
-ExpressionTemplate::ExpressionTemplate(Pattern const& _pattern, langutil::DebugData::ConstPtr const& _debugData)
+ExpressionTemplate::ExpressionTemplate(Pattern const& _pattern, SourceLocation const& _location)
 {
 	if (_pattern.matchGroup())
 	{
@@ -209,10 +209,10 @@ ExpressionTemplate::ExpressionTemplate(Pattern const& _pattern, langutil::DebugD
 	else
 	{
 		hasId = false;
-		item = _pattern.toAssemblyItem(_debugData);
+		item = _pattern.toAssemblyItem(_location);
 	}
 	for (auto const& arg: _pattern.arguments())
-		arguments.emplace_back(arg, _debugData);
+		arguments.emplace_back(arg, _location);
 }
 
 std::string ExpressionTemplate::toString() const

@@ -1,10 +1,12 @@
 {
-	function f(a) -> r1, r2 {
+	function f(a:u256) -> r1:u256, r2:u256 {
 		r1 := a
-		r2 := 7
+		r2 := 7:u256
 	}
-	let x := 9
-	let y := 2
+	let x:u256 := 9:u256
+	let y:u256 := 2:u256
 	x, y := f(x)
 }
+// ====
+// dialect: evmTyped
 // ----

@@ -22,12 +22,12 @@
 #pragma once
 
 #include <libyul/optimiser/ASTWalker.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 #include <libyul/Dialect.h>
 #include <libyul/backends/evm/EVMDialect.h>
 #include <libyul/ASTForward.h>
 
-#include <liblangutil/DebugData.h>
+#include <liblangutil/SourceLocation.h>
 
 #include <libsolutil/Common.h>
 
@@ -74,7 +74,7 @@ public:
 	RepresentationFinder(
 		EVMDialect const& _dialect,
 		GasMeter const& _meter,
-		langutil::DebugData::ConstPtr _debugData,
+		std::shared_ptr<DebugData const> _debugData,
 		std::map<u256, Representation>& _cache
 	):
 		m_dialect(_dialect),
@@ -93,14 +93,14 @@ private:
 	Representation const& findRepresentation(u256 const& _value);
 
 	Representation represent(u256 const& _value) const;
-	Representation represent(YulName _instruction, Representation const& _arg) const;
-	Representation represent(YulName _instruction, Representation const& _arg1, Representation const& _arg2) const;
+	Representation represent(YulString _instruction, Representation const& _arg) const;
+	Representation represent(YulString _instruction, Representation const& _arg1, Representation const& _arg2) const;
 
 	Representation min(Representation _a, Representation _b);
 
 	EVMDialect const& m_dialect;
 	GasMeter const& m_meter;
-	langutil::DebugData::ConstPtr m_debugData;
+	std::shared_ptr<DebugData const> m_debugData;
 	/// Counter for the complexity of optimization, will stop when it reaches zero.
 	size_t m_maxSteps = 10000;
 	std::map<u256, Representation>& m_cache;

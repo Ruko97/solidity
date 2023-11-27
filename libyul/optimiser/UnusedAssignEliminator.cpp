@@ -92,7 +92,7 @@ void UnusedAssignEliminator::operator()(FunctionCall const& _functionCall)
 
 void UnusedAssignEliminator::operator()(Leave const&)
 {
-	for (YulName name: m_returnVariables)
+	for (YulString name: m_returnVariables)
 		markUsed(name);
 	m_activeStores.clear();
 }
@@ -152,7 +152,7 @@ void UnusedAssignEliminator::finalizeFunctionDefinition(FunctionDefinition const
 		markUsed(retParam.name);
 }
 
-void UnusedAssignEliminator::markUsed(YulName _variable)
+void UnusedAssignEliminator::markUsed(YulString _variable)
 {
 	for (auto& assignment: m_activeStores[_variable])
 		m_usedStores.insert(assignment);

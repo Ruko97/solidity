@@ -45,16 +45,9 @@ using solidity::util::h256;
 
 void InterpreterState::dumpStorage(std::ostream& _out) const
 {
-	for (auto const& [slot, value]: storage)
-		if (value != h256{})
-			_out << "  " << slot.hex() << ": " << value.hex() << std::endl;
-}
-
-void InterpreterState::dumpTransientStorage(std::ostream& _out) const
-{
-	for (auto const& [slot, value]: transientStorage)
-		if (value != h256{})
-			_out << "  " << slot.hex() << ": " << value.hex() << std::endl;
+	for (auto const& slot: storage)
+		if (slot.second != h256{})
+			_out << "  " << slot.first.hex() << ": " << slot.second.hex() << std::endl;
 }
 
 void InterpreterState::dumpTraceAndState(std::ostream& _out, bool _disableMemoryTrace) const
@@ -74,9 +67,6 @@ void InterpreterState::dumpTraceAndState(std::ostream& _out, bool _disableMemory
 	}
 	_out << "Storage dump:" << std::endl;
 	dumpStorage(_out);
-
-	_out << "Transient storage dump:" << std::endl;
-	dumpTransientStorage(_out);
 
 	if (!calldata.empty())
 	{
@@ -131,7 +121,7 @@ void Interpreter::operator()(Assignment const& _assignment)
 	solAssert(values.size() == _assignment.variableNames.size(), "");
 	for (size_t i = 0; i < values.size(); ++i)
 	{
-		YulName varName = _assignment.variableNames.at(i).name;
+		YulString varName = _assignment.variableNames.at(i).name;
 		solAssert(m_variables.count(varName), "");
 		m_variables[varName] = values.at(i);
 	}
@@ -146,7 +136,7 @@ void Interpreter::operator()(VariableDeclaration const& _declaration)
 	solAssert(values.size() == _declaration.variables.size(), "");
 	for (size_t i = 0; i < values.size(); ++i)
 	{
-		YulName varName = _declaration.variables.at(i).name;
+		YulString varName = _declaration.variables.at(i).name;
 		solAssert(!m_variables.count(varName), "");
 		m_variables[varName] = values.at(i);
 		m_scope->names.emplace(varName, nullptr);
@@ -296,7 +286,10 @@ void Interpreter::incrementStep()
 void ExpressionEvaluator::operator()(Literal const& _literal)
 {
 	incrementStep();
-	setValue(_literal.value.value());
+	static YulString const trueString("true");
+	static YulString const falseString("false");
+
+	setValue(valueOfLiteral(_literal));
 }
 
 void ExpressionEvaluator::operator()(Identifier const& _identifier)
@@ -343,7 +336,7 @@ void ExpressionEvaluator::operator()(FunctionCall const& _funCall)
 	FunctionDefinition const* fun = scope->names.at(_funCall.functionName.name);
 	yulAssert(fun, "Function not found.");
 	yulAssert(m_values.size() == fun->parameters.size(), "");
-	std::map<YulName, u256> variables;
+	std::map<YulString, u256> variables;
 	for (size_t i = 0; i < fun->parameters.size(); ++i)
 		variables[fun->parameters.at(i).name] = m_values.at(i);
 	for (size_t i = 0; i < fun->returnVariables.size(); ++i)
@@ -386,13 +379,16 @@ void ExpressionEvaluator::evaluateArgs(
 			visit(expr);
 		else
 		{
-			if (std::get<Literal>(expr).value.unlimited())
+			std::string literal = std::get<Literal>(expr).value.str();
+
+			try
 			{
-				yulAssert(std::get<Literal>(expr).kind == LiteralKind::String);
-				m_values = {0xdeadbeef};
+				m_values = {u256(literal)};
 			}
-			else
-				m_values = {std::get<Literal>(expr).value.value()};
+			catch (std::exception&)
+			{
+				m_values = {u256(0)};
+			}
 		}
 
 		values.push_back(value());

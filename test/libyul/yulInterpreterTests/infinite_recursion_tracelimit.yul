@@ -42,4 +42,3 @@
 //   Trace size limit reached.
 // Memory dump:
 // Storage dump:
-// Transient storage dump:

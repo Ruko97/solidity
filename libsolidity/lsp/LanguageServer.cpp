@@ -52,7 +52,6 @@ using namespace std::placeholders;
 using namespace solidity::lsp;
 using namespace solidity::langutil;
 using namespace solidity::frontend;
-using namespace solidity;
 
 namespace fs = boost::filesystem;
 
@@ -86,44 +85,44 @@ int toDiagnosticSeverity(Error::Type _errorType)
 	return -1;
 }
 
-Json semanticTokensLegend()
+Json::Value semanticTokensLegend()
 {
-	Json legend;
+	Json::Value legend = Json::objectValue;
 
 	// NOTE! The (alphabetical) order and items must match exactly the items of
 	//       their respective enum class members.
 
-	Json tokenTypes = Json::array();
-	tokenTypes.emplace_back("class");
-	tokenTypes.emplace_back("comment");
-	tokenTypes.emplace_back("enum");
-	tokenTypes.emplace_back("enumMember");
-	tokenTypes.emplace_back("event");
-	tokenTypes.emplace_back("function");
-	tokenTypes.emplace_back("interface");
-	tokenTypes.emplace_back("keyword");
-	tokenTypes.emplace_back("macro");
-	tokenTypes.emplace_back("method");
-	tokenTypes.emplace_back("modifier");
-	tokenTypes.emplace_back("number");
-	tokenTypes.emplace_back("operator");
-	tokenTypes.emplace_back("parameter");
-	tokenTypes.emplace_back("property");
-	tokenTypes.emplace_back("std::string");
-	tokenTypes.emplace_back("struct");
-	tokenTypes.emplace_back("type");
-	tokenTypes.emplace_back("typeParameter");
-	tokenTypes.emplace_back("variable");
+	Json::Value tokenTypes = Json::arrayValue;
+	tokenTypes.append("class");
+	tokenTypes.append("comment");
+	tokenTypes.append("enum");
+	tokenTypes.append("enumMember");
+	tokenTypes.append("event");
+	tokenTypes.append("function");
+	tokenTypes.append("interface");
+	tokenTypes.append("keyword");
+	tokenTypes.append("macro");
+	tokenTypes.append("method");
+	tokenTypes.append("modifier");
+	tokenTypes.append("number");
+	tokenTypes.append("operator");
+	tokenTypes.append("parameter");
+	tokenTypes.append("property");
+	tokenTypes.append("std::string");
+	tokenTypes.append("struct");
+	tokenTypes.append("type");
+	tokenTypes.append("typeParameter");
+	tokenTypes.append("variable");
 	legend["tokenTypes"] = tokenTypes;
 
-	Json tokenModifiers = Json::array();
-	tokenModifiers.emplace_back("abstract");
-	tokenModifiers.emplace_back("declaration");
-	tokenModifiers.emplace_back("definition");
-	tokenModifiers.emplace_back("deprecated");
-	tokenModifiers.emplace_back("documentation");
-	tokenModifiers.emplace_back("modification");
-	tokenModifiers.emplace_back("readonly");
+	Json::Value tokenModifiers = Json::arrayValue;
+	tokenModifiers.append("abstract");
+	tokenModifiers.append("declaration");
+	tokenModifiers.append("definition");
+	tokenModifiers.append("deprecated");
+	tokenModifiers.append("documentation");
+	tokenModifiers.append("modification");
+	tokenModifiers.append("readonly");
 	legend["tokenModifiers"] = tokenModifiers;
 
 	return legend;
@@ -139,7 +138,7 @@ LanguageServer::LanguageServer(Transport& _transport):
 		{"exit", [this](auto, auto) { m_state = (m_state == State::ShutdownRequested ? State::ExitRequested : State::ExitWithoutShutdown); }},
 		{"initialize", std::bind(&LanguageServer::handleInitialize, this, _1, _2)},
 		{"initialized", std::bind(&LanguageServer::handleInitialized, this, _1, _2)},
-		{"$/setTrace", [this](auto, Json const& args) { setTrace(args["value"]); }},
+		{"$/setTrace", [this](auto, Json::Value const& args) { setTrace(args["value"]); }},
 		{"shutdown", [this](auto, auto) { m_state = State::ShutdownRequested; }},
 		{"textDocument/definition", GotoDefinition(*this) },
 		{"textDocument/didOpen", std::bind(&LanguageServer::handleTextDocumentDidOpen, this, _2)},
@@ -156,17 +155,17 @@ LanguageServer::LanguageServer(Transport& _transport):
 {
 }
 
-Json LanguageServer::toRange(SourceLocation const& _location)
+Json::Value LanguageServer::toRange(SourceLocation const& _location)
 {
 	return HandlerBase(*this).toRange(_location);
 }
 
-Json LanguageServer::toJson(SourceLocation const& _location)
+Json::Value LanguageServer::toJson(SourceLocation const& _location)
 {
 	return HandlerBase(*this).toJson(_location);
 }
 
-void LanguageServer::changeConfiguration(Json const& _settings)
+void LanguageServer::changeConfiguration(Json::Value const& _settings)
 {
 	// The settings item: "file-load-strategy" (enum) defaults to "project-directory" if not (or not correctly) set.
 	// It can be overridden during client's handshake or at runtime, as usual.
@@ -177,9 +176,9 @@ void LanguageServer::changeConfiguration(Json const& _settings)
 	//
 	// If this value is set to "directly-opened-and-on-import", then only currently directly opened files and
 	// those files being imported directly or indirectly will be included in operations.
-	if (_settings.contains("file-load-strategy"))
+	if (_settings["file-load-strategy"])
 	{
-		auto const text = _settings["file-load-strategy"].get<std::string>();
+		auto const text = _settings["file-load-strategy"].asString();
 		if (text == "project-directory")
 			m_fileLoadStrategy = FileLoadStrategy::ProjectDirectory;
 		else if (text == "directly-opened-and-on-import")
@@ -189,18 +188,18 @@ void LanguageServer::changeConfiguration(Json const& _settings)
 	}
 
 	m_settingsObject = _settings;
-	Json jsonIncludePaths = _settings.contains("include-paths") ? _settings["include-paths"] : Json::object();
+	Json::Value jsonIncludePaths = _settings["include-paths"];
 
-	if (!jsonIncludePaths.empty())
+	if (jsonIncludePaths)
 	{
 		int typeFailureCount = 0;
-		if (jsonIncludePaths.is_array())
+		if (jsonIncludePaths.isArray())
 		{
 			std::vector<boost::filesystem::path> includePaths;
-			for (Json const& jsonPath: jsonIncludePaths)
+			for (Json::Value const& jsonPath: jsonIncludePaths)
 			{
-				if (jsonPath.is_string())
-					includePaths.emplace_back(jsonPath.get<std::string>());
+				if (jsonPath.isString())
+					includePaths.emplace_back(boost::filesystem::path(jsonPath.asString()));
 				else
 					typeFailureCount++;
 			}
@@ -275,11 +274,11 @@ void LanguageServer::compileAndUpdateDiagnostics()
 
 	// These are the source units we will sent diagnostics to the client for sure,
 	// even if it is just to clear previous diagnostics.
-	std::map<std::string, Json> diagnosticsBySourceUnit;
+	std::map<std::string, Json::Value> diagnosticsBySourceUnit;
 	for (std::string const& sourceUnitName: m_fileRepository.sourceUnits() | ranges::views::keys)
-		diagnosticsBySourceUnit[sourceUnitName] = Json::array();
+		diagnosticsBySourceUnit[sourceUnitName] = Json::arrayValue;
 	for (std::string const& sourceUnitName: m_nonemptyDiagnostics)
-		diagnosticsBySourceUnit[sourceUnitName] = Json::array();
+		diagnosticsBySourceUnit[sourceUnitName] = Json::arrayValue;
 
 	for (std::shared_ptr<Error const> const& error: m_compilerStack.errors())
 	{
@@ -288,10 +287,10 @@ void LanguageServer::compileAndUpdateDiagnostics()
 			// LSP only has diagnostics applied to individual files.
 			continue;
 
-		Json jsonDiag;
+		Json::Value jsonDiag;
 		jsonDiag["source"] = "solc";
 		jsonDiag["severity"] = toDiagnosticSeverity(error->type());
-		jsonDiag["code"] = Json(error->errorId().error);
+		jsonDiag["code"] = Json::UInt64{error->errorId().error};
 		std::string message = Error::formatErrorType(error->type()) + ":";
 		if (std::string const* comment = error->comment())
 			message += " " + *comment;
@@ -301,26 +300,26 @@ void LanguageServer::compileAndUpdateDiagnostics()
 		if (auto const* secondary = error->secondarySourceLocation())
 			for (auto&& [secondaryMessage, secondaryLocation]: secondary->infos)
 			{
-				Json jsonRelated;
+				Json::Value jsonRelated;
 				jsonRelated["message"] = secondaryMessage;
 				jsonRelated["location"] = toJson(secondaryLocation);
-				jsonDiag["relatedInformation"].emplace_back(jsonRelated);
+				jsonDiag["relatedInformation"].append(jsonRelated);
 			}
 
-		diagnosticsBySourceUnit[*location->sourceName].emplace_back(jsonDiag);
+		diagnosticsBySourceUnit[*location->sourceName].append(jsonDiag);
 	}
 
 	if (m_client.traceValue() != TraceValue::Off)
 	{
-		Json extra;
-		extra["openFileCount"] = Json(diagnosticsBySourceUnit.size());
+		Json::Value extra;
+		extra["openFileCount"] = Json::UInt64(diagnosticsBySourceUnit.size());
 		m_client.trace("Number of currently open files: " + std::to_string(diagnosticsBySourceUnit.size()), extra);
 	}
 
 	m_nonemptyDiagnostics.clear();
 	for (auto&& [sourceUnitName, diagnostics]: diagnosticsBySourceUnit)
 	{
-		Json params;
+		Json::Value params;
 		params["uri"] = m_fileRepository.sourceUnitNameToUri(sourceUnitName);
 		if (!diagnostics.empty())
 			m_nonemptyDiagnostics.insert(sourceUnitName);
@@ -336,15 +335,14 @@ bool LanguageServer::run()
 		MessageID id;
 		try
 		{
-			std::optional<Json> const jsonMessage = m_client.receive();
+			std::optional<Json::Value> const jsonMessage = m_client.receive();
 			if (!jsonMessage)
 				continue;
 
-			if ((*jsonMessage).contains("method") && (*jsonMessage)["method"].is_string())
+			if ((*jsonMessage)["method"].isString())
 			{
-				std::string const methodName = (*jsonMessage)["method"].get<std::string>();
-				if ((*jsonMessage).contains("id"))
-					id = (*jsonMessage)["id"];
+				std::string const methodName = (*jsonMessage)["method"].asString();
+				id = (*jsonMessage)["id"];
 				lspDebug(fmt::format("received method call: {}", methodName));
 
 				if (auto handler = util::valueOrDefault(m_handlers, methodName))
@@ -355,7 +353,7 @@ bool LanguageServer::run()
 			else
 				m_client.error({}, ErrorCode::ParseError, "\"method\" has to be a string.");
 		}
-		catch (Json::exception const&)
+		catch (Json::Exception const&)
 		{
 			m_client.error(id, ErrorCode::InvalidParams, "JSON object access error. Most likely due to a badly formatted JSON request message."s);
 		}
@@ -380,7 +378,7 @@ void LanguageServer::requireServerInitialized()
 	);
 }
 
-void LanguageServer::handleInitialize(MessageID _id, Json const& _args)
+void LanguageServer::handleInitialize(MessageID _id, Json::Value const& _args)
 {
 	lspRequire(
 		m_state == State::Started,
@@ -393,9 +391,9 @@ void LanguageServer::handleInitialize(MessageID _id, Json const& _args)
 	// The default of FileReader is to use `.`, but the path from where the LSP was started
 	// should not matter.
 	std::string rootPath("/");
-	if (_args.contains("rootUri") && _args["rootUri"].is_string())
+	if (Json::Value uri = _args["rootUri"])
 	{
-		rootPath = _args["rootUri"].get<std::string>();
+		rootPath = uri.asString();
 		lspRequire(
 			boost::starts_with(rootPath, "file://"),
 			ErrorCode::InvalidParams,
@@ -403,17 +401,17 @@ void LanguageServer::handleInitialize(MessageID _id, Json const& _args)
 		);
 		rootPath = stripFileUriSchemePrefix(rootPath);
 	}
-	else if (_args.contains("rootPath"))
-		rootPath = _args["rootPath"].get<std::string>();
+	else if (Json::Value rootPath = _args["rootPath"])
+		rootPath = rootPath.asString();
 
-	if (_args.contains("trace"))
+	if (_args["trace"])
 		setTrace(_args["trace"]);
 
 	m_fileRepository = FileRepository(rootPath, {});
-	if (_args.contains("initializationOptions") && _args["initializationOptions"].is_object())
+	if (_args["initializationOptions"].isObject())
 		changeConfiguration(_args["initializationOptions"]);
 
-	Json replyArgs;
+	Json::Value replyArgs;
 	replyArgs["serverInfo"]["name"] = "solc";
 	replyArgs["serverInfo"]["version"] = std::string(VersionNumber);
 	replyArgs["capabilities"]["definitionProvider"] = true;
@@ -429,49 +427,44 @@ void LanguageServer::handleInitialize(MessageID _id, Json const& _args)
 	m_client.reply(_id, std::move(replyArgs));
 }
 
-void LanguageServer::handleInitialized(MessageID, Json const&)
+void LanguageServer::handleInitialized(MessageID, Json::Value const&)
 {
 	if (m_fileLoadStrategy == FileLoadStrategy::ProjectDirectory)
 		compileAndUpdateDiagnostics();
 }
 
-void LanguageServer::semanticTokensFull(MessageID _id, Json const& _args)
+void LanguageServer::semanticTokensFull(MessageID _id, Json::Value const& _args)
 {
-	if (_args.contains("textDocument") && _args["textDocument"].contains("uri"))
-	{
-		auto uri = _args["textDocument"]["uri"];
+	auto uri = _args["textDocument"]["uri"];
 
-		compile();
+	compile();
 
-		auto const sourceName = m_fileRepository.uriToSourceUnitName(uri.get<std::string>());
-		SourceUnit const& ast = m_compilerStack.ast(sourceName);
-		m_compilerStack.charStream(sourceName);
-		Json data = SemanticTokensBuilder().build(ast, m_compilerStack.charStream(sourceName));
+	auto const sourceName = m_fileRepository.uriToSourceUnitName(uri.as<std::string>());
+	SourceUnit const& ast = m_compilerStack.ast(sourceName);
+	m_compilerStack.charStream(sourceName);
+	Json::Value data = SemanticTokensBuilder().build(ast, m_compilerStack.charStream(sourceName));
 
-		Json reply;
-		reply["data"] = data;
+	Json::Value reply = Json::objectValue;
+	reply["data"] = data;
 
-		m_client.reply(_id, std::move(reply));
-	}
-	else
-		m_client.error(_id, ErrorCode::InvalidParams, "Invalid parameter: textDocument.uri expected.");
+	m_client.reply(_id, std::move(reply));
 }
 
-void LanguageServer::handleWorkspaceDidChangeConfiguration(Json const& _args)
+void LanguageServer::handleWorkspaceDidChangeConfiguration(Json::Value const& _args)
 {
 	requireServerInitialized();
 
-	if (_args.contains("settings") && _args["settings"].is_object())
+	if (_args["settings"].isObject())
 		changeConfiguration(_args["settings"]);
 }
 
-void LanguageServer::setTrace(Json const& _args)
+void LanguageServer::setTrace(Json::Value const& _args)
 {
-	if (!_args.is_string())
+	if (!_args.isString())
 		// Simply ignore invalid parameter.
 		return;
 
-	std::string const stringValue = _args.get<std::string>();
+	std::string const stringValue = _args.asString();
 	if (stringValue == "off")
 		m_client.setTrace(TraceValue::Off);
 	else if (stringValue == "messages")
@@ -480,90 +473,78 @@ void LanguageServer::setTrace(Json const& _args)
 		m_client.setTrace(TraceValue::Verbose);
 }
 
-void LanguageServer::handleTextDocumentDidOpen(Json const& _args)
+void LanguageServer::handleTextDocumentDidOpen(Json::Value const& _args)
 {
 	requireServerInitialized();
 
 	lspRequire(
-		_args.contains("textDocument"),
+		_args["textDocument"],
 		ErrorCode::RequestFailed,
 		"Text document parameter missing."
 	);
 
-	if (_args["textDocument"].contains("text") && _args["textDocument"].contains("uri"))
+	std::string text = _args["textDocument"]["text"].asString();
+	std::string uri = _args["textDocument"]["uri"].asString();
+	m_openFiles.insert(uri);
+	m_fileRepository.setSourceByUri(uri, std::move(text));
+	compileAndUpdateDiagnostics();
+}
+
+void LanguageServer::handleTextDocumentDidChange(Json::Value const& _args)
+{
+	requireServerInitialized();
+
+	std::string const uri = _args["textDocument"]["uri"].asString();
+
+	for (Json::Value jsonContentChange: _args["contentChanges"])
 	{
-		std::string text = _args["textDocument"]["text"].get<std::string>();
-		std::string uri = _args["textDocument"]["uri"].get<std::string>();
-		m_openFiles.insert(uri);
+		lspRequire(
+			jsonContentChange.isObject(),
+			ErrorCode::RequestFailed,
+			"Invalid content reference."
+		);
+
+		std::string const sourceUnitName = m_fileRepository.uriToSourceUnitName(uri);
+		lspRequire(
+			m_fileRepository.sourceUnits().count(sourceUnitName),
+			ErrorCode::RequestFailed,
+			"Unknown file: " + uri
+		);
+
+		std::string text = jsonContentChange["text"].asString();
+		if (jsonContentChange["range"].isObject()) // otherwise full content update
+		{
+			std::optional<SourceLocation> change = parseRange(m_fileRepository, sourceUnitName, jsonContentChange["range"]);
+			lspRequire(
+				change && change->hasText(),
+				ErrorCode::RequestFailed,
+				"Invalid source range: " + util::jsonCompactPrint(jsonContentChange["range"])
+			);
+
+			std::string buffer = m_fileRepository.sourceUnits().at(sourceUnitName);
+			buffer.replace(static_cast<size_t>(change->start), static_cast<size_t>(change->end - change->start), std::move(text));
+			text = std::move(buffer);
+		}
 		m_fileRepository.setSourceByUri(uri, std::move(text));
-		compileAndUpdateDiagnostics();
 	}
+
+	compileAndUpdateDiagnostics();
 }
 
-void LanguageServer::handleTextDocumentDidChange(Json const& _args)
-{
-	requireServerInitialized();
-
-	if (_args.contains("textDocument") && _args["textDocument"].contains("uri"))
-	{
-		std::string const uri = _args["textDocument"]["uri"].get<std::string>();
-
-		if (_args.contains("contentChanges"))
-			for (auto const& [_, jsonContentChange]: _args["contentChanges"].items())
-			{
-				lspRequire(jsonContentChange.is_object(), ErrorCode::RequestFailed, "Invalid content reference.");
-
-				std::string const sourceUnitName = m_fileRepository.uriToSourceUnitName(uri);
-				lspRequire(
-					m_fileRepository.sourceUnits().count(sourceUnitName),
-					ErrorCode::RequestFailed,
-					"Unknown file: " + uri);
-
-				if (jsonContentChange.contains("text"))
-				{
-					std::string text = jsonContentChange["text"].get<std::string>();
-					if (jsonContentChange.contains("range")
-						&& jsonContentChange["range"].is_object()) // otherwise full content update
-					{
-						std::optional<SourceLocation> change
-							= parseRange(m_fileRepository, sourceUnitName, jsonContentChange["range"]);
-						lspRequire(
-							change && change->hasText(),
-							ErrorCode::RequestFailed,
-							"Invalid source range: " + util::jsonCompactPrint(jsonContentChange["range"]));
-
-						std::string buffer = m_fileRepository.sourceUnits().at(sourceUnitName);
-						buffer.replace(
-							static_cast<size_t>(change->start),
-							static_cast<size_t>(change->end - change->start),
-							std::move(text));
-						text = std::move(buffer);
-					}
-					m_fileRepository.setSourceByUri(uri, std::move(text));
-				}
-			}
-
-		compileAndUpdateDiagnostics();
-	}
-}
-
-void LanguageServer::handleTextDocumentDidClose(Json const& _args)
+void LanguageServer::handleTextDocumentDidClose(Json::Value const& _args)
 {
 	requireServerInitialized();
 
 	lspRequire(
-		_args.contains("textDocument"),
+		_args["textDocument"],
 		ErrorCode::RequestFailed,
 		"Text document parameter missing."
 	);
 
-	if (_args["textDocument"].contains("uri"))
-	{
-		std::string uri = _args["textDocument"]["uri"].get<std::string>();
-		m_openFiles.erase(uri);
+	std::string uri = _args["textDocument"]["uri"].asString();
+	m_openFiles.erase(uri);
 
-		compileAndUpdateDiagnostics();
-	}
+	compileAndUpdateDiagnostics();
 }
 
 ASTNode const* LanguageServer::astNodeAtSourceLocation(std::string const& _sourceUnitName, LineColumn const& _filePos)

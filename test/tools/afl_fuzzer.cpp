@@ -28,6 +28,7 @@
 #include <string>
 #include <iostream>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::util;
 
@@ -59,11 +60,11 @@ Allowed options)",
 		)
 		(
 			"input-file",
-			po::value<std::string>(),
+			po::value<string>(),
 			"input file"
 		)(
 			"input-files",
-			po::value<std::vector<std::string>>()->multitoken(),
+			po::value<std::vector<string>>()->multitoken(),
 			"input files"
 		)
 		(
@@ -85,7 +86,7 @@ Allowed options)",
 	}
 	catch (po::error const& _exception)
 	{
-		std::cerr << _exception.what() << std::endl;
+		cerr << _exception.what() << endl;
 		return 1;
 	}
 
@@ -94,26 +95,26 @@ Allowed options)",
 
 	if (arguments.count("help"))
 	{
-		std::cout << options;
+		cout << options;
 		return 0;
 	}
 
-	std::vector<std::string> inputs;
+	vector<string> inputs;
 	if (arguments.count("input-file"))
-		inputs.push_back(arguments["input-file"].as<std::string>());
+		inputs.push_back(arguments["input-file"].as<string>());
 	else if (arguments.count("input-files"))
-		inputs = arguments["input-files"].as<std::vector<std::string>>();
+		inputs = arguments["input-files"].as<vector<string>>();
 	else
 		inputs.emplace_back("");
 
 	bool optimize = !arguments.count("without-optimizer");
 	int retResult = 0;
 
-	for (std::string const& inputFile: inputs)
+	for (string const& inputFile: inputs)
 	{
-		std::string input;
+		string input;
 		if (inputFile.size() == 0)
-			input = readUntilEnd(std::cin);
+			input = readUntilEnd(cin);
 		else
 			input = readFileAsString(inputFile);
 
@@ -133,7 +134,7 @@ Allowed options)",
 			if (inputFile.size() == 0)
 				throw;
 
-			std::cerr << "Fuzzer "
+			cerr << "Fuzzer "
 				<< (optimize ? "" : "(without optimizer) ")
 				<< "failed on "
 				<< inputFile;

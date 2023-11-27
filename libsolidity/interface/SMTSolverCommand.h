@@ -28,22 +28,19 @@ namespace solidity::frontend
 class SMTSolverCommand
 {
 public:
-	/// Calls an SMT solver with the given query.
-	frontend::ReadCallback::Result solve(std::string const& _kind, std::string const& _query) const;
+	SMTSolverCommand(std::string _solverCmd);
 
-	frontend::ReadCallback::Callback solver() const
+	/// Calls an SMT solver with the given query.
+	frontend::ReadCallback::Result solve(std::string const& _kind, std::string const& _query);
+
+	frontend::ReadCallback::Callback solver()
 	{
 		return [this](std::string const& _kind, std::string const& _query) { return solve(_kind, _query); };
 	}
 
-	void setEldarica(std::optional<unsigned int> timeoutInMilliseconds, bool computeInvariants);
-	void setCvc5(std::optional<unsigned int> timeoutInMilliseconds);
-	void setZ3(std::optional<unsigned int> timeoutInMilliseconds, bool _preprocessing, bool _computeInvariants);
-
 private:
 	/// The name of the solver's binary.
-	std::string m_solverCmd;
-	std::vector<std::string> m_arguments;
+	std::string const m_solverCmd;
 };
 
 }

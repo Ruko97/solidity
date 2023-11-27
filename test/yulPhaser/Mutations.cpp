@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <vector>
 
+using namespace std;
 using namespace solidity::util;
 using namespace solidity::yul;
 
@@ -47,7 +48,7 @@ BOOST_AUTO_TEST_CASE(geneRandomisation_should_iterate_over_genes_and_replace_the
 
 	// Use genes that do not represent valid step abbreviations to be able to easily spot added steps.
 	assert(OptimiserSuite::stepAbbreviationToNameMap().count('.') == 0);
-	Chromosome input = Chromosome(std::string(inputLength, '.'));
+	Chromosome input = Chromosome(string(inputLength, '.'));
 
 	SimulationRNG::reset(1);
 	for (size_t randomisationChancePercent = 20; randomisationChancePercent <= 100; randomisationChancePercent += 20)
@@ -55,7 +56,7 @@ BOOST_AUTO_TEST_CASE(geneRandomisation_should_iterate_over_genes_and_replace_the
 		double const randomisationChance = double(randomisationChancePercent) / 100.0;
 
 		Chromosome output = geneRandomisation(randomisationChance)(input);
-		std::string outputGenes = output.genes();
+		string outputGenes = output.genes();
 		BOOST_REQUIRE(output.length() == input.length());
 
 		double const expectedValue = randomisationChance;
@@ -65,15 +66,15 @@ BOOST_AUTO_TEST_CASE(geneRandomisation_should_iterate_over_genes_and_replace_the
 			(inputLength - randomisedGeneCount) * expectedValue * expectedValue +
 			randomisedGeneCount * (1 - expectedValue) * (1 - expectedValue);
 
-		BOOST_TEST(std::abs(randomisedGeneCount / inputLength - expectedValue) < tolerance);
-		BOOST_TEST(std::abs(squaredError / inputLength - variance) < tolerance);
+		BOOST_TEST(abs(randomisedGeneCount / inputLength - expectedValue) < tolerance);
+		BOOST_TEST(abs(squaredError / inputLength - variance) < tolerance);
 	}
 }
 
 BOOST_AUTO_TEST_CASE(geneRandomisation_should_return_identical_chromosome_if_probability_is_zero)
 {
 	Chromosome chromosome("fcCUnDvejsrmV");
-	std::function<Mutation> mutation = geneRandomisation(0.0);
+	function<Mutation> mutation = geneRandomisation(0.0);
 
 	BOOST_TEST(mutation(chromosome) == chromosome);
 }
@@ -85,7 +86,7 @@ BOOST_AUTO_TEST_CASE(geneDeletion_should_iterate_over_genes_and_delete_them_with
 
 	// Use genes that do not represent valid step abbreviations to be able to easily spot added steps.
 	assert(OptimiserSuite::stepAbbreviationToNameMap().count('.') == 0);
-	Chromosome input = Chromosome(std::string(inputLength, '.'));
+	Chromosome input = Chromosome(string(inputLength, '.'));
 
 	SimulationRNG::reset(1);
 	for (size_t deletionChancePercent = 20; deletionChancePercent < 100; deletionChancePercent += 20)
@@ -93,7 +94,7 @@ BOOST_AUTO_TEST_CASE(geneDeletion_should_iterate_over_genes_and_delete_them_with
 		double const deletionChance = double(deletionChancePercent) / 100.0;
 
 		Chromosome output = geneDeletion(deletionChance)(input);
-		std::string outputGenes = output.genes();
+		string outputGenes = output.genes();
 		BOOST_REQUIRE(output.length() <= input.length());
 		BOOST_REQUIRE(static_cast<size_t>(count(outputGenes.begin(), outputGenes.end(), '.')) == output.length());
 
@@ -104,15 +105,15 @@ BOOST_AUTO_TEST_CASE(geneDeletion_should_iterate_over_genes_and_delete_them_with
 			(double(inputLength) - deletedGeneCount) * expectedValue * expectedValue +
 			deletedGeneCount * (1.0 - expectedValue) * (1.0 - expectedValue);
 
-		BOOST_TEST(std::abs(deletedGeneCount / double(inputLength) - expectedValue) < tolerance);
-		BOOST_TEST(std::abs(squaredError / double(inputLength) - variance) < tolerance);
+		BOOST_TEST(abs(deletedGeneCount / double(inputLength) - expectedValue) < tolerance);
+		BOOST_TEST(abs(squaredError / double(inputLength) - variance) < tolerance);
 	}
 }
 
 BOOST_AUTO_TEST_CASE(geneDeletion_should_return_identical_chromosome_if_probability_is_zero)
 {
 	Chromosome chromosome("fcCUnDvejsrmV");
-	std::function<Mutation> mutation = geneDeletion(0.0);
+	function<Mutation> mutation = geneDeletion(0.0);
 
 	BOOST_TEST(mutation(chromosome) == chromosome);
 }
@@ -120,7 +121,7 @@ BOOST_AUTO_TEST_CASE(geneDeletion_should_return_identical_chromosome_if_probabil
 BOOST_AUTO_TEST_CASE(geneDeletion_should_delete_all_genes_if_probability_is_one)
 {
 	Chromosome chromosome("fcCUnDvejsrmV");
-	std::function<Mutation> mutation = geneDeletion(1.0);
+	function<Mutation> mutation = geneDeletion(1.0);
 
 	BOOST_TEST(mutation(chromosome) == Chromosome(""));
 }
@@ -133,7 +134,7 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_iterate_over_gene_positions_and_insert_
 
 	// Use genes that do not represent valid step abbreviations to be able to easily spot added steps.
 	assert(OptimiserSuite::stepAbbreviationToNameMap().count('.') == 0);
-	Chromosome input = Chromosome(std::string(inputLength, '.'));
+	Chromosome input = Chromosome(string(inputLength, '.'));
 
 	SimulationRNG::reset(1);
 	for (size_t additionChancePercent = 20; additionChancePercent < 100; additionChancePercent += 20)
@@ -144,8 +145,8 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_iterate_over_gene_positions_and_insert_
 		BOOST_REQUIRE(output.length() >= input.length());
 		BOOST_REQUIRE(output.length() <= inputLength + maxAdditions);
 
-		std::string_view outputGenes = output.genes();
-		size_t preservedGeneCount = static_cast<size_t>(std::count(outputGenes.begin(), outputGenes.end(), '.'));
+		string_view outputGenes = output.genes();
+		size_t preservedGeneCount = static_cast<size_t>(count(outputGenes.begin(), outputGenes.end(), '.'));
 		BOOST_REQUIRE(preservedGeneCount == input.length());
 
 		double const expectedValue = additionChance;
@@ -155,8 +156,8 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_iterate_over_gene_positions_and_insert_
 			(double(maxAdditions) - addedGeneCount) * expectedValue * expectedValue +
 			addedGeneCount * (1.0 - expectedValue) * (1.0 - expectedValue);
 
-		BOOST_TEST(std::abs(addedGeneCount / double(maxAdditions) - expectedValue) < tolerance);
-		BOOST_TEST(std::abs(squaredError / double(maxAdditions) - variance) < tolerance);
+		BOOST_TEST(abs(addedGeneCount / double(maxAdditions) - expectedValue) < tolerance);
+		BOOST_TEST(abs(squaredError / double(maxAdditions) - variance) < tolerance);
 	}
 }
 
@@ -164,7 +165,7 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_be_able_to_insert_before_first_position
 {
 	SimulationRNG::reset(7);
 	Chromosome chromosome("fcCUnDvejs");
-	std::function<Mutation> mutation = geneAddition(0.1);
+	function<Mutation> mutation = geneAddition(0.1);
 
 	Chromosome mutatedChromosome = mutation(chromosome);
 	BOOST_TEST(mutatedChromosome.length() > chromosome.length());
@@ -175,7 +176,7 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_be_able_to_insert_after_last_position)
 {
 	SimulationRNG::reset(81);
 	Chromosome chromosome("fcCUnDvejs");
-	std::function<Mutation> mutation = geneAddition(0.1);
+	function<Mutation> mutation = geneAddition(0.1);
 
 	Chromosome mutatedChromosome = mutation(chromosome);
 	BOOST_TEST(mutatedChromosome.length() > chromosome.length());
@@ -185,7 +186,7 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_be_able_to_insert_after_last_position)
 BOOST_AUTO_TEST_CASE(geneAddition_should_return_identical_chromosome_if_probability_is_zero)
 {
 	Chromosome chromosome("fcCUnDvejsrmV");
-	std::function<Mutation> mutation = geneAddition(0.0);
+	function<Mutation> mutation = geneAddition(0.0);
 
 	BOOST_TEST(mutation(chromosome) == chromosome);
 }
@@ -193,12 +194,12 @@ BOOST_AUTO_TEST_CASE(geneAddition_should_return_identical_chromosome_if_probabil
 BOOST_AUTO_TEST_CASE(geneAddition_should_insert_genes_at_all_positions_if_probability_is_one)
 {
 	Chromosome chromosome("fcCUnDvejsrmV");
-	std::function<Mutation> mutation = geneAddition(1.0);
+	function<Mutation> mutation = geneAddition(1.0);
 
 	Chromosome mutatedChromosome = mutation(chromosome);
 	BOOST_TEST(mutatedChromosome.length() == chromosome.length() * 2 + 1);
 
-	std::vector<std::string> originalGenes;
+	vector<string> originalGenes;
 	for (size_t i = 0; i < mutatedChromosome.length() - 1; ++i)
 		if (i % 2 == 1)
 			originalGenes.push_back(mutatedChromosome.optimisationSteps()[i]);
@@ -210,7 +211,7 @@ BOOST_AUTO_TEST_CASE(alternativeMutations_should_choose_between_mutations_with_g
 {
 	SimulationRNG::reset(1);
 	Chromosome chromosome("a");
-	std::function<Mutation> mutation = alternativeMutations(
+	function<Mutation> mutation = alternativeMutations(
 		0.8,
 		wholeChromosomeReplacement(Chromosome("c")),
 		wholeChromosomeReplacement(Chromosome("f"))
@@ -233,7 +234,7 @@ BOOST_AUTO_TEST_CASE(alternativeMutations_should_choose_between_mutations_with_g
 BOOST_AUTO_TEST_CASE(alternativeMutations_should_always_choose_first_mutation_if_probability_is_one)
 {
 	Chromosome chromosome("a");
-	std::function<Mutation> mutation = alternativeMutations(
+	function<Mutation> mutation = alternativeMutations(
 		1.0,
 		wholeChromosomeReplacement(Chromosome("c")),
 		wholeChromosomeReplacement(Chromosome("f"))
@@ -246,7 +247,7 @@ BOOST_AUTO_TEST_CASE(alternativeMutations_should_always_choose_first_mutation_if
 BOOST_AUTO_TEST_CASE(alternativeMutations_should_always_choose_second_mutation_if_probability_is_zero)
 {
 	Chromosome chromosome("a");
-	std::function<Mutation> mutation = alternativeMutations(
+	function<Mutation> mutation = alternativeMutations(
 		0.0,
 		wholeChromosomeReplacement(Chromosome("c")),
 		wholeChromosomeReplacement(Chromosome("f"))
@@ -259,8 +260,8 @@ BOOST_AUTO_TEST_CASE(alternativeMutations_should_always_choose_second_mutation_i
 BOOST_AUTO_TEST_CASE(mutationSequence_should_apply_all_mutations)
 {
 	Chromosome chromosome("aaaaa");
-	std::vector<std::string> steps = Chromosome::genesToSteps("gfc");
-	std::function<Mutation> mutation = mutationSequence({
+	vector<string> steps = Chromosome::genesToSteps("gfc");
+	function<Mutation> mutation = mutationSequence({
 		geneSubstitution(3, steps[0]),
 		geneSubstitution(2, steps[1]),
 		geneSubstitution(1, steps[2]),
@@ -272,8 +273,8 @@ BOOST_AUTO_TEST_CASE(mutationSequence_should_apply_all_mutations)
 BOOST_AUTO_TEST_CASE(mutationSequence_apply_mutations_in_the_order_they_are_given)
 {
 	Chromosome chromosome("aa");
-	std::vector<std::string> steps = Chromosome::genesToSteps("gcfo");
-	std::function<Mutation> mutation = mutationSequence({
+	vector<string> steps = Chromosome::genesToSteps("gcfo");
+	function<Mutation> mutation = mutationSequence({
 		geneSubstitution(0, steps[0]),
 		geneSubstitution(1, steps[1]),
 		geneSubstitution(0, steps[2]),
@@ -286,14 +287,14 @@ BOOST_AUTO_TEST_CASE(mutationSequence_apply_mutations_in_the_order_they_are_give
 BOOST_AUTO_TEST_CASE(mutationSequence_should_return_unmodified_chromosome_if_given_no_mutations)
 {
 	Chromosome chromosome("aa");
-	std::function<Mutation> mutation = mutationSequence({});
+	function<Mutation> mutation = mutationSequence({});
 
 	BOOST_TEST(mutation(chromosome) == chromosome);
 }
 
 BOOST_AUTO_TEST_CASE(randomPointCrossover_should_swap_chromosome_parts_at_random_point)
 {
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	SimulationRNG::reset(1);
 	Chromosome result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
@@ -306,22 +307,22 @@ BOOST_AUTO_TEST_CASE(randomPointCrossover_should_swap_chromosome_parts_at_random
 
 BOOST_AUTO_TEST_CASE(symmetricRandomPointCrossover_should_swap_chromosome_parts_at_random_point)
 {
-	std::function<SymmetricCrossover> crossover = symmetricRandomPointCrossover();
+	function<SymmetricCrossover> crossover = symmetricRandomPointCrossover();
 
 	SimulationRNG::reset(1);
-	std::tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
-	std::tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("aaaccc"), Chromosome("cccaaaaaaa")};
+	tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
+	tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("aaaccc"), Chromosome("cccaaaaaaa")};
 	BOOST_TEST(result1 == expectedPair1);
 
-	std::tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
-	std::tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("ccccccaaaa"), Chromosome("aaaaaa")};
+	tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
+	tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("ccccccaaaa"), Chromosome("aaaaaa")};
 	BOOST_TEST(result2 == expectedPair2);
 }
 
 BOOST_AUTO_TEST_CASE(randomPointCrossover_should_only_consider_points_available_on_both_chromosomes)
 {
 	SimulationRNG::reset(1);
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	for (size_t i = 0; i < 30; ++i)
 	{
@@ -345,7 +346,7 @@ BOOST_AUTO_TEST_CASE(randomPointCrossover_should_only_consider_points_available_
 BOOST_AUTO_TEST_CASE(randomPointCrossover_should_never_split_at_position_zero_if_chromosomes_are_splittable)
 {
 	SimulationRNG::reset(1);
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	for (size_t i = 0; i < 30; ++i)
 	{
@@ -359,7 +360,7 @@ BOOST_AUTO_TEST_CASE(randomPointCrossover_should_never_split_at_position_zero_if
 BOOST_AUTO_TEST_CASE(randomPointCrossover_should_never_split_at_position_zero_if_chromosomes_are_not_empty)
 {
 	SimulationRNG::reset(1);
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	for (size_t i = 0; i < 30; ++i)
 	{
@@ -372,7 +373,7 @@ BOOST_AUTO_TEST_CASE(randomPointCrossover_should_never_split_at_position_zero_if
 
 BOOST_AUTO_TEST_CASE(randomPointCrossover_should_work_even_if_one_chromosome_is_unsplittable)
 {
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	SimulationRNG::reset(1);
 	BOOST_CHECK(crossover(Chromosome("ff"), Chromosome("a")) == Chromosome("f"));
@@ -384,7 +385,7 @@ BOOST_AUTO_TEST_CASE(randomPointCrossover_should_split_at_position_zero_only_if_
 	Chromosome empty("");
 	Chromosome unsplittable("a");
 	Chromosome splittable("aaaa");
-	std::function<Crossover> crossover = randomPointCrossover();
+	function<Crossover> crossover = randomPointCrossover();
 
 	SimulationRNG::reset(1);
 	BOOST_CHECK(crossover(empty, empty) == empty);
@@ -446,13 +447,13 @@ BOOST_AUTO_TEST_CASE(fixedPointCrossover_should_split_at_end_of_shorter_chromoso
 
 BOOST_AUTO_TEST_CASE(fixedPointCrossover_should_select_correct_split_point_for_unsplittable_chromosomes)
 {
-	std::function<Crossover> crossover00 = fixedPointCrossover(0.0);
+	function<Crossover> crossover00 = fixedPointCrossover(0.0);
 	BOOST_CHECK(crossover00(Chromosome("fff"), Chromosome("a")) == Chromosome("a"));
 	BOOST_CHECK(crossover00(Chromosome("a"), Chromosome("fff")) == Chromosome("fff"));
 
 	BOOST_CHECK(crossover00(Chromosome("f"), Chromosome("a")) == Chromosome("a"));
 
-	std::function<Crossover> crossover10 = fixedPointCrossover(1.0);
+	function<Crossover> crossover10 = fixedPointCrossover(1.0);
 	BOOST_CHECK(crossover10(Chromosome("fff"), Chromosome("a")) == Chromosome("f"));
 	BOOST_CHECK(crossover10(Chromosome("a"), Chromosome("fff")) == Chromosome("aff"));
 
@@ -465,14 +466,14 @@ BOOST_AUTO_TEST_CASE(fixedPointCrossover_should_always_use_position_zero_as_spli
 	Chromosome unsplittable("f");
 	Chromosome splittable("aaaa");
 
-	std::function<Crossover> crossover00 = fixedPointCrossover(0.0);
+	function<Crossover> crossover00 = fixedPointCrossover(0.0);
 	BOOST_CHECK(crossover00(empty, empty) == empty);
 	BOOST_CHECK(crossover00(unsplittable, empty) == empty);
 	BOOST_CHECK(crossover00(empty, unsplittable) == unsplittable);
 	BOOST_CHECK(crossover00(splittable, empty) == empty);
 	BOOST_CHECK(crossover00(empty, splittable) == splittable);
 
-	std::function<Crossover> crossover10 = fixedPointCrossover(1.0);
+	function<Crossover> crossover10 = fixedPointCrossover(1.0);
 	BOOST_CHECK(crossover10(empty, empty) == empty);
 	BOOST_CHECK(crossover10(unsplittable, empty) == empty);
 	BOOST_CHECK(crossover10(empty, unsplittable) == unsplittable);
@@ -482,7 +483,7 @@ BOOST_AUTO_TEST_CASE(fixedPointCrossover_should_always_use_position_zero_as_spli
 
 BOOST_AUTO_TEST_CASE(randomTwoPointCrossover_should_swap_chromosome_parts_between_two_random_points)
 {
-	std::function<Crossover> crossover = randomTwoPointCrossover();
+	function<Crossover> crossover = randomTwoPointCrossover();
 
 	SimulationRNG::reset(1);
 	Chromosome result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
@@ -495,21 +496,21 @@ BOOST_AUTO_TEST_CASE(randomTwoPointCrossover_should_swap_chromosome_parts_betwee
 
 BOOST_AUTO_TEST_CASE(symmetricRandomTwoPointCrossover_should_swap_chromosome_parts_at_random_point)
 {
-	std::function<SymmetricCrossover> crossover = symmetricRandomTwoPointCrossover();
+	function<SymmetricCrossover> crossover = symmetricRandomTwoPointCrossover();
 
 	SimulationRNG::reset(1);
-	std::tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
-	std::tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("aaacccaaaa"), Chromosome("cccaaa")};
+	tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
+	tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("aaacccaaaa"), Chromosome("cccaaa")};
 	BOOST_TEST(result1 == expectedPair1);
 
-	std::tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
-	std::tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("ccccca"), Chromosome("aaaaacaaaa")};
+	tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
+	tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("ccccca"), Chromosome("aaaaacaaaa")};
 	BOOST_TEST(result2 == expectedPair2);
 }
 
 BOOST_AUTO_TEST_CASE(randomTwoPointCrossover_should_only_consider_points_available_on_both_chromosomes)
 {
-	std::function<Crossover> crossover = randomTwoPointCrossover();
+	function<Crossover> crossover = randomTwoPointCrossover();
 
 	for (size_t i = 0; i < 30; ++i)
 	{
@@ -538,7 +539,7 @@ BOOST_AUTO_TEST_CASE(randomTwoPointCrossover_should_only_consider_points_availab
 
 BOOST_AUTO_TEST_CASE(uniformCrossover_should_swap_randomly_selected_genes)
 {
-	std::function<Crossover> crossover = uniformCrossover(0.7);
+	function<Crossover> crossover = uniformCrossover(0.7);
 
 	SimulationRNG::reset(1);
 	Chromosome result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
@@ -551,23 +552,23 @@ BOOST_AUTO_TEST_CASE(uniformCrossover_should_swap_randomly_selected_genes)
 
 BOOST_AUTO_TEST_CASE(symmetricUniformCrossover_should_swap_randomly_selected_genes)
 {
-	std::function<SymmetricCrossover> crossover = symmetricUniformCrossover(0.7);
+	function<SymmetricCrossover> crossover = symmetricUniformCrossover(0.7);
 
 	SimulationRNG::reset(1);
-	std::tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
-	std::tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("caaacc"), Chromosome("acccaaaaaa")};
+	tuple<Chromosome, Chromosome> result1 = crossover(Chromosome("aaaaaaaaaa"), Chromosome("cccccc"));
+	tuple<Chromosome, Chromosome> expectedPair1 = {Chromosome("caaacc"), Chromosome("acccaaaaaa")};
 	BOOST_TEST(result1 == expectedPair1);
 
-	std::tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
-	std::tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("caaaaaaaaa"), Chromosome("accccc")};
+	tuple<Chromosome, Chromosome> result2 = crossover(Chromosome("cccccc"), Chromosome("aaaaaaaaaa"));
+	tuple<Chromosome, Chromosome> expectedPair2 = {Chromosome("caaaaaaaaa"), Chromosome("accccc")};
 	BOOST_TEST(result2 == expectedPair2);
 }
 
 BOOST_AUTO_TEST_CASE(uniformCrossover_should_only_consider_points_available_on_both_chromosomes)
 {
-	std::function<Crossover> crossover = uniformCrossover(0.7);
+	function<Crossover> crossover = uniformCrossover(0.7);
 
-	std::set<std::string> expectedPatterns = {
+	set<string> expectedPatterns = {
 		"TTTTTTTTTTTTTTTTTTTT",
 		"aTTTTTTTTTTTTTTTTTTT",
 		"TaTTTTTTTTTTTTTTTTTT",
@@ -615,20 +616,20 @@ BOOST_AUTO_TEST_CASE(uniformCrossover_should_swap_genes_with_uniform_probability
 	double const expectedValue = swapChance;
 	double const variance = swapChance * (1 - swapChance);
 
-	std::function<Crossover> crossover = uniformCrossover(swapChance);
+	function<Crossover> crossover = uniformCrossover(swapChance);
 	Chromosome chromosome1("aaaaaaaaaa");
 	Chromosome chromosome2("cccccccccc");
 
-	std::vector<size_t> bernoulliTrials;
+	vector<size_t> bernoulliTrials;
 	for (size_t i = 0; i < operationCount; ++i)
 	{
-		std::string genes = toString(crossover(chromosome1, chromosome2));
+		string genes = toString(crossover(chromosome1, chromosome2));
 		for (size_t j = 0; j < chromosome1.length(); ++j)
 			bernoulliTrials.push_back(static_cast<size_t>(genes[j] == 'c'));
 	}
 
-	BOOST_TEST(std::abs(mean(bernoulliTrials) - expectedValue) < expectedValue * relativeTolerance);
-	BOOST_TEST(std::abs(meanSquaredError(bernoulliTrials, expectedValue) - variance) < variance * relativeTolerance);
+	BOOST_TEST(abs(mean(bernoulliTrials) - expectedValue) < expectedValue * relativeTolerance);
+	BOOST_TEST(abs(meanSquaredError(bernoulliTrials, expectedValue) - variance) < variance * relativeTolerance);
 }
 
 BOOST_AUTO_TEST_CASE(uniformCrossover_should_swap_tail_with_uniform_probability)
@@ -639,22 +640,22 @@ BOOST_AUTO_TEST_CASE(uniformCrossover_should_swap_tail_with_uniform_probability)
 	double const expectedValue = swapChance;
 	double const variance = swapChance * (1 - swapChance);
 
-	std::function<Crossover> crossover = uniformCrossover(swapChance);
+	function<Crossover> crossover = uniformCrossover(swapChance);
 	Chromosome chromosome1("aaaaa");
 	Chromosome chromosome2("cccccccccc");
 
 	SimulationRNG::reset(1);
 
-	std::vector<size_t> bernoulliTrials;
+	vector<size_t> bernoulliTrials;
 	for (size_t i = 0; i < operationCount; ++i)
 	{
-		std::string genes = toString(crossover(chromosome1, chromosome2));
+		string genes = toString(crossover(chromosome1, chromosome2));
 		BOOST_REQUIRE(genes.size() == 5 || genes.size() == 10);
 		bernoulliTrials.push_back(static_cast<size_t>(genes.size() == 10));
 	}
 
-	BOOST_TEST(std::abs(mean(bernoulliTrials) - expectedValue) < expectedValue * relativeTolerance);
-	BOOST_TEST(std::abs(meanSquaredError(bernoulliTrials, expectedValue) - variance) < variance * relativeTolerance);
+	BOOST_TEST(abs(mean(bernoulliTrials) - expectedValue) < expectedValue * relativeTolerance);
+	BOOST_TEST(abs(meanSquaredError(bernoulliTrials, expectedValue) - variance) < variance * relativeTolerance);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

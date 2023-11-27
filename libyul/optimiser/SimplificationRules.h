@@ -24,13 +24,13 @@
 #include <libevmasm/SimplificationRule.h>
 
 #include <libyul/ASTForward.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 
 #include <libsolutil/CommonData.h>
 #include <libsolutil/Numeric.h>
 
 #include <liblangutil/EVMVersion.h>
-#include <liblangutil/DebugData.h>
+#include <liblangutil/SourceLocation.h>
 
 #include <functional>
 #include <optional>
@@ -41,8 +41,6 @@ namespace solidity::yul
 struct Dialect;
 struct AssignedValue;
 class Pattern;
-
-using DebugData = langutil::DebugData;
 
 /**
  * Container for all simplification rules.
@@ -64,7 +62,7 @@ public:
 	static Rule const* findFirstMatch(
 		Expression const& _expr,
 		Dialect const& _dialect,
-		std::function<AssignedValue const*(YulName)> const& _ssaValues
+		std::function<AssignedValue const*(YulString)> const& _ssaValues
 	);
 
 	/// Checks whether the rulelist is non-empty. This is usually enforced
@@ -121,7 +119,7 @@ public:
 	bool matches(
 		Expression const& _expr,
 		Dialect const& _dialect,
-		std::function<AssignedValue const*(YulName)> const& _ssaValues
+		std::function<AssignedValue const*(YulString)> const& _ssaValues
 	) const;
 
 	std::vector<Pattern> arguments() const { return m_arguments; }
@@ -133,7 +131,7 @@ public:
 
 	/// Turns this pattern into an actual expression. Should only be called
 	/// for patterns resulting from an action, i.e. with match groups assigned.
-	Expression toExpression(langutil::DebugData::ConstPtr const& _debugData, langutil::EVMVersion _evmVersion) const;
+	Expression toExpression(std::shared_ptr<DebugData const> const& _debugData, langutil::EVMVersion _evmVersion) const;
 
 private:
 	Expression const& matchGroupValue() const;

@@ -1,7 +1,10 @@
 {
-    "contracts": {
-        "A": {
-            "C": {
+    "contracts":
+    {
+        "A":
+        {
+            "C":
+            {
                 "ir": "
 /// @use-src 0:\"A\"
 object \"C_11\" {
@@ -93,10 +96,12 @@ object \"C_11\" {
             }
 
             function copy_memory_to_memory_with_cleanup(src, dst, length) {
-
-                mcopy(dst, src, length)
+                let i := 0
+                for { } lt(i, length) { i := add(i, 32) }
+                {
+                    mstore(add(dst, i), mload(add(src, i)))
+                }
                 mstore(add(dst, length), 0)
-
             }
 
             function round_up_to_mul_of_32(value) -> result {
@@ -218,8 +223,10 @@ object \"C_11\" {
             }
         }
     },
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

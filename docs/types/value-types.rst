@@ -7,12 +7,6 @@ Value Types
 The following are called value types because their variables will always be passed by value, i.e. they are always copied when they
 are used as function arguments or in assignments.
 
-Unlike :ref:`reference types <reference-types>`, value type declarations do not
-specify a data location since they are small enough to be stored on the stack.
-The only exception are :ref:`state variables <structure-state-variables>`.
-Those are by default located in storage, but can also be marked as
-:ref:`transient <transient-storage>`, :ref:`constant or immutable <constants>`.
-
 .. index:: ! bool, ! true, ! false
 
 Booleans
@@ -344,13 +338,6 @@ You can query the deployed code for any smart contract. Use ``.code`` to get the
 ``bytes memory``, which might be empty. Use ``.codehash`` to get the Keccak-256 hash of that code
 (as a ``bytes32``). Note that ``addr.codehash`` is cheaper than using ``keccak256(addr.code)``.
 
-.. warning::
-    The output of ``addr.codehash`` may be ``0`` if the account associated with ``addr`` is empty or non-existent
-    (i.e., it has no code, zero balance, and zero nonce as defined by `EIP-161 <https://eips.ethereum.org/EIPS/eip-161>`_).
-    If the account has no code but a non-zero balance or nonce, then ``addr.codehash`` will output the Keccak-256 hash of empty data
-    (i.e., ``keccak256("")`` which is equal to ``c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470``), as defined by
-    `EIP-1052 <https://eips.ethereum.org/EIPS/eip-1052>`_.
-
 .. note::
     All contracts can be converted to ``address`` type, so it is possible to query the balance of the
     current contract using ``address(this).balance``.
@@ -427,6 +414,14 @@ Members:
 
 .. note::
     Prior to version 0.8.0, ``byte`` used to be an alias for ``bytes1``.
+
+Dynamically-sized byte array
+----------------------------
+
+``bytes``:
+    Dynamically-sized byte array, see :ref:`arrays`. Not a value-type!
+``string``:
+    Dynamically-sized UTF-8-encoded string, see :ref:`arrays`. Not a value-type!
 
 .. index:: address, ! literal;address
 
@@ -817,12 +812,6 @@ functions.
     The caller cannot pass its calldata directly to an external function and always ABI-encodes the arguments into memory.
     Marking the parameters as ``calldata`` only affects the implementation of the external function and is
     meaningless in a function pointer on the caller's side.
-
-.. warning::
-    Comparison of internal function pointers can have unexpected results in the legacy pipeline with the optimizer enabled,
-    as it can collapse identical functions into one, which will then lead to said function pointers comparing as equal instead of not.
-    Such comparisons are not advised, and will lead to the compiler issuing a warning, until the next breaking release (0.9.0),
-    when the warning will be upgraded to an error, thereby making such comparisons disallowed.
 
 Libraries are excluded because they require a ``delegatecall`` and use :ref:`a different ABI
 convention for their selectors <library-selectors>`.

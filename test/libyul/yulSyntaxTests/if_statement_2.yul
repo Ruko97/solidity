@@ -1,7 +1,9 @@
 {
-	if false
+	if false:bool
 	{
-		let x := 3
+		let x:u256 := 3:u256
 	}
 }
+// ====
+// dialect: evmTyped
 // ----

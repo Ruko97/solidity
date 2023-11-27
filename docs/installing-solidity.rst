@@ -73,7 +73,7 @@ Docker
 ======
 
 Docker images of Solidity builds are available using the ``solc`` image from the ``ethereum`` organization.
-Use the ``stable`` tag for the latest released version, and ``nightly`` for potentially unstable changes in the ``develop`` branch.
+Use the ``stable`` tag for the latest released version, and ``nightly`` for potentially unstable changes in the develop branch.
 
 The Docker image runs the compiler executable so that you can pass all compiler arguments to it.
 For example, the command below pulls the stable version of the ``solc`` image (if you do not have it already),
@@ -83,20 +83,14 @@ and runs it in a new container, passing the ``--help`` argument.
 
     docker run ethereum/solc:stable --help
 
-You can specify release build versions in the tag. For example:
+For example, You can specify release build versions in the tag for the 0.5.4 release.
 
 .. code-block:: bash
 
-    docker run ethereum/solc:stable --help
-
-Note
-
-Specific compiler versions are supported as the Docker image tag such as `ethereum/solc:0.8.23`. We will be passing the
-`stable` tag here instead of specific version tag to ensure that users get the latest version by default and avoid the issue of
-an out-of-date version.
+    docker run ethereum/solc:0.5.4 --help
 
 To use the Docker image to compile Solidity files on the host machine, mount a
-local folder for input and output, and specify the contract to compile. For example:
+local folder for input and output, and specify the contract to compile. For example.
 
 .. code-block:: bash
 
@@ -189,7 +183,7 @@ If you need a specific version of Solidity you can install a
 Homebrew formula directly from Github.
 
 View
-`solidity.rb commits on GitHub <https://github.com/ethereum/homebrew-ethereum/commits/master/solidity.rb>`_.
+`solidity.rb commits on Github <https://github.com/ethereum/homebrew-ethereum/commits/master/solidity.rb>`_.
 
 Copy the commit hash of the version you want and check it out on your machine.
 
@@ -230,8 +224,8 @@ out-of-the-box but it is also meant to be friendly to third-party tools:
   (via git, HTTPS, IPFS or just have it cached locally) and verify hashes of the binaries
   after downloading them, you do not have to use HTTPS for the binaries themselves.
 
-The same binaries are in most cases available on the `Solidity release page on GitHub`_. The
-difference is that we do not generally update old releases on the GitHub release page. This means
+The same binaries are in most cases available on the `Solidity release page on Github`_. The
+difference is that we do not generally update old releases on the Github release page. This means
 that we do not rename them if the naming convention changes and we do not add builds for platforms
 that were not supported at the time of release. This only happens in ``solc-bin``.
 
@@ -249,6 +243,7 @@ Each one includes a ``list.json`` file listing the available binaries. For examp
       "keccak256": "0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3",
       "sha256": "0x2b55ed5fec4d9625b6c7b3ab1abd2b7fb7dd2a9c68543bf0323db2c7e2d55af2",
       "urls": [
+        "bzzr://16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1",
         "dweb:/ipfs/QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS"
       ]
     }
@@ -263,7 +258,7 @@ This means that:
   In this case git is not necessary and symlinks are resolved transparently, either by serving a copy
   of the file or returning a HTTP redirect.
 - The file is also available on IPFS at `QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS`_.
-  Please, be aware that the order of items in the ``urls`` array is not predetermined or guaranteed and users should not rely on it.
+- The file might in future be available on Swarm at `16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1`_.
 - You can verify the integrity of the binary by comparing its keccak256 hash to
   ``0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3``.  The hash can be computed
   on the command-line using ``keccak256sum`` utility provided by `sha3sum`_ or `keccak256() function
@@ -304,12 +299,14 @@ This means that:
     in the long-term.
 
 .. _IPFS: https://ipfs.io
+.. _Swarm: https://swarm-gateways.net/bzz:/swarm.eth
 .. _solc-bin: https://github.com/ethereum/solc-bin/
-.. _Solidity release page on GitHub: https://github.com/ethereum/solidity/releases
+.. _Solidity release page on github: https://github.com/ethereum/solidity/releases
 .. _sha3sum: https://github.com/maandree/sha3sum
 .. _keccak256() function from ethereumjs-util: https://github.com/ethereumjs/ethereumjs-util/blob/master/docs/modules/_hash_.md#const-keccak256
 .. _WebAssembly builds: https://emscripten.org/docs/compiling/WebAssembly.html
 .. _QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS: https://gateway.ipfs.io/ipfs/QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS
+.. _16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1: https://swarm-gateways.net/bzz:/16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1/
 
 .. _building-from-source:
 
@@ -327,13 +324,16 @@ The following are dependencies for all builds of Solidity:
 | Windows, 3.13+ otherwise)         |                                                       |
 +-----------------------------------+-------------------------------------------------------+
 | `Boost`_ (version 1.77+ on        | C++ libraries.                                        |
-| Windows, 1.67+ otherwise)         |                                                       |
+| Windows, 1.65+ otherwise)         |                                                       |
 +-----------------------------------+-------------------------------------------------------+
 | `Git`_                            | Command-line tool for retrieving source code.         |
 +-----------------------------------+-------------------------------------------------------+
 | `z3`_ (version 4.8.16+, Optional) | For use with SMT checker.                             |
 +-----------------------------------+-------------------------------------------------------+
+| `cvc4`_ (Optional)                | For use with SMT checker.                             |
++-----------------------------------+-------------------------------------------------------+
 
+.. _cvc4: https://cvc4.cs.stanford.edu/web/
 .. _Git: https://git-scm.com/download
 .. _Boost: https://www.boost.org
 .. _CMake: https://cmake.org/download/
@@ -461,11 +461,11 @@ you should fork Solidity and add your personal fork as a second remote:
     This method will result in a pre-release build leading to e.g. a flag
     being set in each bytecode produced by such a compiler.
     If you want to re-build a released Solidity compiler, then
-    please use the source tarball on the GitHub release page:
+    please use the source tarball on the github release page:
 
     https://github.com/ethereum/solidity/releases/download/v0.X.Y/solidity_0.X.Y.tar.gz
 
-    (not the "Source code" provided by GitHub).
+    (not the "Source code" provided by github).
 
 Command-Line Build
 ------------------
@@ -527,23 +527,24 @@ If you are interested what CMake options are available run ``cmake .. -LH``.
 
 SMT Solvers
 -----------
-Solidity can be built against Z3 SMT solver and will do so by default if
-it is found in the system. Z3 can be disabled by a ``cmake`` option.
+Solidity can be built against SMT solvers and will do so by default if
+they are found in the system. Each solver can be disabled by a ``cmake`` option.
 
 *Note: In some cases, this can also be a potential workaround for build failures.*
 
 
-Inside the build folder you can disable Z3, since it is enabled by default:
+Inside the build folder you can disable them, since they are enabled by default:
 
 .. code-block:: bash
 
-    # disables Z3 SMT Solver.
+    # disables only Z3 SMT Solver.
     cmake .. -DUSE_Z3=OFF
 
-.. note::
+    # disables only CVC4 SMT Solver.
+    cmake .. -DUSE_CVC4=OFF
 
-    Solidity can optionally use other solvers, namely ``cvc5`` and ``Eldarica``,
-    but their presence is checked only at runtime, they are not needed for the build to succeed.
+    # disables both Z3 and CVC4
+    cmake .. -DUSE_CVC4=OFF -DUSE_Z3=OFF
 
 The Version String in Detail
 ============================

@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 5,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,7 +13,8 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
           "constant": false,
           "id": 3,
@@ -24,8 +26,10 @@
           "stateVariable": false,
           "storageLocation": "default",
           "typeDescriptions": {},
-          "typeName": {
-            "baseType": {
+          "typeName":
+          {
+            "baseType":
+            {
               "id": 1,
               "name": "uint",
               "nodeType": "ElementaryTypeName",

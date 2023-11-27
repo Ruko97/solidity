@@ -30,7 +30,6 @@
 #include <boost/algorithm/string.hpp>
 #include <unordered_set>
 
-using namespace std::string_literals;
 using namespace solidity::langutil;
 
 namespace solidity::frontend
@@ -39,13 +38,11 @@ namespace solidity::frontend
 NameAndTypeResolver::NameAndTypeResolver(
 	GlobalContext& _globalContext,
 	langutil::EVMVersion _evmVersion,
-	ErrorReporter& _errorReporter,
-	bool _experimentalSolidity
+	ErrorReporter& _errorReporter
 ):
 	m_evmVersion(_evmVersion),
 	m_errorReporter(_errorReporter),
-	m_globalContext(_globalContext),
-	m_experimentalSolidity(_experimentalSolidity)
+	m_globalContext(_globalContext)
 {
 	m_scopes[nullptr] = std::make_shared<DeclarationContainer>();
 	for (Declaration const* declaration: _globalContext.declarations())
@@ -61,9 +58,10 @@ bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode 
 	{
 		DeclarationRegistrationHelper registrar(m_scopes, _sourceUnit, m_errorReporter, m_globalContext, _currentScope);
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;
@@ -135,9 +133,10 @@ bool NameAndTypeResolver::resolveNamesAndTypes(SourceUnit& _source)
 				return false;
 		}
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;
@@ -150,9 +149,10 @@ bool NameAndTypeResolver::updateDeclaration(Declaration const& _declaration)
 		m_scopes[nullptr]->registerDeclaration(_declaration, false, true);
 		solAssert(_declaration.scope() == nullptr, "Updated declaration outside global scope.");
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;
@@ -701,34 +701,11 @@ void DeclarationRegistrationHelper::registerDeclaration(Declaration& _declaratio
 	solAssert(m_currentScope && m_scopes.count(m_currentScope), "No current scope.");
 	solAssert(m_currentScope == _declaration.scope(), "Unexpected current scope.");
 
-	// Functions defined inside quantifiers should be visible in the scope containing the quantifier
-	// TODO: Turn it into a more generic mechanism in the same vein as Scopable and ScopeOpener if
-	// it turns out we need more special-casing here.
-	auto const* quantifier = dynamic_cast<ForAllQuantifier const*>(m_currentScope);
-	auto const* functionDefinition = dynamic_cast<FunctionDefinition const*>(&_declaration);
-	if (quantifier && functionDefinition)
-	{
-		solAssert(quantifier->scope());
-		solAssert(
-			// forall quantifiers cannot be used in block scope so the declaration is always active.
-			!dynamic_cast<Block const*>(quantifier->scope()) &&
-			!dynamic_cast<ForStatement const*>(quantifier->scope())
-		);
+	// Register declaration as inactive if we are in block scope.
+	bool inactive =
+		(dynamic_cast<Block const*>(m_currentScope) || dynamic_cast<ForStatement const*>(m_currentScope));
 
-		// NOTE: We're registering the function outside of its scope(). This will only affect
-		// name lookups. An more general alternative would be to modify Scoper to simply assign it
-		// that scope in the first place, but this would complicate the AST traversal here, which
-		// currently assumes that scopes follow ScopeOpener nesting.
-		registerDeclaration(*m_scopes.at(quantifier->scope()), _declaration, nullptr, nullptr, false /* inactive */, m_errorReporter);
-	}
-	else
-	{
-		// Register declaration as inactive if we are in block scope.
-		bool inactive =
-			(dynamic_cast<Block const*>(m_currentScope) || dynamic_cast<ForStatement const*>(m_currentScope));
-
-		registerDeclaration(*m_scopes[m_currentScope], _declaration, nullptr, nullptr, inactive, m_errorReporter);
-	}
+	registerDeclaration(*m_scopes[m_currentScope], _declaration, nullptr, nullptr, inactive, m_errorReporter);
 
 	solAssert(_declaration.annotation().scope == m_currentScope, "");
 	solAssert(_declaration.annotation().contract == m_currentContract, "");

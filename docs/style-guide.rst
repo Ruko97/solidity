@@ -662,10 +662,9 @@ Yes:
         return balanceOf[from];
     }
 
-    function increment(uint x) public pure onlyOwner returns (uint) {
-        return x + 1;
+    function shutdown() public onlyOwner {
+        selfdestruct(owner);
     }
-
 
 No:
 
@@ -675,8 +674,8 @@ No:
         return balanceOf[from];
     }
 
-    function increment(uint x) onlyOwner public pure returns (uint) {
-        return x + 1;
+    function shutdown() onlyOwner public {
+        selfdestruct(owner);
     }
 
 For long function declarations, it is recommended to drop each argument onto

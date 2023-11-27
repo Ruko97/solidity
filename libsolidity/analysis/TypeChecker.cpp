@@ -80,6 +80,18 @@ bool TypeChecker::checkTypeRequirements(SourceUnit const& _source)
 	return !Error::containsErrors(m_errorReporter.errors());
 }
 
+Type const* TypeChecker::type(Expression const& _expression) const
+{
+	solAssert(!!_expression.annotation().type, "Type requested but not present.");
+	return _expression.annotation().type;
+}
+
+Type const* TypeChecker::type(VariableDeclaration const& _variable) const
+{
+	solAssert(!!_variable.annotation().type, "Type requested but not present.");
+	return _variable.annotation().type;
+}
+
 bool TypeChecker::visit(ContractDefinition const& _contract)
 {
 	m_currentContract = &_contract;
@@ -92,6 +104,102 @@ bool TypeChecker::visit(ContractDefinition const& _contract)
 	m_currentContract = nullptr;
 
 	return false;
+}
+
+void TypeChecker::checkDoubleStorageAssignment(Assignment const& _assignment)
+{
+	size_t storageToStorageCopies = 0;
+	size_t toStorageCopies = 0;
+	size_t storageByteArrayPushes = 0;
+	size_t storageByteAccesses = 0;
+	auto count = [&](TupleExpression const& _lhs, TupleType const& _rhs, auto _recurse) -> void {
+		TupleType const& lhsType = dynamic_cast<TupleType const&>(*type(_lhs));
+		TupleExpression const* lhsResolved = dynamic_cast<TupleExpression const*>(resolveOuterUnaryTuples(&_lhs));
+
+		if (lhsType.components().size() != _rhs.components().size() || lhsResolved->components().size() != _rhs.components().size())
+		{
+			solAssert(m_errorReporter.hasErrors(), "");
+			return;
+		}
+
+		for (auto&& [index, componentType]: lhsType.components() | ranges::views::enumerate)
+		{
+			if (ReferenceType const* ref = dynamic_cast<ReferenceType const*>(componentType))
+			{
+				if (ref && ref->dataStoredIn(DataLocation::Storage) && !ref->isPointer())
+				{
+					toStorageCopies++;
+					if (_rhs.components()[index]->dataStoredIn(DataLocation::Storage))
+						storageToStorageCopies++;
+				}
+			}
+			else if (FixedBytesType const* bytesType = dynamic_cast<FixedBytesType const*>(componentType))
+			{
+				if (bytesType && bytesType->numBytes() == 1)
+				{
+					if (FunctionCall const* lhsCall = dynamic_cast<FunctionCall const*>(resolveOuterUnaryTuples(lhsResolved->components().at(index).get())))
+					{
+						FunctionType const& callType = dynamic_cast<FunctionType const&>(*type(lhsCall->expression()));
+						if (callType.kind() == FunctionType::Kind::ArrayPush)
+						{
+							ArrayType const& arrayType = dynamic_cast<ArrayType const&>(*callType.selfType());
+							if (arrayType.isByteArray() && arrayType.dataStoredIn(DataLocation::Storage))
+							{
+								++storageByteAccesses;
+								++storageByteArrayPushes;
+							}
+						}
+					}
+					else if (IndexAccess const* indexAccess = dynamic_cast<IndexAccess const*>(resolveOuterUnaryTuples(lhsResolved->components().at(index).get())))
+					{
+						if (ArrayType const* arrayType = dynamic_cast<ArrayType const*>(type(indexAccess->baseExpression())))
+							if (arrayType->isByteArray() && arrayType->dataStoredIn(DataLocation::Storage))
+								++storageByteAccesses;
+					}
+				}
+			}
+			else if (TupleType const* tupleType = dynamic_cast<TupleType const*>(componentType))
+				if (auto const* lhsNested = dynamic_cast<TupleExpression const*>(lhsResolved->components().at(index).get()))
+					if (auto const* rhsNestedType = dynamic_cast<TupleType const*>(_rhs.components().at(index)))
+						_recurse(
+							*lhsNested,
+							*rhsNestedType,
+							_recurse
+						);
+		}
+	};
+
+	TupleExpression const* lhsTupleExpression = dynamic_cast<TupleExpression const*>(&_assignment.leftHandSide());
+	if (!lhsTupleExpression)
+	{
+		solAssert(m_errorReporter.hasErrors());
+		return;
+	}
+	count(
+		*lhsTupleExpression,
+		dynamic_cast<TupleType const&>(*type(_assignment.rightHandSide())),
+		count
+	);
+
+	if (storageToStorageCopies >= 1 && toStorageCopies >= 2)
+		m_errorReporter.warning(
+			7238_error,
+			_assignment.location(),
+			"This assignment performs two copies to storage. Since storage copies do not first "
+			"copy to a temporary location, one of them might be overwritten before the second "
+			"is executed and thus may have unexpected effects. It is safer to perform the copies "
+			"separately or assign to storage pointers first."
+		);
+
+	if (storageByteArrayPushes >= 1 && storageByteAccesses >= 2)
+		m_errorReporter.warning(
+			7239_error,
+			_assignment.location(),
+			"This assignment involves multiple accesses to a bytes array in storage while simultaneously enlarging it. "
+			"When a bytes array is enlarged, it may transition from short storage layout to long storage layout, "
+			"which invalidates all references to its elements. It is safer to only enlarge byte arrays in a single "
+			"operation, one element at a time."
+		);
 }
 
 TypePointers TypeChecker::typeCheckABIDecodeAndRetrieveReturnType(FunctionCall const& _functionCall, bool _abiEncoderV2)
@@ -785,7 +893,7 @@ bool TypeChecker::visit(InlineAssembly const& _inlineAssembly)
 				}
 				else if (identifierInfo.suffix == "slot" || identifierInfo.suffix == "offset")
 				{
-					m_errorReporter.typeError(6617_error, nativeLocationOf(_identifier), "The suffixes .offset and .slot can only be used on non-constant storage or transient storage variables.");
+					m_errorReporter.typeError(6617_error, nativeLocationOf(_identifier), "The suffixes .offset and .slot can only be used on non-constant storage variables.");
 					return false;
 				}
 				else if (var && var->value() && !var->value()->annotation().type && !dynamic_cast<Literal const*>(var->value().get()))
@@ -824,7 +932,7 @@ bool TypeChecker::visit(InlineAssembly const& _inlineAssembly)
 					{
 						if (var->isStateVariable())
 						{
-							m_errorReporter.typeError(4713_error, nativeLocationOf(_identifier), "State variables cannot be assigned to - you have to use \"sstore()\" or \"tstore()\".");
+							m_errorReporter.typeError(4713_error, nativeLocationOf(_identifier), "State variables cannot be assigned to - you have to use \"sstore()\".");
 							return false;
 						}
 						else if (suffix != "slot")
@@ -869,7 +977,7 @@ bool TypeChecker::visit(InlineAssembly const& _inlineAssembly)
 				m_errorReporter.typeError(
 					1408_error,
 					nativeLocationOf(_identifier),
-					"Only local variables are supported. To access state variables, use the \".slot\" and \".offset\" suffixes."
+					"Only local variables are supported. To access storage variables, use the \".slot\" and \".offset\" suffixes."
 				);
 				return false;
 			}
@@ -940,7 +1048,7 @@ bool TypeChecker::visit(InlineAssembly const& _inlineAssembly)
 		_inlineAssembly.dialect(),
 		identifierAccess
 	);
-	if (!analyzer.analyze(_inlineAssembly.operations().root()))
+	if (!analyzer.analyze(_inlineAssembly.operations()))
 		solAssert(m_errorReporter.hasErrors());
 	_inlineAssembly.annotation().hasMemoryEffects =
 		lvalueAccessToMemoryVariable ||
@@ -1478,6 +1586,10 @@ bool TypeChecker::visit(Assignment const& _assignment)
 		_assignment.annotation().type = TypeProvider::emptyTuple();
 
 		expectType(_assignment.rightHandSide(), *tupleType);
+
+		// expectType does not cause fatal errors, so we have to check again here.
+		if (dynamic_cast<TupleType const*>(type(_assignment.rightHandSide())))
+			checkDoubleStorageAssignment(_assignment);
 	}
 	else if (_assignment.assignmentOperator() == Token::Assign)
 		expectType(_assignment.rightHandSide(), *t);
@@ -1777,27 +1889,6 @@ void TypeChecker::endVisit(BinaryOperation const& _operation)
 		(!userDefinedFunctionType || userDefinedFunctionType->isPure());
 	_operation.annotation().isLValue = false;
 	_operation.annotation().isConstant = false;
-
-	if (_operation.getOperator() == Token::Equal || _operation.getOperator() == Token::NotEqual)
-	{
-		auto const* leftFunction = dynamic_cast<FunctionType const*>(leftType);
-		auto const* rightFunction = dynamic_cast<FunctionType const*>(rightType);
-		if (
-			leftFunction &&
-			rightFunction &&
-			leftFunction->kind() == FunctionType::Kind::Internal &&
-			rightFunction->kind() == FunctionType::Kind::Internal
-		)
-		{
-			m_errorReporter.warning(
-				3075_error,
-				_operation.location(),
-				"Comparison of internal function pointers can yield unexpected results "
-				"in the legacy pipeline with the optimizer enabled, and will be disallowed entirely "
-				"in the next breaking release."
-			);
-		}
-	}
 
 	if (_operation.getOperator() == Token::Exp || _operation.getOperator() == Token::SHL)
 	{
@@ -3301,7 +3392,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 			annotation.isPure = true;
 		else if (
 			magicType->kind() == MagicType::Kind::MetaType &&
-			(memberName == "min" || memberName == "max")
+			(memberName == "min" ||	memberName == "max")
 		)
 			annotation.isPure = true;
 		else if (magicType->kind() == MagicType::Kind::Block)
@@ -3317,12 +3408,6 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 					5921_error,
 					_memberAccess.location(),
 					"\"basefee\" is not supported by the VM version."
-				);
-			else if (memberName == "blobbasefee" && !m_evmVersion.hasBlobBaseFee())
-				m_errorReporter.typeError(
-					1006_error,
-					_memberAccess.location(),
-					"\"blobbasefee\" is not supported by the VM version."
 				);
 			else if (memberName == "prevrandao" && !m_evmVersion.hasPrevRandao())
 				m_errorReporter.warning(
@@ -3676,11 +3761,8 @@ bool TypeChecker::visit(Identifier const& _identifier)
 				5159_error,
 				_identifier.location(),
 				"\"selfdestruct\" has been deprecated. "
-				"Note that, starting from the Cancun hard fork, the underlying opcode no longer deletes the code and "
-				"data associated with an account and only transfers its Ether to the beneficiary, "
-				"unless executed in the same transaction in which the contract was created (see EIP-6780). "
-				"Any use in newly deployed contracts is strongly discouraged even if the new behavior is taken into account. "
-				"Future changes to the EVM might further reduce the functionality of the opcode."
+				"The underlying opcode will eventually undergo breaking changes, "
+				"and its use is not recommended."
 			);
 	}
 
@@ -3762,7 +3844,7 @@ void TypeChecker::endVisit(Literal const& _literal)
 			5145_error,
 			_literal.location(),
 			"Hexadecimal numbers cannot be used with unit denominations. "
-			"You can use an expression of the form \"0x1234 * 1 days\" instead."
+			"You can use an expression of the form \"0x1234 * 1 day\" instead."
 		);
 
 	if (_literal.subDenomination() == Literal::SubDenomination::Year)

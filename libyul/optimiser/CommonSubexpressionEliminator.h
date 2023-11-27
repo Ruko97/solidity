@@ -53,19 +53,19 @@ public:
 private:
 	CommonSubexpressionEliminator(
 		Dialect const& _dialect,
-		std::map<YulName, SideEffects> _functionSideEffects
+		std::map<YulString, SideEffects> _functionSideEffects
 	);
 
 protected:
 	using ASTModifier::visit;
 	void visit(Expression& _e) override;
 
-	void assignValue(YulName _variable, Expression const* _value) override;
+	void assignValue(YulString _variable, Expression const* _value) override;
 private:
-	std::set<YulName> m_returnVariables;
+	std::set<YulString> m_returnVariables;
 	std::unordered_map<
 		std::reference_wrapper<Expression const>,
-		std::set<YulName>,
+		std::set<YulString>,
 		ExpressionHash,
 		SyntacticallyEqualExpression
 	> m_replacementCandidates;

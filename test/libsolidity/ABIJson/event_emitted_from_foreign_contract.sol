@@ -17,7 +17,8 @@ contract D {
 // [
 //   {
 //     "anonymous": false,
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "indexed": true,
 //         "internalType": "address",
@@ -35,7 +36,8 @@ contract D {
 // [
 //   {
 //     "anonymous": false,
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "indexed": false,
 //         "internalType": "uint256",
@@ -48,7 +50,8 @@ contract D {
 //   },
 //   {
 //     "anonymous": false,
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "indexed": true,
 //         "internalType": "address",
@@ -61,7 +64,8 @@ contract D {
 //   },
 //   {
 //     "anonymous": false,
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "indexed": true,
 //         "internalType": "address",
@@ -73,7 +77,8 @@ contract D {
 //     "type": "event"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "address",
 //         "name": "sender",
@@ -92,7 +97,8 @@ contract D {
 // [
 //   {
 //     "anonymous": false,
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "indexed": false,
 //         "internalType": "uint256",

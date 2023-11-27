@@ -33,7 +33,6 @@
 #include <functional>
 #include <limits>
 #include <tuple>
-#include <utility>
 
 using namespace solidity;
 using namespace solidity::evmasm;
@@ -135,11 +134,11 @@ void ExpressionClasses::forceEqual(
 	m_expressions.insert(exp);
 }
 
-ExpressionClasses::Id ExpressionClasses::newClass(langutil::DebugData::ConstPtr _debugData)
+ExpressionClasses::Id ExpressionClasses::newClass(SourceLocation const& _location)
 {
 	Expression exp;
 	exp.id = static_cast<Id>(m_representatives.size());
-	exp.item = storeItem(AssemblyItem(UndefinedItem, (u256(1) << 255) + exp.id, std::move(_debugData)));
+	exp.item = storeItem(AssemblyItem(UndefinedItem, (u256(1) << 255) + exp.id, _location));
 	m_representatives.push_back(exp);
 	m_expressions.insert(exp);
 	return exp.id;
@@ -227,7 +226,7 @@ ExpressionClasses::Id ExpressionClasses::tryToSimplify(Expression const& _expr)
 			std::cout << "to " << match->action().toString() << std::endl;
 		}
 
-		return rebuildExpression(ExpressionTemplate(match->action(), _expr.item->debugData()));
+		return rebuildExpression(ExpressionTemplate(match->action(), _expr.item->location()));
 	}
 
 	return std::numeric_limits<unsigned>::max();

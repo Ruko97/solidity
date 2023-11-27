@@ -1,5 +1,7 @@
 {
-	for {} 1 {let x for {} x {} { break }}
+	for {} 1:bool {let x:bool for {} x {} { break }}
 	{}
 }
+// ====
+// dialect: evmTyped
 // ----

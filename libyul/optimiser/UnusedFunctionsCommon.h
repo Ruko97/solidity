@@ -52,8 +52,8 @@ inline bool tooSimpleToBePruned(FunctionDefinition const& _f)
 FunctionDefinition createLinkingFunction(
 	FunctionDefinition const& _original,
 	std::pair<std::vector<bool>, std::vector<bool>> const& _usedParametersAndReturns,
-	YulName const& _originalFunctionName,
-	YulName const& _linkingFunctionName,
+	YulString const& _originalFunctionName,
+	YulString const& _linkingFunctionName,
 	NameDispenser& _nameDispenser
 );
 

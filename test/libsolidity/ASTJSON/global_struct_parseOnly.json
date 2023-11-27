@@ -2,10 +2,12 @@
   "absolutePath": "a",
   "id": 4,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "id": 3,
-      "members": [
+      "members":
+      [
         {
           "constant": false,
           "id": 2,
@@ -17,7 +19,8 @@
           "stateVariable": false,
           "storageLocation": "default",
           "typeDescriptions": {},
-          "typeName": {
+          "typeName":
+          {
             "id": 1,
             "name": "uint256",
             "nodeType": "ElementaryTypeName",

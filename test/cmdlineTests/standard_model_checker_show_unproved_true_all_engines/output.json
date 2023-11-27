@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "6328",
@@ -12,7 +13,8 @@
 ",
             "message": "CHC: Assertion violation might happen here.",
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 201,
                 "file": "A",
                 "start": 186
@@ -31,13 +33,15 @@ Note:
 
 ",
             "message": "BMC: Assertion violation might happen here.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": ""
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 201,
                 "file": "A",
                 "start": 186
@@ -45,8 +49,10 @@ Note:
             "type": "Warning"
         }
     ],
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

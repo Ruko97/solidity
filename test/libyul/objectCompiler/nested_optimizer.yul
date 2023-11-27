@@ -15,32 +15,31 @@ object "a" {
   }
 }
 // ====
-// EVMVersion: >=shanghai
 // optimizationPreset: full
 // ----
 // Assembly:
-//     /* "source":58:59   */
+//     /* "source":48:49   */
 //   0x00
-//     /* "source":41:56   */
+//     /* "source":35:50   */
 //   dup1
 //   calldataload
-//     /* "source":34:60   */
+//     /* "source":107:127   */
 //   sstore
-//     /* "source":22:68   */
+//     /* "source":20:131   */
 //   stop
 // stop
 //
 // sub_0: assembly {
-//         /* "source":141:142   */
+//         /* "source":188:189   */
 //       0x00
-//         /* "source":124:139   */
+//         /* "source":175:190   */
 //       dup1
 //       calldataload
-//         /* "source":117:143   */
+//         /* "source":253:273   */
 //       sstore
-//         /* "source":101:155   */
+//         /* "source":158:279   */
 //       stop
 // }
 // Bytecode: 5f80355500fe
 // Opcodes: PUSH0 DUP1 CALLDATALOAD SSTORE STOP INVALID
-// SourceMappings: 58:1:0:-:0;41:15;;34:26;22:46
+// SourceMappings: 48:1:0:-:0;35:15;;107:20;20:111

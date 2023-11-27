@@ -42,23 +42,23 @@ class SideEffectsCollector: public ASTWalker
 public:
 	explicit SideEffectsCollector(
 		Dialect const& _dialect,
-		std::map<YulName, SideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, SideEffects> const* _functionSideEffects = nullptr
 	): m_dialect(_dialect), m_functionSideEffects(_functionSideEffects) {}
 	SideEffectsCollector(
 		Dialect const& _dialect,
 		Expression const& _expression,
-		std::map<YulName, SideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, SideEffects> const* _functionSideEffects = nullptr
 	);
 	SideEffectsCollector(Dialect const& _dialect, Statement const& _statement);
 	SideEffectsCollector(
 		Dialect const& _dialect,
 		Block const& _ast,
-		std::map<YulName, SideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, SideEffects> const* _functionSideEffects = nullptr
 	);
 	SideEffectsCollector(
 		Dialect const& _dialect,
 		ForLoop const& _ast,
-		std::map<YulName, SideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, SideEffects> const* _functionSideEffects = nullptr
 	);
 
 	using ASTWalker::operator();
@@ -78,8 +78,7 @@ public:
 			!m_sideEffects.movableApartFromEffects ||
 			m_sideEffects.storage == SideEffects::Write ||
 			m_sideEffects.otherState == SideEffects::Write ||
-			m_sideEffects.memory == SideEffects::Write ||
-			m_sideEffects.transientStorage == SideEffects::Write
+			m_sideEffects.memory == SideEffects::Write
 		)
 			return false;
 
@@ -93,10 +92,6 @@ public:
 
 		if (m_sideEffects.memory == SideEffects::Read)
 			if (_codeContainsMSize || _other.memory == SideEffects::Write)
-				return false;
-
-		if (m_sideEffects.transientStorage == SideEffects::Read)
-			if (_other.transientStorage == SideEffects::Write)
 				return false;
 
 		return true;
@@ -117,7 +112,7 @@ public:
 
 private:
 	Dialect const& m_dialect;
-	std::map<YulName, SideEffects> const* m_functionSideEffects = nullptr;
+	std::map<YulString, SideEffects> const* m_functionSideEffects = nullptr;
 	SideEffects m_sideEffects;
 };
 
@@ -130,7 +125,7 @@ private:
 class SideEffectsPropagator
 {
 public:
-	static std::map<YulName, SideEffects> sideEffects(
+	static std::map<YulString, SideEffects> sideEffects(
 		Dialect const& _dialect,
 		CallGraph const& _directCallGraph
 	);
@@ -195,7 +190,7 @@ class MovableChecker: public SideEffectsCollector
 public:
 	explicit MovableChecker(
 		Dialect const& _dialect,
-		std::map<YulName, SideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, SideEffects> const* _functionSideEffects = nullptr
 	): SideEffectsCollector(_dialect, _functionSideEffects) {}
 	MovableChecker(Dialect const& _dialect, Expression const& _expression);
 
@@ -205,11 +200,11 @@ public:
 	void visit(Statement const&) override;
 	using ASTWalker::visit;
 
-	std::set<YulName> const& referencedVariables() const { return m_variableReferences; }
+	std::set<YulString> const& referencedVariables() const { return m_variableReferences; }
 
 private:
 	/// Which variables the current expression references.
-	std::set<YulName> m_variableReferences;
+	std::set<YulString> m_variableReferences;
 };
 
 struct ControlFlowSideEffects;
@@ -231,7 +226,7 @@ public:
 
 	TerminationFinder(
 		Dialect const& _dialect,
-		std::map<YulName, ControlFlowSideEffects> const* _functionSideEffects = nullptr
+		std::map<YulString, ControlFlowSideEffects> const* _functionSideEffects = nullptr
 	): m_dialect(_dialect), m_functionSideEffects(_functionSideEffects) {}
 
 	/// @returns the index of the first statement in the provided sequence
@@ -256,7 +251,7 @@ public:
 
 private:
 	Dialect const& m_dialect;
-	std::map<YulName, ControlFlowSideEffects> const* m_functionSideEffects;
+	std::map<YulString, ControlFlowSideEffects> const* m_functionSideEffects;
 };
 
 }

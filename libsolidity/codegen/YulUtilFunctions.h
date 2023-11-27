@@ -24,7 +24,6 @@
 #include <liblangutil/EVMVersion.h>
 
 #include <libsolidity/ast/Types.h>
-#include <libsolidity/ast/AST.h>
 #include <libsolidity/codegen/MultiUseYulFunctionCollector.h>
 
 #include <libsolidity/interface/DebugSettings.h>
@@ -91,29 +90,9 @@ public:
 	/// signature: (slot) ->
 	std::string copyLiteralToStorageFunction(std::string const& _literal);
 
-	/// @returns statements to revert with an error.
-	/// Generates code to revert with an error. The error arguments are assumed to
-	/// be already evaluated and available in local IRVariables, but not yet
-	/// converted.
-	std::string revertWithError(
-		std::string const& _signature,
-		std::vector<Type const*> const& _parameterTypes,
-		std::vector<ASTPointer<Expression const>> const& _errorArguments,
-		std::string const& _posVar = {},
-		std::string const& _endVar = {}
-	);
-
 	// @returns the name of a function that has the equivalent logic of an
 	// `assert` or `require` call.
-	std::string requireOrAssertFunction(
-		bool _assert,
-		Type const* _messageType = nullptr,
-		ASTPointer<Expression const> _stringArgumentExpression = nullptr
-	);
-
-	// @returns function that has equivalent logic of a require function, but with a custom
-	// error constructor parameter.
-	std::string requireWithErrorFunction(FunctionCall const& errorConstructorCall);
+	std::string requireOrAssertFunction(bool _assert, Type const* _messageType = nullptr);
 
 	/// @returns the name of a function that takes a (cleaned) value of the given value type and
 	/// left-aligns it, usually for use in non-padded encoding.
@@ -350,17 +329,8 @@ public:
 	/// @returns a function that reads a type from storage.
 	/// @param _splitFunctionTypes if false, returns the address and function signature in a
 	/// single variable.
-	std::string readFromStorage(
-		Type const& _type,
-		size_t _offset,
-		bool _splitFunctionTypes,
-		VariableDeclaration::Location _location
-	);
-	std::string readFromStorageDynamic(
-		Type const& _type,
-		bool _splitFunctionTypes,
-		VariableDeclaration::Location _location
-	);
+	std::string readFromStorage(Type const& _type, size_t _offset, bool _splitFunctionTypes);
+	std::string readFromStorageDynamic(Type const& _type, bool _splitFunctionTypes);
 
 	/// @returns a function that reads a value type from memory. Performs cleanup.
 	/// signature: (addr) -> value
@@ -386,7 +356,6 @@ public:
 	std::string updateStorageValueFunction(
 		Type const& _fromType,
 		Type const& _toType,
-		VariableDeclaration::Location _location,
 		std::optional<unsigned> const& _offset = std::optional<unsigned>()
 	);
 
@@ -507,7 +476,7 @@ public:
 	/// @returns the name of a function that will set the given storage item to
 	/// zero
 	/// signature: (slot, offset) ->
-	std::string storageSetToZeroFunction(Type const& _type, VariableDeclaration::Location _location);
+	std::string storageSetToZeroFunction(Type const& _type);
 
 	/// If revertStrings is debug, @returns the name of a function that
 	/// stores @param _message in memory position 0 and reverts.
@@ -584,13 +553,8 @@ private:
 	/// @param _splitFunctionTypes if false, returns the address and function signature in a
 	/// single variable.
 	/// @param _offset if provided, read from static offset, otherwise offset is a parameter of the Yul function.
-	/// @param _location if provided, indicates whether we're reading from storage our transient storage.
-	std::string readFromStorageValueType(
-		Type const& _type,
-		std::optional<size_t> _offset,
-		bool _splitFunctionTypes,
-		VariableDeclaration::Location _location
-	);
+	std::string readFromStorageValueType(Type const& _type, std::optional<size_t> _offset, bool _splitFunctionTypes);
+
 	/// @returns a function that reads a reference type from storage to memory (performing a deep copy).
 	std::string readFromStorageReferenceType(Type const& _type);
 

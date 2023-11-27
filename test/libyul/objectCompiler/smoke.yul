@@ -1,11 +1,9 @@
 {
 }
-// ====
-// EVMVersion: >=constantinople
 // ----
 // Assembly:
-//     /* "source":27:34   */
+//     /* "source":0:3   */
 //   stop
 // Bytecode: 00
 // Opcodes: STOP
-// SourceMappings: 27:7:0:-:0
+// SourceMappings: 0:3:0:-:0

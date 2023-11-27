@@ -9,4 +9,3 @@
 // Memory dump:
 //     20: 0200000000000000000000000000000000000000000000000000000000000000
 // Storage dump:
-// Transient storage dump:

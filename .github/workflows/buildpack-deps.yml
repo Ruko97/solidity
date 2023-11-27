@@ -7,8 +7,8 @@ on:
       - 'scripts/docker/buildpack-deps/Dockerfile.emscripten'
       - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu.clang.ossfuzz'
       - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu2004'
-      - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu2404'
-      - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu2404.clang'
+      - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu2204.clang'
+      - 'scripts/docker/buildpack-deps/Dockerfile.ubuntu2204'
 
 jobs:
   buildpack-deps:
@@ -23,10 +23,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image_variant: [emscripten, ubuntu.clang.ossfuzz, ubuntu2004, ubuntu2404, ubuntu2404.clang]
+        image_variant: [emscripten, ubuntu.clang.ossfuzz, ubuntu2004, ubuntu2204.clang, ubuntu2204]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
         with:
           fetch-depth: 0
 

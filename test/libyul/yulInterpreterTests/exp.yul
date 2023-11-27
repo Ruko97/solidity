@@ -6,4 +6,3 @@
 // Memory dump:
 //      0: 8e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e39
 // Storage dump:
-// Transient storage dump:

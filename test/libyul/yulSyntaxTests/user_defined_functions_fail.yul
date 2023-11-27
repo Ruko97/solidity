@@ -1,9 +1,12 @@
 {
-    function f(a, b, c) -> r, t {
+    function f(a:u256, b:u256, c:bool) -> r:bool, t {
         r := lt(a, b)
-        t := not(c)
+        t := bool_to_u256(not(c))
     }
-    let x, y := f(1, 2, true, false)
+    let x, y: bool := f(1, 2: u256, true)
 }
+// ====
+// dialect: evmTyped
 // ----
-// TypeError 7000: (100-101): Function "f" expects 3 arguments but got 4.
+// TypeError 3947: (126-127): Assigning value of type "bool" to variable of type "u256".
+// TypeError 3947: (129-136): Assigning value of type "u256" to variable of type "bool".

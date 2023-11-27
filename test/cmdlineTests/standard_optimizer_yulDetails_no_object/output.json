@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "formattedMessage": "\"settings.optimizer.details.yulDetails\" must be an object",

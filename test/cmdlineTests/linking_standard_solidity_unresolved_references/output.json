@@ -1,19 +1,27 @@
 {
-    "contracts": {
-        "A": {
-            "C": {
-                "evm": {
-                    "bytecode": {
-                        "linkReferences": {
-                            "A": {
-                                "L2": [
+    "contracts":
+    {
+        "A":
+        {
+            "C":
+            {
+                "evm":
+                {
+                    "bytecode":
+                    {
+                        "linkReferences":
+                        {
+                            "A":
+                            {
+                                "L2":
+                                [
                                     {
                                         "length": 20,
-                                        "start": 173
+                                        "start": 174
                                     },
                                     {
                                         "length": 20,
-                                        "start": 349
+                                        "start": 350
                                     }
                                 ]
                             }
@@ -24,8 +32,10 @@
             }
         }
     },
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

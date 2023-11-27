@@ -23,7 +23,7 @@
 
 #include <liblangutil/Exceptions.h>
 
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 
 #include <functional>
 #include <memory>
@@ -35,24 +35,27 @@ namespace solidity::yul
 
 struct Scope
 {
+	using YulType = YulString;
+
 	struct Variable
 	{
-		YulName name;
+		YulType type;
+		YulString name;
 	};
 	struct Function
 	{
-		size_t numArguments;
-		size_t numReturns;
-		YulName name;
+		std::vector<YulType> arguments;
+		std::vector<YulType> returns;
+		YulString name;
 	};
 
 	using Identifier = std::variant<Variable, Function>;
 
-	bool registerVariable(YulName _name);
+	bool registerVariable(YulString _name, YulType const& _type);
 	bool registerFunction(
-		YulName _name,
-		size_t _numArguments,
-		size_t _numReturns
+		YulString _name,
+		std::vector<YulType> _arguments,
+		std::vector<YulType> _returns
 	);
 
 	/// Looks up the identifier in this or super scopes and returns a valid pointer if found
@@ -60,12 +63,12 @@ struct Scope
 	/// will any lookups across assembly boundaries.
 	/// The pointer will be invalidated if the scope is modified.
 	/// @param _crossedFunction if true, we already crossed a function boundary during recursive lookup
-	Identifier* lookup(YulName _name);
+	Identifier* lookup(YulString _name);
 	/// Looks up the identifier in this and super scopes (will not find variables across function
 	/// boundaries and generally stops at assembly boundaries) and calls the visitor, returns
 	/// false if not found.
 	template <class V>
-	bool lookup(YulName _name, V const& _visitor)
+	bool lookup(YulString _name, V const& _visitor)
 	{
 		if (Identifier* id = lookup(_name))
 		{
@@ -77,7 +80,7 @@ struct Scope
 	}
 	/// @returns true if the name exists in this scope or in super scopes (also searches
 	/// across function and assembly boundaries).
-	bool exists(YulName _name) const;
+	bool exists(YulString _name) const;
 
 	/// @returns the number of variables directly registered inside the scope.
 	size_t numberOfVariables() const;
@@ -88,7 +91,7 @@ struct Scope
 	/// If true, variables from the super scope are not visible here (other identifiers are),
 	/// but they are still taken into account to prevent shadowing.
 	bool functionScope = false;
-	std::map<YulName, Identifier> identifiers;
+	std::map<YulString, Identifier> identifiers;
 };
 
 }

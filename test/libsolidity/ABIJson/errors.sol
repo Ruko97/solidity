@@ -13,7 +13,8 @@ contract X {
 //     :X
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "uint256",
 //         "name": "",
@@ -24,7 +25,8 @@ contract X {
 //     "type": "error"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "uint256",
 //         "name": "a",
@@ -40,7 +42,8 @@ contract X {
 //     "type": "error"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "uint256",
 //         "name": "a",
@@ -56,9 +59,11 @@ contract X {
 //     "type": "error"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
-//         "components": [
+//         "components":
+//         [
 //           {
 //             "internalType": "uint256",
 //             "name": "x",

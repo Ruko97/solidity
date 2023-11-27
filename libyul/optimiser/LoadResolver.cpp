@@ -62,7 +62,7 @@ void LoadResolver::visit(Expression& _e)
 			tryResolve(_e, StoreLoadLocation::Memory, funCall->arguments);
 		else if (funCall->functionName.name == m_loadFunctionName[static_cast<unsigned>(StoreLoadLocation::Storage)])
 			tryResolve(_e, StoreLoadLocation::Storage, funCall->arguments);
-		else if (!m_containsMSize && funCall->functionName.name == m_dialect.hashFunction())
+		else if (!m_containsMSize && funCall->functionName.name == m_dialect.hashFunction({}))
 		{
 			Identifier const* start = std::get_if<Identifier>(&funCall->arguments.at(0));
 			Identifier const* length = std::get_if<Identifier>(&funCall->arguments.at(1));
@@ -87,7 +87,7 @@ void LoadResolver::tryResolve(
 	if (_arguments.empty() || !std::holds_alternative<Identifier>(_arguments.at(0)))
 		return;
 
-	YulName key = std::get<Identifier>(_arguments.at(0)).name;
+	YulString key = std::get<Identifier>(_arguments.at(0)).name;
 	if (_location == StoreLoadLocation::Storage)
 	{
 		if (auto value = storageValue(key))
@@ -125,7 +125,8 @@ void LoadResolver::tryEvaluateKeccak(
 			{},
 			LiteralKind::Number,
 			// a dummy 256-bit number to represent the Keccak256 hash.
-			LiteralValue{std::numeric_limits<u256>::max()}
+			YulString{std::numeric_limits<u256>::max().str()},
+			{}
 		}
 	);
 
@@ -136,7 +137,7 @@ void LoadResolver::tryEvaluateKeccak(
 	if (costOfLiteral > costOfKeccak)
 		return;
 
-	std::optional<YulName> value = memoryValue(memoryKey->name);
+	std::optional<YulString> value = memoryValue(memoryKey->name);
 	if (value && inScope(*value))
 	{
 		std::optional<u256> memoryContent = valueOfIdentifier(*value);
@@ -145,11 +146,11 @@ void LoadResolver::tryEvaluateKeccak(
 		{
 			bytes contentAsBytes = toBigEndian(*memoryContent);
 			contentAsBytes.resize(static_cast<size_t>(*byteLength));
-			u256 const contentHash (keccak256(contentAsBytes));
 			_e = Literal{
 				debugDataOf(_e),
 				LiteralKind::Number,
-				LiteralValue{contentHash}
+				YulString{u256(keccak256(contentAsBytes)).str()},
+				m_dialect.defaultType
 			};
 		}
 	}

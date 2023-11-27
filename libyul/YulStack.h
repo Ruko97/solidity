@@ -16,7 +16,7 @@
 */
 // SPDX-License-Identifier: GPL-3.0
 /**
- * Full assembly stack that can support Yul as input.
+ * Full assembly stack that can support EVM-assembly and Yul as input and EVM.
  */
 
 #pragma once
@@ -25,15 +25,15 @@
 #include <liblangutil/DebugInfoSelection.h>
 #include <liblangutil/ErrorReporter.h>
 #include <liblangutil/EVMVersion.h>
-#include <libsolutil/JSON.h>
 
 #include <libyul/Object.h>
-#include <libyul/ObjectOptimizer.h>
 #include <libyul/ObjectParser.h>
 
 #include <libsolidity/interface/OptimiserSettings.h>
 
 #include <libevmasm/LinkerObject.h>
+
+#include <json/json.h>
 
 #include <memory>
 #include <string>
@@ -56,7 +56,7 @@ class AbstractAssembly;
 struct MachineAssemblyObject
 {
 	std::shared_ptr<evmasm::LinkerObject> bytecode;
-	std::shared_ptr<evmasm::Assembly> assembly;
+	std::string assembly;
 	std::unique_ptr<std::string> sourceMappings;
 };
 
@@ -66,13 +66,8 @@ struct MachineAssemblyObject
 class YulStack: public langutil::CharStreamProvider
 {
 public:
-	using Language = yul::Language;
+	enum class Language { Yul, Assembly, StrictAssembly };
 	enum class Machine { EVM };
-	enum State {
-		Empty,
-		Parsed,
-		AnalysisSuccessful
-	};
 
 	YulStack():
 		YulStack(
@@ -89,18 +84,14 @@ public:
 		std::optional<uint8_t> _eofVersion,
 		Language _language,
 		solidity::frontend::OptimiserSettings _optimiserSettings,
-		langutil::DebugInfoSelection const& _debugInfoSelection,
-		langutil::CharStreamProvider const* _soliditySourceProvider = nullptr,
-		std::shared_ptr<ObjectOptimizer> _objectOptimizer = nullptr
+		langutil::DebugInfoSelection const& _debugInfoSelection
 	):
 		m_language(_language),
 		m_evmVersion(_evmVersion),
 		m_eofVersion(_eofVersion),
 		m_optimiserSettings(std::move(_optimiserSettings)),
 		m_debugInfoSelection(_debugInfoSelection),
-		m_soliditySourceProvider(_soliditySourceProvider),
-		m_errorReporter(m_errors),
-		m_objectOptimizer(_objectOptimizer ? std::move(_objectOptimizer) : std::make_shared<ObjectOptimizer>())
+		m_errorReporter(m_errors)
 	{}
 
 	/// @returns the char stream used during parsing
@@ -115,7 +106,7 @@ public:
 	void optimize();
 
 	/// Run the assembly step (should only be called after parseAndAnalyze).
-	MachineAssemblyObject assemble(Machine _machine);
+	MachineAssemblyObject assemble(Machine _machine) const;
 
 	/// Run the assembly step (should only be called after parseAndAnalyze).
 	/// In addition to the value returned by @a assemble, returns
@@ -124,7 +115,7 @@ public:
 	std::pair<MachineAssemblyObject, MachineAssemblyObject>
 	assembleWithDeployed(
 		std::optional<std::string_view> _deployName = {}
-	);
+	) const;
 
 	/// Run the assembly step (should only be called after parseAndAnalyze).
 	/// Similar to @a assemblyWithDeployed, but returns EVM assembly objects.
@@ -132,39 +123,26 @@ public:
 	std::pair<std::shared_ptr<evmasm::Assembly>, std::shared_ptr<evmasm::Assembly>>
 	assembleEVMWithDeployed(
 		std::optional<std::string_view> _deployName = {}
-	);
+	) const;
 
 	/// @returns the errors generated during parsing, analysis (and potentially assembly).
 	langutil::ErrorList const& errors() const { return m_errors; }
-	bool hasErrors() const { return m_errorReporter.hasErrors(); }
 
 	/// Pretty-print the input after having parsed it.
-	std::string print() const;
-	Json astJson() const;
-
-	// return the JSON representation of the YuL CFG (experimental)
-	Json cfgJson() const;
-
+	std::string print(
+		langutil::CharStreamProvider const* _soliditySourceProvider = nullptr
+	) const;
+	Json::Value astJson() const;
 	/// Return the parsed and analyzed object.
 	std::shared_ptr<Object> parserResult() const;
 
-	langutil::DebugInfoSelection debugInfoSelection() const { return m_debugInfoSelection; }
-
 private:
-	bool parse(std::string const& _sourceName, std::string const& _source);
 	bool analyzeParsed();
 	bool analyzeParsed(yul::Object& _object);
 
 	void compileEVM(yul::AbstractAssembly& _assembly, bool _optimize) const;
 
-	/// Prints the Yul object stored internally and parses it again.
-	/// This ensures that the debug info in the AST matches the source that printing would produce
-	/// rather than the initial source.
-	/// @warning Does not update the error list or the original source (@a m_charStream) to make
-	/// it possible to report errors to the user even after the optimization has been performed.
-	void reparse();
-
-	void reportUnimplementedFeatureError(langutil::UnimplementedFeatureError const& _error);
+	void optimize(yul::Object& _object, bool _isCreation);
 
 	Language m_language = Language::Assembly;
 	langutil::EVMVersion m_evmVersion;
@@ -172,19 +150,14 @@ private:
 	solidity::frontend::OptimiserSettings m_optimiserSettings;
 	langutil::DebugInfoSelection m_debugInfoSelection{};
 
-	/// Provider of the Solidity sources that the Yul code was generated from.
-	/// Necessary when code snippets are requested as a part of debug info. When null, code snippets are omitted.
-	/// NOTE: Not owned by YulStack, the user must ensure that it is not destroyed before the stack is.
-	langutil::CharStreamProvider const* m_soliditySourceProvider{};
-
 	std::unique_ptr<langutil::CharStream> m_charStream;
 
-	State m_stackState = Empty;
+	bool m_analysisSuccessful = false;
 	std::shared_ptr<yul::Object> m_parserResult;
 	langutil::ErrorList m_errors;
 	langutil::ErrorReporter m_errorReporter;
 
-	std::shared_ptr<ObjectOptimizer> m_objectOptimizer;
+	std::unique_ptr<std::string> m_sourceMappings;
 };
 
 }

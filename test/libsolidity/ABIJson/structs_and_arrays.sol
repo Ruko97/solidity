@@ -6,7 +6,8 @@ contract test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "string",
 //         "name": "a",

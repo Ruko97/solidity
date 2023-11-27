@@ -35,6 +35,7 @@
 #include <regex>
 #include <sstream>
 
+using namespace std;
 using namespace boost::unit_test::framework;
 using namespace boost::test_tools;
 using namespace solidity::langutil;
@@ -73,44 +74,44 @@ class AlgorithmRunnerFixture
 {
 protected:
 	// NOTE: Regexes here should not contain spaces because we strip them before matching
-	std::regex RoundSummaryRegex{R"(-+ROUND\d+\[round:[0-9.]+s,total:[0-9.]+s\]-+)"};
-	std::regex InitialPopulationHeaderRegex{"-+INITIALPOPULATION-+"};
+	regex RoundSummaryRegex{R"(-+ROUND\d+\[round:[0-9.]+s,total:[0-9.]+s\]-+)"};
+	regex InitialPopulationHeaderRegex{"-+INITIALPOPULATION-+"};
 
-	std::string individualPattern(Individual const& individual) const
+	string individualPattern(Individual const& individual) const
 	{
-		std::ostringstream output;
+		ostringstream output;
 		output << individual.fitness << individual.chromosome;
 		return output.str();
 	}
 
-	std::string topChromosomePattern(size_t roundNumber, Individual const& individual) const
+	string topChromosomePattern(size_t roundNumber, Individual const& individual) const
 	{
-		std::ostringstream output;
+		ostringstream output;
 		output << roundNumber << R"(\|[0-9.]+\|)" << individualPattern(individual);
 		return output.str();
 	}
 
-	bool nextLineMatches(std::stringstream& stream, std::regex const& pattern) const
+	bool nextLineMatches(stringstream& stream, regex const& pattern) const
 	{
-		std::string line;
-		if (std::getline(stream, line).fail())
+		string line;
+		if (getline(stream, line).fail())
 			return false;
 
-		return std::regex_match(stripWhitespace(line), pattern);
+		return regex_match(stripWhitespace(line), pattern);
 	}
 
-	std::shared_ptr<FitnessMetric> m_fitnessMetric = std::make_shared<ChromosomeLengthMetric>();
+	shared_ptr<FitnessMetric> m_fitnessMetric = make_shared<ChromosomeLengthMetric>();
 	Population const m_population = Population::makeRandom(m_fitnessMetric, 5, 0, 20);
-	std::stringstream m_output;
+	stringstream m_output;
 	AlgorithmRunner::Options m_options;
 };
 
 class AlgorithmRunnerAutosaveFixture: public AlgorithmRunnerFixture
 {
 public:
-	static std::vector<std::string> chromosomeStrings(Population const& _population)
+	static vector<string> chromosomeStrings(Population const& _population)
 	{
-		std::vector<std::string> lines;
+		vector<string> lines;
 		for (auto const& individual: _population.individuals())
 			lines.push_back(toString(individual.chromosome));
 
@@ -119,7 +120,7 @@ public:
 
 protected:
 	TemporaryDirectory m_tempDir;
-	std::string const m_autosavePath = (m_tempDir.path() / "population-autosave.txt").string();
+	string const m_autosavePath = (m_tempDir.path() / "population-autosave.txt").string();
 	RandomisingAlgorithm m_algorithm;
 };
 
@@ -152,12 +153,12 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_round_summary_after_each_round, Algorit
 	runner.run(algorithm);
 	BOOST_TEST(nextLineMatches(m_output, RoundSummaryRegex));
 	for (auto const& individual: runner.population().individuals())
-		BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(individual))));
+		BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(individual))));
 
 	runner.run(algorithm);
 	BOOST_TEST(nextLineMatches(m_output, RoundSummaryRegex));
 	for (auto const& individual: runner.population().individuals())
-		BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(individual))));
+		BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(individual))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -171,9 +172,9 @@ BOOST_FIXTURE_TEST_CASE(run_should_not_print_round_summary_if_not_requested, Alg
 	RandomisingAlgorithm algorithm;
 
 	runner.run(algorithm);
-	BOOST_TEST(nextLineMatches(m_output, std::regex("")));
+	BOOST_TEST(nextLineMatches(m_output, regex("")));
 	for (auto const& individual: runner.population().individuals())
-		BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(individual))));
+		BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(individual))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -201,7 +202,7 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_only_top_chromosome_if_requested, Algor
 	RandomisingAlgorithm algorithm;
 
 	runner.run(algorithm);
-	BOOST_TEST(nextLineMatches(m_output, std::regex(topChromosomePattern(1, runner.population().individuals()[0]))));
+	BOOST_TEST(nextLineMatches(m_output, regex(topChromosomePattern(1, runner.population().individuals()[0]))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -215,7 +216,7 @@ BOOST_FIXTURE_TEST_CASE(run_should_not_print_round_number_for_top_chromosome_if_
 	RandomisingAlgorithm algorithm;
 
 	runner.run(algorithm);
-	BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(runner.population().individuals()[0]))));
+	BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(runner.population().individuals()[0]))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -245,7 +246,7 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_initial_population_if_requested, Algori
 
 	BOOST_TEST(nextLineMatches(m_output, InitialPopulationHeaderRegex));
 	for (auto const& individual: m_population.individuals())
-		BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(individual))));
+		BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(individual))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -276,7 +277,7 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_whole_initial_population_even_if_only_t
 
 	BOOST_TEST(nextLineMatches(m_output, InitialPopulationHeaderRegex));
 	for (auto const& individual: m_population.individuals())
-		BOOST_TEST(nextLineMatches(m_output, std::regex(individualPattern(individual))));
+		BOOST_TEST(nextLineMatches(m_output, regex(individualPattern(individual))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -289,21 +290,21 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_cache_stats_if_requested, AlgorithmRunn
 	m_options.showCacheStats = true;
 	RandomisingAlgorithm algorithm;
 
-	std::vector<CharStream> sourceStreams = {
+	vector<CharStream> sourceStreams = {
 		CharStream("{mstore(10, 20)}", ""),
 		CharStream("{mstore(10, 20)\nsstore(10, 20)}", ""),
 	};
-	std::vector<Program> programs = {
+	vector<Program> programs = {
 		get<Program>(Program::load(sourceStreams[0])),
 		get<Program>(Program::load(sourceStreams[1])),
 	};
-	std::vector<std::shared_ptr<ProgramCache>> caches = {
-			std::make_shared<ProgramCache>(programs[0]),
-			std::make_shared<ProgramCache>(programs[1]),
+	vector<shared_ptr<ProgramCache>> caches = {
+		make_shared<ProgramCache>(programs[0]),
+		make_shared<ProgramCache>(programs[1]),
 	};
-	std::shared_ptr<FitnessMetric> fitnessMetric = std::make_shared<FitnessMetricAverage>(std::vector<std::shared_ptr<FitnessMetric>>{
-		std::make_shared<ProgramSize>(std::nullopt, caches[0], CodeWeights{}),
-		std::make_shared<ProgramSize>(std::nullopt, caches[1], CodeWeights{}),
+	shared_ptr<FitnessMetric> fitnessMetric = make_shared<FitnessMetricAverage>(vector<shared_ptr<FitnessMetric>>{
+		make_shared<ProgramSize>(nullopt, caches[0], CodeWeights{}),
+		make_shared<ProgramSize>(nullopt, caches[1], CodeWeights{}),
 	});
 	Population population = Population::makeRandom(fitnessMetric, 2, 0, 5);
 
@@ -317,14 +318,14 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_cache_stats_if_requested, AlgorithmRunn
 
 	for (size_t i = 0; i < m_options.maxRounds.value() - 1; ++i)
 	{
-		BOOST_TEST(nextLineMatches(m_output, std::regex(".*")));
-		BOOST_TEST(nextLineMatches(m_output, std::regex("-+CACHESTATS-+")));
+		BOOST_TEST(nextLineMatches(m_output, regex(".*")));
+		BOOST_TEST(nextLineMatches(m_output, regex("-+CACHESTATS-+")));
 		if (i > 0)
-			BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Round\d+:\d+entries)")));
-		BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Round\d+:\d+entries)")));
-		BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Totalhits:\d+)")));
-		BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Totalmisses:\d+)")));
-		BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Sizeofcachedcode:\d+)")));
+			BOOST_TEST(nextLineMatches(m_output, regex(R"(Round\d+:\d+entries)")));
+		BOOST_TEST(nextLineMatches(m_output, regex(R"(Round\d+:\d+entries)")));
+		BOOST_TEST(nextLineMatches(m_output, regex(R"(Totalhits:\d+)")));
+		BOOST_TEST(nextLineMatches(m_output, regex(R"(Totalmisses:\d+)")));
+		BOOST_TEST(nextLineMatches(m_output, regex(R"(Sizeofcachedcode:\d+)")));
 	}
 
 	BOOST_REQUIRE(stats.roundEntryCounts.size() == 2);
@@ -332,13 +333,13 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_cache_stats_if_requested, AlgorithmRunn
 	BOOST_REQUIRE(stats.roundEntryCounts.count(m_options.maxRounds.value()) == 1);
 
 	size_t round = m_options.maxRounds.value();
-	BOOST_TEST(nextLineMatches(m_output, std::regex(".*")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("-+CACHESTATS-+")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("Round" + toString(round - 1) + ":" + toString(stats.roundEntryCounts[round - 1]) + "entries")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("Round" + toString(round) + ":" + toString(stats.roundEntryCounts[round]) + "entries")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("Totalhits:" + toString(stats.hits))));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("Totalmisses:" + toString(stats.misses))));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("Sizeofcachedcode:" + toString(stats.totalCodeSize))));
+	BOOST_TEST(nextLineMatches(m_output, regex(".*")));
+	BOOST_TEST(nextLineMatches(m_output, regex("-+CACHESTATS-+")));
+	BOOST_TEST(nextLineMatches(m_output, regex("Round" + toString(round - 1) + ":" + toString(stats.roundEntryCounts[round - 1]) + "entries")));
+	BOOST_TEST(nextLineMatches(m_output, regex("Round" + toString(round) + ":" + toString(stats.roundEntryCounts[round]) + "entries")));
+	BOOST_TEST(nextLineMatches(m_output, regex("Totalhits:" + toString(stats.hits))));
+	BOOST_TEST(nextLineMatches(m_output, regex("Totalmisses:" + toString(stats.misses))));
+	BOOST_TEST(nextLineMatches(m_output, regex("Sizeofcachedcode:" + toString(stats.totalCodeSize))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -354,9 +355,9 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_message_if_cache_stats_requested_but_ca
 	AlgorithmRunner runner(m_population, {nullptr}, m_options, m_output);
 	runner.run(algorithm);
 
-	BOOST_TEST(nextLineMatches(m_output, std::regex(".*")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("-+CACHESTATS-+")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex(stripWhitespace("Program cache disabled"))));
+	BOOST_TEST(nextLineMatches(m_output, regex(".*")));
+	BOOST_TEST(nextLineMatches(m_output, regex("-+CACHESTATS-+")));
+	BOOST_TEST(nextLineMatches(m_output, regex(stripWhitespace("Program cache disabled"))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -370,18 +371,18 @@ BOOST_FIXTURE_TEST_CASE(run_should_print_partial_stats_and_message_if_some_cache
 	RandomisingAlgorithm algorithm;
 
 	CharStream sourceStream = CharStream("{}", "");
-	std::shared_ptr<ProgramCache> cache = std::make_shared<ProgramCache>(std::get<Program>(Program::load(sourceStream)));
+	shared_ptr<ProgramCache> cache = make_shared<ProgramCache>(get<Program>(Program::load(sourceStream)));
 
 	AlgorithmRunner runner(m_population, {cache, nullptr}, m_options, m_output);
 	BOOST_REQUIRE(cache->gatherStats().roundEntryCounts.size() == 0);
 
 	runner.run(algorithm);
-	BOOST_TEST(nextLineMatches(m_output, std::regex(".*")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex("-+CACHESTATS-+")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Totalhits:\d+)")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Totalmisses:\d+)")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex(R"(Sizeofcachedcode:\d+)")));
-	BOOST_TEST(nextLineMatches(m_output, std::regex(stripWhitespace("Program cache disabled for 1 out of 2 programs"))));
+	BOOST_TEST(nextLineMatches(m_output, regex(".*")));
+	BOOST_TEST(nextLineMatches(m_output, regex("-+CACHESTATS-+")));
+	BOOST_TEST(nextLineMatches(m_output, regex(R"(Totalhits:\d+)")));
+	BOOST_TEST(nextLineMatches(m_output, regex(R"(Totalmisses:\d+)")));
+	BOOST_TEST(nextLineMatches(m_output, regex(R"(Sizeofcachedcode:\d+)")));
+	BOOST_TEST(nextLineMatches(m_output, regex(stripWhitespace("Program cache disabled for 1 out of 2 programs"))));
 	BOOST_TEST(m_output.peek() == EOF);
 }
 
@@ -420,10 +421,10 @@ BOOST_FIXTURE_TEST_CASE(run_should_overwrite_existing_file_if_autosave_file_spec
 	AlgorithmRunner runner(m_population, {}, m_options, m_output);
 	assert(!fs::exists(m_autosavePath));
 
-	std::vector<std::string> originalContent = {"Original content"};
+	vector<string> originalContent = {"Original content"};
 	{
-		std::ofstream tmpFile(m_autosavePath);
-		tmpFile << originalContent[0] << std::endl;
+		ofstream tmpFile(m_autosavePath);
+		tmpFile << originalContent[0] << endl;
 	}
 	assert(fs::exists(m_autosavePath));
 	assert(readLinesFromFile(m_autosavePath) == originalContent);
@@ -434,14 +435,10 @@ BOOST_FIXTURE_TEST_CASE(run_should_overwrite_existing_file_if_autosave_file_spec
 	BOOST_TEST(readLinesFromFile(m_autosavePath) != originalContent);
 }
 
-// Disabled due to a fairly obscure bug in GCC 13+
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109561
-// The issue is on line 444, and more specifically the Options struct std::optional<std::string>
-/*
 BOOST_FIXTURE_TEST_CASE(run_should_not_save_population_to_file_if_autosave_file_not_specified, AlgorithmRunnerAutosaveFixture)
 {
 	m_options.maxRounds = 5;
-	m_options.populationAutosaveFile = std::nullopt;
+	m_options.populationAutosaveFile = nullopt;
 	AlgorithmRunner runner(m_population, {}, m_options, m_output);
 	assert(!fs::exists(m_autosavePath));
 
@@ -449,7 +446,6 @@ BOOST_FIXTURE_TEST_CASE(run_should_not_save_population_to_file_if_autosave_file_
 
 	BOOST_TEST(!fs::exists(m_autosavePath));
 }
-*/
 
 BOOST_FIXTURE_TEST_CASE(run_should_randomise_duplicate_chromosomes_if_requested, AlgorithmRunnerFixture)
 {
@@ -503,9 +499,9 @@ BOOST_FIXTURE_TEST_CASE(run_should_not_randomise_duplicate_chromosomes_if_not_re
 BOOST_FIXTURE_TEST_CASE(run_should_clear_cache_at_the_beginning_and_update_it_before_each_round, AlgorithmRunnerFixture)
 {
 	CharStream sourceStream = CharStream("{}", current_test_case().p_name);
-	std::vector<std::shared_ptr<ProgramCache>> caches = {
-		std::make_shared<ProgramCache>(std::get<Program>(Program::load(sourceStream))),
-		std::make_shared<ProgramCache>(std::get<Program>(Program::load(sourceStream))),
+	vector<shared_ptr<ProgramCache>> caches = {
+		make_shared<ProgramCache>(get<Program>(Program::load(sourceStream))),
+		make_shared<ProgramCache>(get<Program>(Program::load(sourceStream))),
 	};
 
 	m_options.maxRounds = 10;

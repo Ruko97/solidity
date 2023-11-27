@@ -21,9 +21,6 @@ contract A {
 // ----
 // different_salt() -> true
 // same_salt() -> true
-// gas irOptimized: 98438295
-// gas irOptimized code: 600
-// gas legacy: 98437509
-// gas legacy code: 1600
-// gas legacyOptimized: 98437367
-// gas legacyOptimized code: 1600
+// gas irOptimized: 98438895
+// gas legacy: 98439109
+// gas legacyOptimized: 98438967

@@ -17,20 +17,17 @@ contract C {
 // EVMVersion: >=byzantium
 // ----
 // constructor(), 20 wei
-// gas irOptimized: 61548
-// gas irOptimized code: 104600
-// gas legacy: 70147
-// gas legacy code: 215400
-// gas legacyOptimized: 61715
-// gas legacyOptimized code: 106800
+// gas irOptimized: 166148
+// gas legacy: 285547
+// gas legacyOptimized: 168515
 // f(uint256): 20 -> 0x137aa4dfc0911524504fcd4d98501f179bc13b4a
 // x() -> 1
 // f(uint256): 20 -> FAILURE
 // x() -> 1
 // stack(uint256): 1023 -> FAILURE
 // gas irOptimized: 252410
-// gas legacy: 476845
-// gas legacyOptimized: 299061
+// gas legacy: 477722
+// gas legacyOptimized: 299567
 // x() -> 1
 // stack(uint256): 10 -> 0x87948bd7ebbe13a00bfd930c93e4828ab18e3908
 // x() -> 2

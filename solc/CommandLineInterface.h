@@ -108,7 +108,6 @@ private:
 	void handleIRAst(std::string const& _contract);
 	void handleIROptimized(std::string const& _contract);
 	void handleIROptimizedAst(std::string const& _contract);
-	void handleYulCFGExport(std::string const& _contract);
 	void handleBytecode(std::string const& _contract);
 	void handleSignatureHashes(std::string const& _contract);
 	void handleMetadata(std::string const& _contract);
@@ -116,13 +115,12 @@ private:
 	void handleNatspec(bool _natspecDev, std::string const& _contract);
 	void handleGasEstimation(std::string const& _contract);
 	void handleStorageLayout(std::string const& _contract);
-	void handleTransientStorageLayout(std::string const& _contract);
 
 	/// Tries to read @ m_sourceCodes as a JSONs holding ASTs
 	/// such that they can be imported into the compiler  (importASTs())
 	/// (produced by --combined-json ast <file.sol>
 	/// or standard-json output
-	std::map<std::string, Json> parseAstFromInput();
+	std::map<std::string, Json::Value> parseAstFromInput();
 
 	/// Create a file in the given directory
 	/// @arg _fileName the name of the file
@@ -149,7 +147,7 @@ private:
 	std::ostream& m_serr;
 	bool m_hasOutput = false;
 	FileReader m_fileReader;
-	SMTSolverCommand m_solverCommand;
+	SMTSolverCommand m_solverCommand{"eld"};
 	UniversalCallback m_universalCallback{&m_fileReader, m_solverCommand};
 	std::optional<std::string> m_standardJsonInput;
 	std::unique_ptr<frontend::CompilerStack> m_compiler;

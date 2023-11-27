@@ -22,7 +22,7 @@ set -e
 
 # Requires $REPO_ROOT to be defined and "${REPO_ROOT}/scripts/common.sh" to be included before.
 
-CURRENT_EVM_VERSION=cancun
+CURRENT_EVM_VERSION=shanghai
 
 AVAILABLE_PRESETS=(
     legacy-no-optimize
@@ -106,28 +106,25 @@ function setup_solc
 
 function download_project
 {
-    local repo_url="$1"
-    local ref="$2"
-    local test_dir="$3"
+    local repo="$1"
+    local ref_type="$2"
+    local solcjs_ref="$3"
+    local test_dir="$4"
 
-    printLog "Cloning ${repo_url}..."
-    # Clone the repo ignoring all blobs until needed by git.
-    # This allows access to commit history but with a fast initial clone
-    git clone --filter=blob:none "$repo_url" "$test_dir/ext"
-    cd "$test_dir/ext"
+    [[ $ref_type == commit || $ref_type == branch || $ref_type == tag ]] || assertFail
 
-    # If the ref is '<latest-release>' try to use the latest tag as ref
-    # NOTE: Sadly this will not work with monorepos and may not always
-    # return the latest tag.
-    if [[ "$ref" == "<latest-release>" ]]; then
-        ref=$(git tag --sort=-v:refname | head --lines=1)
+    printLog "Cloning ${ref_type} ${solcjs_ref} of ${repo}..."
+    if [[ $ref_type == commit ]]; then
+        mkdir ext
+        cd ext
+        git init
+        git remote add origin "$repo"
+        git fetch --depth 1 origin "$solcjs_ref"
+        git reset --hard FETCH_HEAD
+    else
+        git clone --depth 1 "$repo" -b "$solcjs_ref" "$test_dir/ext"
+        cd ext
     fi
-
-    [[ $ref != "" ]] || assertFail
-
-    printLog "Using ref: ${ref}"
-    git checkout "$ref"
-
     echo "Current commit hash: $(git rev-parse HEAD)"
 }
 
@@ -332,16 +329,12 @@ function force_hardhat_compiler_settings
         echo "require('hardhat-gas-reporter');"
         echo "module.exports.gasReporter = ${gas_reporter_settings};"
         echo "module.exports.solidity = ${compiler_settings};"
-        echo "module.exports.networks.hardhat = module.exports.networks.hardhat || { hardfork: '${evm_version}' }"
-        echo "module.exports.networks.hardhat.hardfork = '${evm_version}'"
     else
         [[ $config_file == *\.ts ]] || assertFail
         [[ $config_var_name != "" ]] || assertFail
         echo 'import "hardhat-gas-reporter";'
         echo "${config_var_name}.gasReporter = ${gas_reporter_settings};"
         echo "${config_var_name}.solidity = {compilers: [${compiler_settings}]};"
-        echo "${config_var_name}.networks!.hardhat = ${config_var_name}.networks!.hardhat ?? { hardfork: '${evm_version}' };"
-        echo "${config_var_name}.networks!.hardhat!.hardfork = '${evm_version}'"
     fi >> "$config_file"
 }
 
@@ -505,14 +498,14 @@ function compile_and_run_test
     [[ $preset != *" "* ]] || assertFail "Preset names must not contain spaces."
 
     printLog "Running compile function..."
-    time_to_json_file "$(compilation_time_report_path "$preset")" "$compile_fn"
-    "$verify_fn" "$SOLCVERSION_SHORT" "$SOLCVERSION"
+    time $compile_fn
+    $verify_fn "$SOLCVERSION_SHORT" "$SOLCVERSION"
 
     if [[ "$COMPILE_ONLY" == 1 || " $compile_only_presets " == *" $preset "* ]]; then
         printLog "Skipping test function..."
     else
         printLog "Running test function..."
-        "$test_fn"
+        $test_fn
     fi
 }
 
@@ -572,27 +565,22 @@ function gas_report_path
     echo "${DIR}/gas-report-${preset}.rst"
 }
 
-function compilation_time_report_path
-{
-    local preset="$1"
-
-    echo "${DIR}/compilation-time-report-${preset}.json"
-}
-
 function gas_report_to_json
 {
     cat - | "${REPO_ROOT}/scripts/externalTests/parse_eth_gas_report.py" | jq '{gas: .}'
 }
 
-function detect_hardhat_artifact_dirs
+function detect_hardhat_artifact_dir
 {
-    # NOTE: The artifacts path is a configured parameter in Hardhat, so the below may fail for new external tests
-    # See: https://hardhat.org/hardhat-runner/docs/config#path-configuration
-    local artifact_dir=()
-    [[ -e build/artifacts ]] && artifact_dir+=("build/artifacts")
-    [[ -e artifacts/ ]] && artifact_dir+=("artifacts")
-    (( ${#artifact_dir[@]} != 0 )) || assertFail
-    echo -n "${artifact_dir[@]}"
+    if [[ -e build/ && -e artifacts/ ]]; then
+        fail "Cannot determine Hardhat artifact location. Both build/ and artifacts/ exist"
+    elif [[ -e build/ ]]; then
+        echo -n build/artifacts
+    elif [[ -e artifacts/ ]]; then
+        echo -n artifacts
+    else
+        fail "Hardhat build artifacts not found."
+    fi
 }
 
 function bytecode_size_json_from_truffle_artifacts
@@ -617,17 +605,16 @@ function bytecode_size_json_from_truffle_artifacts
 function bytecode_size_json_from_hardhat_artifacts
 {
     # NOTE: The output of this function is a series of concatenated JSON dicts rather than a list.
-    for artifact_dir in $(detect_hardhat_artifact_dirs); do
-        for artifact in "$artifact_dir"/build-info/*.json; do
-            # Each artifact contains Standard JSON output under the `output` key.
-            # Process it into a dict of the form `{"<file>": {"<contract>": <size>}}`,
-            # Note that one Hardhat artifact often represents multiple input files.
-            jq '.output.contracts | to_entries[] | {
-                "\(.key)": .value | to_entries[] | {
-                    "\(.key)": (.value.evm.bytecode.object | length / 2)
-                }
-            }' "$artifact"
-        done
+
+    for artifact in "$(detect_hardhat_artifact_dir)"/build-info/*.json; do
+        # Each artifact contains Standard JSON output under the `output` key.
+        # Process it into a dict of the form `{"<file>": {"<contract>": <size>}}`,
+        # Note that one Hardhat artifact often represents multiple input files.
+        jq '.output.contracts | to_entries[] | {
+            "\(.key)": .value | to_entries[] | {
+                "\(.key)": (.value.evm.bytecode.object | length / 2)
+            }
+        }' "$artifact"
     done
 }
 
@@ -686,6 +673,5 @@ function store_benchmark_report
 
         "bytecode_size_json_from_${framework}_artifacts" | combine_artifact_json
         project_info_json "$project_url"
-        echo "{\"compilation_time\": $(cat "$(compilation_time_report_path "$preset")")}"
     } | jq --slurp "{\"${project_name}\": {\"${preset}\": add}}" --indent 4 --sort-keys > "$output_file"
 }

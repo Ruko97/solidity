@@ -26,6 +26,7 @@
 #include <cstring>
 #include <fstream>
 
+using namespace std;
 using namespace solidity::phaser;
 
 void AlgorithmRunner::run(GeneticAlgorithm& _algorithm)
@@ -64,12 +65,12 @@ void AlgorithmRunner::printRoundSummary(
 		if (m_options.showRoundInfo)
 		{
 			m_outputStream << "---------- ROUND " << _round + 1;
-			m_outputStream << " [round: " << std::fixed << std::setprecision(1) << roundTime << " s,";
-			m_outputStream << " total: " << std::fixed << std::setprecision(1) << totalTime << " s]";
-			m_outputStream << " ----------" << std::endl;
+			m_outputStream << " [round: " << fixed << setprecision(1) << roundTime << " s,";
+			m_outputStream << " total: " << fixed << setprecision(1) << totalTime << " s]";
+			m_outputStream << " ----------" << endl;
 		}
 		else if (m_population.individuals().size() > 0)
-			m_outputStream << std::endl;
+			m_outputStream << endl;
 
 		m_outputStream << m_population;
 	}
@@ -77,11 +78,11 @@ void AlgorithmRunner::printRoundSummary(
 	{
 		if (m_options.showRoundInfo)
 		{
-			m_outputStream << std::setw(5) << _round + 1 << " | ";
-			m_outputStream << std::setw(5) << std::fixed << std::setprecision(1) << totalTime << " | ";
+			m_outputStream << setw(5) << _round + 1 << " | ";
+			m_outputStream << setw(5) << fixed << setprecision(1) << totalTime << " | ";
 		}
 
-		m_outputStream << m_population.individuals()[0] << std::endl;
+		m_outputStream << m_population.individuals()[0] << endl;
 	}
 }
 
@@ -90,7 +91,7 @@ void AlgorithmRunner::printInitialPopulation() const
 	if (!m_options.showInitialPopulation)
 		return;
 
-	m_outputStream << "---------- INITIAL POPULATION ----------" << std::endl;
+	m_outputStream << "---------- INITIAL POPULATION ----------" << endl;
 	m_outputStream << m_population;
 }
 
@@ -107,23 +108,23 @@ void AlgorithmRunner::printCacheStats() const
 		else
 			++disabledCacheCount;
 
-	m_outputStream << "---------- CACHE STATS ----------" << std::endl;
+	m_outputStream << "---------- CACHE STATS ----------" << endl;
 
 	if (disabledCacheCount < m_programCaches.size())
 	{
 		for (auto& [round, count]: totalStats.roundEntryCounts)
-			m_outputStream << "Round " << round << ": " << count << " entries" << std::endl;
-		m_outputStream << "Total hits: " << totalStats.hits << std::endl;
-		m_outputStream << "Total misses: " << totalStats.misses << std::endl;
-		m_outputStream << "Size of cached code: " << totalStats.totalCodeSize << std::endl;
+			m_outputStream << "Round " << round << ": " << count << " entries" << endl;
+		m_outputStream << "Total hits: " << totalStats.hits << endl;
+		m_outputStream << "Total misses: " << totalStats.misses << endl;
+		m_outputStream << "Size of cached code: " << totalStats.totalCodeSize << endl;
 	}
 
 	if (disabledCacheCount == m_programCaches.size())
-		m_outputStream << "Program cache disabled" << std::endl;
+		m_outputStream << "Program cache disabled" << endl;
 	else if (disabledCacheCount > 0)
 	{
 		m_outputStream << "Program cache disabled for " << disabledCacheCount << " out of ";
-		m_outputStream << m_programCaches.size() << " programs" << std::endl;
+		m_outputStream << m_programCaches.size() << " programs" << endl;
 	}
 }
 
@@ -132,20 +133,20 @@ void AlgorithmRunner::populationAutosave() const
 	if (!m_options.populationAutosaveFile.has_value())
 		return;
 
-	std::ofstream outputStream(m_options.populationAutosaveFile.value(), std::ios::out | std::ios::trunc);
+	ofstream outputStream(m_options.populationAutosaveFile.value(), ios::out | ios::trunc);
 	assertThrow(
 		outputStream.is_open(),
 		FileOpenError,
-		"Could not open file '" + m_options.populationAutosaveFile.value() + "': " + std::strerror(errno)
+		"Could not open file '" + m_options.populationAutosaveFile.value() + "': " + strerror(errno)
 	);
 
 	for (auto& individual: m_population.individuals())
-		outputStream << individual.chromosome << std::endl;
+		outputStream << individual.chromosome << endl;
 
 	assertThrow(
 		!outputStream.bad(),
 		FileWriteError,
-		"Error while writing to file '" + m_options.populationAutosaveFile.value() + "': " + std::strerror(errno)
+		"Error while writing to file '" + m_options.populationAutosaveFile.value() + "': " + strerror(errno)
 	);
 }
 
@@ -187,7 +188,7 @@ Population AlgorithmRunner::randomiseDuplicates(
 	if (_population.individuals().size() == 0)
 		return _population;
 
-	std::vector<Individual> individuals{_population.individuals()[0]};
+	vector<Individual> individuals{_population.individuals()[0]};
 	size_t duplicateCount = 0;
 	for (size_t i = 1; i < _population.individuals().size(); ++i)
 		if (_population.individuals()[i].chromosome == _population.individuals()[i - 1].chromosome)

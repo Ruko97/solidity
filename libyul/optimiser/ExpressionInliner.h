@@ -22,7 +22,6 @@
 
 #include <libyul/optimiser/ASTWalker.h>
 #include <libyul/ASTForward.h>
-#include <libyul/YulName.h>
 
 #include <optional>
 #include <set>
@@ -60,16 +59,16 @@ public:
 private:
 	ExpressionInliner(
 		Dialect const& _dialect,
-		std::map<YulName, FunctionDefinition const*> const& _inlinableFunctions
+		std::map<YulString, FunctionDefinition const*> const& _inlinableFunctions
 	): m_dialect(_dialect), m_inlinableFunctions(_inlinableFunctions)
 	{}
 
 	Dialect const& m_dialect;
-	std::map<YulName, FunctionDefinition const*> const& m_inlinableFunctions;
+	std::map<YulString, FunctionDefinition const*> const& m_inlinableFunctions;
 
-	std::map<YulName, YulName> m_varReplacements;
+	std::map<YulString, YulString> m_varReplacements;
 	/// Set of functions we are currently visiting inside.
-	std::set<YulName> m_currentFunctions;
+	std::set<YulString> m_currentFunctions;
 };
 
 }

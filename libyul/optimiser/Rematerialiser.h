@@ -50,7 +50,7 @@ public:
 	static void run(
 		Dialect const& _dialect,
 		Block& _ast,
-		std::set<YulName> _varsToAlwaysRematerialize = {},
+		std::set<YulString> _varsToAlwaysRematerialize = {},
 		bool _onlySelectedVariables = false
 	);
 
@@ -58,7 +58,7 @@ protected:
 	Rematerialiser(
 		Dialect const& _dialect,
 		Block& _ast,
-		std::set<YulName> _varsToAlwaysRematerialize = {},
+		std::set<YulString> _varsToAlwaysRematerialize = {},
 		bool _onlySelectedVariables = false
 	);
 
@@ -67,8 +67,8 @@ protected:
 	using ASTModifier::visit;
 	void visit(Expression& _e) override;
 
-	std::map<YulName, size_t> m_referenceCounts;
-	std::set<YulName> m_varsToAlwaysRematerialize;
+	std::map<YulString, size_t> m_referenceCounts;
+	std::set<YulString> m_varsToAlwaysRematerialize;
 	bool m_onlySelectedVariables = false;
 };
 

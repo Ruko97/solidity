@@ -35,13 +35,12 @@
 
 #include <libsolidity/interface/ReadFile.h>
 
-#include <libsmtutil/BMCSolverInterface.h>
+#include <libsmtutil/SolverInterface.h>
 #include <liblangutil/UniqueErrorReporter.h>
 
 #include <set>
 #include <string>
 #include <vector>
-#include <stack>
 
 using solidity::util::h256;
 
@@ -62,7 +61,6 @@ public:
 		smt::EncodingContext& _context,
 		langutil::UniqueErrorReporter& _errorReporter,
 		langutil::UniqueErrorReporter& _unsupportedErrorReporter,
-		langutil::ErrorReporter& _provedSafeReporter,
 		std::map<h256, std::string> const& _smtlib2Responses,
 		ReadCallback::Callback const& _smtCallback,
 		ModelCheckerSettings _settings,
@@ -150,10 +148,7 @@ private:
 
 		friend bool operator<(BMCVerificationTarget const& _a, BMCVerificationTarget const& _b)
 		{
-			if (_a.expression->id() == _b.expression->id())
-				return _a.type < _b.type;
-			else
-				return _a.expression->id() < _b.expression->id();
+			return _a.expression->id() < _b.expression->id();
 		}
 	};
 
@@ -205,7 +200,7 @@ private:
 	smtutil::Expression mergeVariablesFromLoopCheckpoints();
 	bool isInsideLoop() const;
 
-	std::unique_ptr<smtutil::BMCSolverInterface> m_interface;
+	std::unique_ptr<smtutil::SolverInterface> m_interface;
 
 	/// Flags used for better warning messages.
 	bool m_loopExecutionHappened = false;

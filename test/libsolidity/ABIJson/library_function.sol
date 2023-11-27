@@ -12,7 +12,8 @@ library test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "uint256[]",
 //         "name": "c",
@@ -25,7 +26,8 @@ library test {
 //       }
 //     ],
 //     "name": "f1",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "uint256[]",
 //         "name": "e",
