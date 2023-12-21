@@ -15,7 +15,7 @@ contract C {
     }
 }
 // ====
-// EVMVersion: <cancun
+// EVMVersion: <=shanghai
 // ----
 // f() -> 1
 // g() -> 1000
