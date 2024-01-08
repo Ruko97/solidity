@@ -7,7 +7,7 @@
     mcopy(0x60, 0, 32)   // Append a duplicate of the first word past msize
     mcopy(0x90, 0x30, 1) // Copy the 0x44 byte from the middle of second word past msize
     mcopy(0, 0, 0)       // No-op
-    mcopy(0x2f, 0x90, 2) // Copy the 0x4400 straddling msize back into the middle of second word
+    mcopy(0x2f, 0x90, 2) // Copy the 0x4400 straddling msize back into the the middle of second word
     mcopy(0xa0, 0, 160)  // Duplicate the whole thing
 }
 // ====
@@ -32,4 +32,3 @@
 //    100: 1111111111111111111111111111111122222222222222222222222222222222
 //    120: 0000000000000000000000000000000044000000000000000000000000000000
 // Storage dump:
-// Transient storage dump:

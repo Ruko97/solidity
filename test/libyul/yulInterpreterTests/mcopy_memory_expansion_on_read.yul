@@ -10,4 +10,3 @@
 //   MCOPY(48, 48, 0)
 // Memory dump:
 // Storage dump:
-// Transient storage dump:
