@@ -811,17 +811,8 @@ bool CompilerStack::compile(State _stopAfter)
 				{
 					try
 					{
-						// NOTE: Bytecode generation via IR always uses Contract::yulIROptimized.
-						// When optimization is not enabled, that member simply contains unoptimized code.
-						bool needIROutput =
-							(m_generateEvmBytecode && m_viaIR) ||
-							m_irOutputSelection != IROutputSelection::None;
-						bool needUnoptimizedIROutputOnly =
-							!(m_generateEvmBytecode && m_viaIR) &&
-							m_irOutputSelection != IROutputSelection::UnoptimizedAndOptimized;
-
-						if (needIROutput)
-							generateIR(*contract, needUnoptimizedIROutputOnly);
+						if ((m_generateEvmBytecode && m_viaIR) || m_generateIR)
+							generateIR(*contract);
 						if (m_generateEvmBytecode)
 						{
 							if (m_viaIR)

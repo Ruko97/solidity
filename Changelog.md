@@ -4,6 +4,31 @@ Language Features:
 
 
 Compiler Features:
+ * Code Generator: Use ``MCOPY`` instead of ``MLOAD``/``MSTORE`` loop when copying byte arrays.
+ * Yul Analyzer: Emit transient storage warning only for the first occurrence of ``tstore``.
+
+
+Bugfixes:
+ * Assembler: Prevent incorrect calculation of tag sizes.
+ * Commandline Interface: Do not run IR pipeline when ``--via-ir`` is used but no output that depends on the IR is requested.
+ * EVM Assembly Import: Fix handling of missing source locations during import.
+ * SMTChecker: Ensure query is properly flushed to a file before calling solver when using SMT-LIB interface.
+ * SMTChecker: Fix internal error caused by not respecting the sign of an integer type when constructing zero-value SMT expressions.
+ * SMTChecker: Run Eldarica only when explicitly requested with `--model-checker-solvers eld`, even when it is present on the system.
+
+
+### 0.8.24 (2024-01-25)
+
+Language Features:
+ * Introduce global ``block.blobbasefee`` for retrieving the blob base fee of the current block.
+ * Introduce global function ``blobhash(uint)`` for retrieving versioned hashes of blobs, akin to the homonymous Yul builtin.
+ * Yul: Introduce builtin ``blobbasefee()`` for retrieving the blob base fee of the current block.
+ * Yul: Introduce builtin ``blobhash()`` for retrieving versioned hashes of blobs associated with the transaction.
+ * Yul: Introduce builtin ``mcopy()`` for cheaply copying data between memory areas.
+ * Yul: Introduce builtins ``tload()`` and ``tstore()`` for transient storage access.
+
+
+Compiler Features:
  * EVM: Support for the EVM Version "Cancun".
 
 Bugfixes:
