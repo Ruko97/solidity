@@ -844,9 +844,9 @@ bool CompilerStack::compile(State _stopAfter)
 
 					try
 					{
-						if (pipelineConfig.needIR(m_viaIR))
-							generateIR(*contract, pipelineConfig.needIRCodegenOnly(m_viaIR));
-						if (pipelineConfig.needBytecode())
+						if ((m_generateEvmBytecode && m_viaIR) || m_generateIR)
+							generateIR(*contract);
+						if (m_generateEvmBytecode)
 						{
 							if (m_viaIR)
 								generateEVMFromIR(*contract);
