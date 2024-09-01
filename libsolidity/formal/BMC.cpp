@@ -621,6 +621,22 @@ void BMC::endVisit(BinaryOperation const& _op)
 	}
 }
 
+void BMC::endVisit(BinaryOperation const& _op)
+{
+	SMTEncoder::endVisit(_op);
+
+	if (auto funDef = *_op.annotation().userDefinedFunction)
+	{
+		std::vector<Expression const*> arguments;
+		arguments.push_back(&_op.leftExpression());
+		arguments.push_back(&_op.rightExpression());
+
+		// pushCallStack and defineExpr inside createReturnedExpression should be called on the expression
+		// in case of a user-defined operator call
+		inlineFunctionCall(funDef, _op, std::nullopt, arguments);
+	}
+}
+
 void BMC::endVisit(FunctionCall const& _funCall)
 {
 	auto functionCallKind = *_funCall.annotation().kind;

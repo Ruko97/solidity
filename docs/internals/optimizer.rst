@@ -303,6 +303,8 @@ The following transformation steps are the main components:
 
 .. _optimizer-steps:
 
+.. _optimizer-steps:
+
 Optimizer Steps
 ---------------
 

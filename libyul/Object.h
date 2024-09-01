@@ -33,6 +33,7 @@
 #include <memory>
 #include <set>
 #include <limits>
+#include <json/json.h>
 
 namespace solidity::yul
 {

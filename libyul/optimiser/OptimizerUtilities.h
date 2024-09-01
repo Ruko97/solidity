@@ -54,6 +54,10 @@ std::optional<evmasm::Instruction> toEVMInstruction(Dialect const& _dialect, Yul
 /// It returns the default EVM version if dialect is not an EVMDialect.
 langutil::EVMVersion const evmVersionFromDialect(Dialect const& _dialect);
 
+/// Helper function that returns the EVM version from a dialect.
+/// It returns the default EVM version if dialect is not an EVMDialect.
+langutil::EVMVersion const evmVersionFromDialect(Dialect const& _dialect);
+
 class StatementRemover: public ASTModifier
 {
 public:

@@ -1050,6 +1050,8 @@ Json CompilerStack::assemblyJSON(std::string const& _contractName) const
 	solAssert(m_stackState == CompilationSuccessful, "Compilation was not successful.");
 	solUnimplementedAssert(!isExperimentalSolidity());
 
+	solUnimplementedAssert(!isExperimentalSolidity());
+
 	Contract const& currentContract = contract(_contractName);
 	if (currentContract.evmAssembly)
 		return currentContract.evmAssembly->assemblyJSON(sourceIndices());
@@ -1929,6 +1931,8 @@ Json gasToJson(GasEstimator::GasConsumption const& _gas)
 Json CompilerStack::gasEstimates(std::string const& _contractName) const
 {
 	solAssert(m_stackState == CompilationSuccessful, "Compilation was not successful.");
+	solUnimplementedAssert(!isExperimentalSolidity());
+
 	solUnimplementedAssert(!isExperimentalSolidity());
 
 	if (!assemblyItems(_contractName) && !runtimeAssemblyItems(_contractName))

@@ -56,6 +56,8 @@ using namespace solidity;
 
 namespace fs = boost::filesystem;
 
+namespace fs = boost::filesystem;
+
 namespace
 {
 

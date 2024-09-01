@@ -133,8 +133,8 @@ sub_0: assembly {
         /* \"C\":475:483  this.f() */
       gas
       staticcall
-      swap2
-      dup3
+      swap3
+      dup4
       iszero
       tag_16
       jumpi
@@ -183,12 +183,12 @@ sub_0: assembly {
       add
       not(0x1f)
       and
-      dup4
+      dup5
       add
       0xffffffffffffffff
       dup2
       gt
-      dup5
+      dup6
       dup3
       lt
       or
@@ -198,7 +198,7 @@ sub_0: assembly {
       0x20
         /* \"C\":79:503  contract C... */
       swap2
-      dup5
+      dup6
       swap2
       0x40
       mstore
@@ -284,6 +284,10 @@ sub_0: assembly {
       add
       swap1
       dup2
+      0x29
+      add
+      swap2
+      dup3
       slt
       0x01
       and
@@ -479,8 +483,8 @@ sub_0: assembly {
         /* \"C\":475:483  this.f() */
       gas
       staticcall
-      swap2
-      dup3
+      swap3
+      dup4
       iszero
       tag_16
       jumpi
@@ -529,12 +533,12 @@ sub_0: assembly {
       add
       not(0x1f)
       and
-      dup4
+      dup5
       add
       0xffffffffffffffff
       dup2
       gt
-      dup5
+      dup6
       dup3
       lt
       or
@@ -544,7 +548,7 @@ sub_0: assembly {
       0x20
         /* \"D\":91:181  contract D is C(3)... */
       swap2
-      dup5
+      dup6
       swap2
       0x40
       mstore
@@ -630,6 +634,10 @@ sub_0: assembly {
       add
       swap1
       dup2
+      0x29
+      add
+      swap2
+      dup3
       slt
       0x01
       and

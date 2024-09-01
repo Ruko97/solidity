@@ -95,6 +95,11 @@ function uniswap_test
     # See hardhat note about the issue here: https://github.com/NomicFoundation/hardhat/releases/tag/hardhat@2.21.0
     pnpm install hardhat@2.20.0
 
+    # We set hardhat version to 2.20.0 since version 2.21.0 has issues with solidity-coverage plugin
+    # that often causes out-of-memory errors.
+    # See hardhat note about the issue here: https://github.com/NomicFoundation/hardhat/releases/tag/hardhat@2.21.0
+    yarn add hardhat@2.20.0
+
     replace_version_pragmas
 
     for preset in $SELECTED_PRESETS; do

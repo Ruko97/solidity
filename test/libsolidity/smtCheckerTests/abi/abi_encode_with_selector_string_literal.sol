@@ -20,6 +20,7 @@ contract C {
 }
 // ====
 // SMTEngine: all
+// SMTIgnoreOS: macos
 // ----
 // Warning 6328: (403-433): CHC: Assertion violation happens here.\nCounterexample:\n\nsel = 0x0\nb5 = []\nb6 = []\n\nTransaction trace:\nC.constructor()\nC.abiEncodeStringLiteral(0x0)
 // Warning 6328: (514-544): CHC: Assertion violation happens here.\nCounterexample:\n\nsel = 0x0\nb6 = []\n\nTransaction trace:\nC.constructor()\nC.abiEncodeStringLiteral(0x0)

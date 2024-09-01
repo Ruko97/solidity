@@ -36,6 +36,7 @@ public:
 	explicit CHCSmtLib2Interface(
 		std::map<util::h256, std::string> _queryResponses = {},
 		frontend::ReadCallback::Callback _smtCallback = {},
+		SMTSolverChoice _enabledSolvers = SMTSolverChoice::All(),
 		std::optional<unsigned> _queryTimeout = {}
 	);
 
@@ -90,6 +91,9 @@ protected:
 
 	static std::string createQueryAssertion(std::string _name);
 	void createHeader();
+
+	std::string createQueryAssertion(std::string name);
+	std::string createHeaderAndDeclarations();
 
 	/// Communicates with the solver via the callback. Throws SMTSolverError on error.
 	virtual std::string querySolver(std::string const& _input);
