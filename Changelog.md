@@ -14,7 +14,6 @@ Bugfixes:
 
 Compiler Features:
  * Code Generator: Use ``MCOPY`` instead of ``MLOAD``/``MSTORE`` loop when copying byte arrays.
- * EVM: Set default EVM version to ``cancun``.
  * Yul Analyzer: Emit transient storage warning only for the first occurrence of ``tstore``.
 
 
@@ -40,11 +39,6 @@ Language Features:
 
 Compiler Features:
  * EVM: Support for the EVM Version "Cancun".
- * SMTChecker: Support `bytes.concat` except when string literals are passed as arguments.
- * SMTChecker: Print a message that function parameter name was used instead of a concrete value in a counterexample when the concrete value found by the solver is too long to print.
- * Standard JSON Interface: Add experimental support to import EVM assembly in the format used by ``--asm-json``.
- * TypeChecker: Comparison of internal function pointers now yields a warning, as it can produce unexpected results with the legacy pipeline enabled.
-
 
 Bugfixes:
  * AST import: Fix bug when importing inline assembly with empty ``let`` variable declaration.
@@ -97,8 +91,6 @@ Important Bugfixes:
 
 Language Features:
  * Allow qualified access to events from other contracts.
- * Relax restrictions on initialization of immutable variables. Reads and writes may now happen at any point at construction time outside of functions and modifiers. Explicit initialization is no longer mandatory.
-
 
 Compiler Features:
  * Commandline Interface: Add ``--ast-compact-json`` output in assembler mode.
@@ -164,6 +156,10 @@ AST Changes:
  * AST: Add the ``usedEvents`` field to ``ContractDefinition`` which contains the AST IDs of all events emitted by the contract as well as all events defined and inherited by the contract.
 
 
+AST Changes:
+ * AST: add the ``internalFunctionID`` field to the AST nodes of functions that may be called via the internal dispatch. These IDs are always generated, but they are only used in via-IR code generation.
+
+
 ### 0.8.19 (2023-02-22)
 
 Language Features:
@@ -181,6 +177,7 @@ Bugfixes:
  * SMTChecker: Fix internal error caused by unhandled ``z3`` expressions that come from the solver when bitwise operators are used.
  * SMTChecker: Fix internal error when using the custom NatSpec annotation to abstract free functions.
  * TypeChecker: Also allow external library functions in ``using for``.
+ * SMTChecker: Fix internal error caused by unhandled ``z3`` expressions that come from the solver when bitwise operators are used.
 
 
 AST Changes:

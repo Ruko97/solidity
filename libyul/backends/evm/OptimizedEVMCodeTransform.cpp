@@ -80,7 +80,7 @@ void OptimizedEVMCodeTransform::operator()(CFG::FunctionCall const& _call)
 		// Assert that we got the correct return label on stack.
 		if (_call.canContinue)
 		{
-			auto const* returnLabelSlot = std::get_if<FunctionCallReturnLabelSlot>(
+			auto const* returnLabelSlot = get_if<FunctionCallReturnLabelSlot>(
 				&m_stack.at(m_stack.size() - _call.functionCall.get().arguments.size() - 1)
 			);
 			yulAssert(returnLabelSlot && &returnLabelSlot->call.get() == &_call.functionCall.get(), "");
@@ -502,9 +502,9 @@ void OptimizedEVMCodeTransform::operator()(CFG::BasicBlock const& _block)
 		[&](CFG::BasicBlock::Terminated const&)
 		{
 			yulAssert(!_block.operations.empty());
-			if (CFG::BuiltinCall const* builtinCall = std::get_if<CFG::BuiltinCall>(&_block.operations.back().operation))
+			if (CFG::BuiltinCall const* builtinCall = get_if<CFG::BuiltinCall>(&_block.operations.back().operation))
 				yulAssert(builtinCall->builtin.get().controlFlowSideEffects.terminatesOrReverts(), "");
-			else if (CFG::FunctionCall const* functionCall = std::get_if<CFG::FunctionCall>(&_block.operations.back().operation))
+			else if (CFG::FunctionCall const* functionCall = get_if<CFG::FunctionCall>(&_block.operations.back().operation))
 				yulAssert(!functionCall->canContinue);
 			else
 				yulAssert(false);

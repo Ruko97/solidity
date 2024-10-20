@@ -161,4 +161,19 @@ std::optional<Json::Value> jsonValueByPath(Json::Value const& _node, std::string
 	return jsonValueByPath(_node[memberName], _jsonPath.substr(memberName.size() + 1));
 }
 
+std::optional<Json::Value> jsonValueByPath(Json::Value const& _node, std::string_view _jsonPath)
+{
+	if (!_node.isObject() || _jsonPath.empty())
+		return {};
+
+	std::string memberName = std::string(_jsonPath.substr(0, _jsonPath.find_first_of('.')));
+	if (!_node.isMember(memberName))
+		return {};
+
+	if (memberName == _jsonPath)
+		return _node[memberName];
+
+	return jsonValueByPath(_node[memberName], _jsonPath.substr(memberName.size() + 1));
+}
+
 } // namespace solidity::util

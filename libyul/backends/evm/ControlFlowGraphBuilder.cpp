@@ -233,7 +233,7 @@ std::unique_ptr<CFG> ControlFlowGraphBuilder::build(
 ControlFlowGraphBuilder::ControlFlowGraphBuilder(
 	CFG& _graph,
 	AsmAnalysisInfo const& _analysisInfo,
-	std::map<FunctionDefinition const*, ControlFlowSideEffects> const& _functionSideEffects,
+	map<FunctionDefinition const*, ControlFlowSideEffects> const& _functionSideEffects,
 	Dialect const& _dialect
 ):
 	m_graph(_graph),
@@ -496,13 +496,13 @@ void ControlFlowGraphBuilder::registerFunction(FunctionDefinition const& _functi
 				std::get<Scope::Variable>(virtualFunctionScope->identifiers.at(_param.name)),
 				_param.debugData
 			};
-		}) | ranges::to<std::vector>,
+		}) | ranges::to<vector>,
 		_functionDefinition.returnVariables | ranges::views::transform([&](auto const& _retVar) {
 			return VariableSlot{
 				std::get<Scope::Variable>(virtualFunctionScope->identifiers.at(_retVar.name)),
 				_retVar.debugData
 			};
-		}) | ranges::to<std::vector>,
+		}) | ranges::to<vector>,
 		{},
 		m_functionSideEffects.at(&_functionDefinition).canContinue
 	})).second;

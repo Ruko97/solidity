@@ -71,6 +71,9 @@ private:
 	std::string createQueryAssertion(std::string name);
 	std::string createHeaderAndDeclarations();
 
+	std::string createQueryAssertion(std::string name);
+	std::string createHeaderAndDeclarations();
+
 	/// Communicates with the solver via the callback. Throws SMTSolverError on error.
 	std::string querySolver(std::string const& _input);
 

@@ -199,13 +199,12 @@ void EVMHost::newTransactionFrame()
 	}
 	// Process selfdestruct list
 	for (auto& [address, _]: recorded_selfdestructs)
-		if (m_evmVersion < langutil::EVMVersion::cancun() || m_newlyCreatedAccounts.count(address))
+		if (m_evmVersion < langutil::EVMVersion::cancun() || newlyCreatedAccounts.count(address))
 			// EIP-6780: If SELFDESTRUCT is executed in a transaction different from the one
 			// in which it was created, we do NOT record it or clear any data.
 			// Otherwise, the previous behavior (pre-Cancun) is maintained.
 			accounts.erase(address);
-	m_newlyCreatedAccounts.clear();
-	m_totalCodeDepositGas = 0;
+	newlyCreatedAccounts.clear();
 	recorded_selfdestructs.clear();
 }
 
@@ -359,8 +358,7 @@ evmc::Result EVMHost::call(evmc_message const& _message) noexcept
 	auto& destination = accounts[message.recipient];
 	if (message.kind == EVMC_CREATE || message.kind == EVMC_CREATE2)
 		// Mark account as created if it is a CREATE or CREATE2 call
-		// TODO: Should we roll changes back on failure like we do for `accounts`?
-		m_newlyCreatedAccounts.emplace(message.recipient);
+		newlyCreatedAccounts.emplace(message.recipient);
 
 	if (value != 0 && message.kind != EVMC_DELEGATECALL && message.kind != EVMC_CALLCODE)
 	{

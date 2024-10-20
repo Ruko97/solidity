@@ -58,6 +58,8 @@ protected:
 		Set in m_modelCheckerSettings.
 	BMCLoopIterations: number of loop iterations for BMC engine, the default is 1.
 		Set in m_modelCheckerSettings.
+	BMCLoopIterations: number of loop iterations for BMC engine, the default is 1.
+		Set in m_modelCheckerSettings.
 	*/
 
 	ModelCheckerSettings m_modelCheckerSettings;
