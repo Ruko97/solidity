@@ -18,18 +18,21 @@
 
 #pragma once
 
-#include <cstddef>
-
-namespace solidity::yul
+namespace solidity::smtutil
 {
 
-/// Handle to reference a builtin function in the AST
-struct BuiltinHandle
+class Z3Loader
 {
-	size_t id;
-
-	bool operator==(BuiltinHandle const& _other) const { return id == _other.id; }
-	bool operator<(BuiltinHandle const& _other) const { return id < _other.id; }
+public:
+	Z3Loader(Z3Loader const&) = delete;
+	Z3Loader& operator=(Z3Loader const&) = delete;
+	static Z3Loader const& get();
+	void* loadSymbol(char const* _name) const;
+	bool available() const;
+private:
+	Z3Loader();
+	~Z3Loader();
+	void* m_handle = nullptr;
 };
 
 }

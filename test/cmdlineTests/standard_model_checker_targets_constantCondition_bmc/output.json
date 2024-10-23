@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "6838",
@@ -12,13 +13,15 @@ Note: Callstack:
 
 ",
             "message": "BMC: Condition is always true.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": "Callstack:"
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 165,
                 "file": "A",
                 "start": 159
@@ -26,8 +29,10 @@ Note: Callstack:
             "type": "Warning"
         }
     ],
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

@@ -46,7 +46,7 @@ public:
 		solAssert(false, "Unknown callback kind.");
 	}
 
-	frontend::ReadCallback::Callback callback() const
+	frontend::ReadCallback::Callback callback()
 	{
 		return *this;
 	}

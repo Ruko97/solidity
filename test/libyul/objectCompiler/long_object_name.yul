@@ -7,24 +7,23 @@ object "t" {
 	}
 }
 // ====
-// EVMVersion: >=shanghai
 // optimizationPreset: full
 // ----
 // Assembly:
-//     /* "source":56:169   */
+//     /* "source":33:146   */
 //   dataSize(sub_0)
-//     /* "source":53:54   */
+//     /* "source":30:31   */
 //   0x00
-//     /* "source":46:170   */
+//     /* "source":23:147   */
 //   sstore
-//     /* "source":22:186   */
+//     /* "source":19:150   */
 //   stop
 // stop
 //
 // sub_0: assembly {
-//         /* "source":317:324   */
+//         /* "source":272:274   */
 //       stop
 // }
 // Bytecode: 60015f5500fe
 // Opcodes: PUSH1 0x1 PUSH0 SSTORE STOP INVALID
-// SourceMappings: 56:113:0:-:0;53:1;46:124;22:164
+// SourceMappings: 33:113:0:-:0;30:1;23:124;19:131

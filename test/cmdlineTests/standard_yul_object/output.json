@@ -1,23 +1,28 @@
 {
-    "contracts": {
-        "A": {
-            "NamedObject": {
-                "evm": {
-                    "assembly": "    /* \"A\":118:119   */
+    "contracts":
+    {
+        "A":
+        {
+            "NamedObject":
+            {
+                "evm":
+                {
+                    "assembly": "    /* \"A\":80:81   */
   0x00
-    /* \"A\":65:87   */
+    /* \"A\":39:61   */
   dup1
   data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45
-    /* \"A\":107:116   */
+    /* \"A\":69:78   */
   add
-    /* \"A\":100:120   */
+    /* \"A\":62:82   */
   sstore
-    /* \"A\":32:136   */
+    /* \"A\":28:84   */
   stop
 stop
 data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
 ",
-                    "bytecode": {
+                    "bytecode":
+                    {
                         "functionDebugData": {},
                         "generatedSources": [],
                         "linkReferences": {},
@@ -47,21 +52,29 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
             }
         }
     },
-    "sources": {
-        "A": {
-            "ast": {
-                "code": {
-                    "block": {
+    "sources":
+    {
+        "A":
+        {
+            "ast":
+            {
+                "code":
+                {
+                    "block":
+                    {
                         "nativeSrc": "28:56:0",
                         "nodeType": "YulBlock",
                         "src": "28:56:0",
-                        "statements": [
+                        "statements":
+                        [
                             {
                                 "nativeSrc": "30:31:0",
                                 "nodeType": "YulVariableDeclaration",
                                 "src": "30:31:0",
-                                "value": {
-                                    "arguments": [
+                                "value":
+                                {
+                                    "arguments":
+                                    [
                                         {
                                             "hexValue": "446174614e616d65",
                                             "kind": "string",
@@ -72,7 +85,8 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                                             "value": "DataName"
                                         }
                                     ],
-                                    "functionName": {
+                                    "functionName":
+                                    {
                                         "name": "dataoffset",
                                         "nativeSrc": "39:10:0",
                                         "nodeType": "YulIdentifier",
@@ -82,7 +96,8 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                                     "nodeType": "YulFunctionCall",
                                     "src": "39:22:0"
                                 },
-                                "variables": [
+                                "variables":
+                                [
                                     {
                                         "name": "x",
                                         "nativeSrc": "34:1:0",
@@ -93,10 +108,13 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                                 ]
                             },
                             {
-                                "expression": {
-                                    "arguments": [
+                                "expression":
+                                {
+                                    "arguments":
+                                    [
                                         {
-                                            "arguments": [
+                                            "arguments":
+                                            [
                                                 {
                                                     "name": "x",
                                                     "nativeSrc": "73:1:0",
@@ -112,7 +130,8 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                                                     "value": "0"
                                                 }
                                             ],
-                                            "functionName": {
+                                            "functionName":
+                                            {
                                                 "name": "add",
                                                 "nativeSrc": "69:3:0",
                                                 "nodeType": "YulIdentifier",
@@ -131,7 +150,8 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                                             "value": "0"
                                         }
                                     ],
-                                    "functionName": {
+                                    "functionName":
+                                    {
                                         "name": "sstore",
                                         "nativeSrc": "62:6:0",
                                         "nodeType": "YulIdentifier",
@@ -151,7 +171,8 @@ data_4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45 616263
                 },
                 "name": "NamedObject",
                 "nodeType": "YulObject",
-                "subObjects": [
+                "subObjects":
+                [
                     {
                         "nodeType": "YulData",
                         "value": "616263"

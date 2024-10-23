@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "2661",
@@ -18,7 +19,8 @@ Note:
 
 ",
             "message": "BMC: Overflow (resulting value larger than 2**256 - 1) happens here.",
-            "secondarySourceLocations": [
+            "secondarySourceLocations":
+            [
                 {
                     "message": "Counterexample:
   <result> = 2**256
@@ -34,7 +36,8 @@ Note:
                 }
             ],
             "severity": "warning",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 203,
                 "file": "A",
                 "start": 185
@@ -42,8 +45,10 @@ Note:
             "type": "Warning"
         }
     ],
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

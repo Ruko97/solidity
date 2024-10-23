@@ -7,9 +7,10 @@ contract C {
 	}
 }
 // ====
-// SMTEngine: chc
-// SMTSolvers: eld
+// SMTEngine: all
+// SMTIgnoreOS: macos
 // ----
 // Warning 9302: (96-117): Return value of low-level calls not used.
+// Warning 6328: (121-156): CHC: Assertion violation might happen here.
 // Warning 6328: (175-211): CHC: Assertion violation happens here.
-// Info 1391: CHC: 1 verification condition(s) proved safe! Enable the model checker option "show proved safe" to see all of them.
+// Warning 4661: (121-156): BMC: Assertion violation happens here.

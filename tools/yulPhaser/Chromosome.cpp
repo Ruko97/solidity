@@ -25,6 +25,7 @@
 
 #include <sstream>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::yul;
 using namespace solidity::phaser;
@@ -32,36 +33,36 @@ using namespace solidity::phaser;
 namespace solidity::phaser
 {
 
-std::ostream& operator<<(std::ostream& _stream, Chromosome const& _chromosome);
+ostream& operator<<(ostream& _stream, Chromosome const& _chromosome);
 
 }
 
 Chromosome Chromosome::makeRandom(size_t _length)
 {
-	std::vector<std::string> steps;
+	vector<string> steps;
 	for (size_t i = 0; i < _length; ++i)
 		steps.push_back(randomOptimisationStep());
 
 	return Chromosome(std::move(steps));
 }
 
-std::ostream& phaser::operator<<(std::ostream& _stream, Chromosome const& _chromosome)
+ostream& phaser::operator<<(ostream& _stream, Chromosome const& _chromosome)
 {
 	return _stream << _chromosome.m_genes;
 }
 
-std::vector<std::string> Chromosome::allStepNames()
+vector<string> Chromosome::allStepNames()
 {
-	std::vector<std::string> stepNames;
+	vector<string> stepNames;
 	for (auto const& step: OptimiserSuite::allSteps())
 		stepNames.push_back(step.first);
 
 	return stepNames;
 }
 
-std::string const& Chromosome::randomOptimisationStep()
+string const& Chromosome::randomOptimisationStep()
 {
-	static std::vector<std::string> stepNames = allStepNames();
+	static vector<string> stepNames = allStepNames();
 
 	return stepNames[SimulationRNG::uniformInt(0, stepNames.size() - 1)];
 }
@@ -71,18 +72,18 @@ char Chromosome::randomGene()
 	return OptimiserSuite::stepNameToAbbreviationMap().at(randomOptimisationStep());
 }
 
-std::string Chromosome::stepsToGenes(std::vector<std::string> const& _optimisationSteps)
+string Chromosome::stepsToGenes(vector<string> const& _optimisationSteps)
 {
-	std::string genes;
-	for (std::string const& stepName: _optimisationSteps)
+	string genes;
+	for (string const& stepName: _optimisationSteps)
 		genes.push_back(OptimiserSuite::stepNameToAbbreviationMap().at(stepName));
 
 	return genes;
 }
 
-std::vector<std::string> Chromosome::genesToSteps(std::string const& _genes)
+vector<string> Chromosome::genesToSteps(string const& _genes)
 {
-	std::vector<std::string> steps;
+	vector<string> steps;
 	for (char abbreviation: _genes)
 		steps.push_back(OptimiserSuite::stepAbbreviationToNameMap().at(abbreviation));
 

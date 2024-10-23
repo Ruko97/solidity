@@ -36,6 +36,7 @@ using namespace solidity::frontend;
 using namespace solidity::langutil;
 using namespace solidity::util;
 
+
 StackVariable::StackVariable(CompilerContext& _compilerContext, VariableDeclaration const& _declaration):
 	LValue(_compilerContext, _declaration.annotation().type),
 	m_baseStackOffset(m_context.baseStackOffsetOfVariable(_declaration)),
@@ -197,17 +198,15 @@ void ImmutableItem::setToZero(SourceLocation const&, bool _removeReference) cons
 	m_context << Instruction::POP;
 }
 
-template<bool IsTransient>
-GenericStorageItem<IsTransient>::GenericStorageItem(CompilerContext& _compilerContext, VariableDeclaration const& _declaration):
-	GenericStorageItem<IsTransient>(_compilerContext, *_declaration.annotation().type)
+StorageItem::StorageItem(CompilerContext& _compilerContext, VariableDeclaration const& _declaration):
+	StorageItem(_compilerContext, *_declaration.annotation().type)
 {
 	solAssert(!_declaration.immutable(), "");
 	auto const& location = m_context.storageLocationOfVariable(_declaration);
 	m_context << location.first << u256(location.second);
 }
 
-template<bool IsTransient>
-GenericStorageItem<IsTransient>::GenericStorageItem(CompilerContext& _compilerContext, Type const& _type):
+StorageItem::StorageItem(CompilerContext& _compilerContext, Type const& _type):
 	LValue(_compilerContext, &_type)
 {
 	if (m_dataType->isValueType())
@@ -218,13 +217,11 @@ GenericStorageItem<IsTransient>::GenericStorageItem(CompilerContext& _compilerCo
 	}
 }
 
-template<bool IsTransient>
-void GenericStorageItem<IsTransient>::retrieveValue(langutil::SourceLocation const&, bool _remove) const
+void StorageItem::retrieveValue(SourceLocation const&, bool _remove) const
 {
 	// stack: storage_key storage_offset
 	if (!m_dataType->isValueType())
 	{
-		solUnimplementedAssert(!IsTransient, "Transient storage reference types are not supported yet.");
 		solAssert(m_dataType->sizeOnStack() == 1, "Invalid storage ref size.");
 		if (_remove)
 			m_context << Instruction::POP; // remove byte offset
@@ -235,7 +232,7 @@ void GenericStorageItem<IsTransient>::retrieveValue(langutil::SourceLocation con
 	if (!_remove)
 		CompilerUtils(m_context).copyToStackTop(sizeOnStack(), sizeOnStack());
 	if (m_dataType->storageBytes() == 32)
-		m_context << Instruction::POP << s_loadInstruction;
+		m_context << Instruction::POP << Instruction::SLOAD;
 	else
 	{
 		Type const* type = m_dataType;
@@ -243,12 +240,12 @@ void GenericStorageItem<IsTransient>::retrieveValue(langutil::SourceLocation con
 			type = type->encodingType();
 		bool cleaned = false;
 		m_context
-			<< Instruction::SWAP1 << s_loadInstruction << Instruction::SWAP1
+			<< Instruction::SWAP1 << Instruction::SLOAD << Instruction::SWAP1
 			<< u256(0x100) << Instruction::EXP << Instruction::SWAP1 << Instruction::DIV;
 		if (type->category() == Type::Category::FixedPoint)
 			// implementation should be very similar to the integer case.
 			solUnimplemented("Not yet implemented - FixedPointType.");
-		else if (auto const* fun = dynamic_cast<FunctionType const*>(type))
+		else if (FunctionType const* fun = dynamic_cast<decltype(fun)>(type))
 		{
 			if (fun->kind() == FunctionType::Kind::External)
 			{
@@ -284,8 +281,7 @@ void GenericStorageItem<IsTransient>::retrieveValue(langutil::SourceLocation con
 	}
 }
 
-template<bool IsTransient>
-void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langutil::SourceLocation const& _location, bool _move) const
+void StorageItem::storeValue(Type const& _sourceType, SourceLocation const& _location, bool _move) const
 {
 	CompilerUtils utils(m_context);
 	solAssert(m_dataType, "");
@@ -307,7 +303,7 @@ void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langut
 			utils.convertType(_sourceType, *m_dataType, true);
 			m_context << Instruction::SWAP1;
 
-			m_context << s_storeInstruction;
+			m_context << Instruction::SSTORE;
 		}
 		else
 		{
@@ -315,7 +311,7 @@ void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langut
 			m_context << u256(0x100) << Instruction::EXP;
 			// stack: value storage_ref multiplier
 			// fetch old value
-			m_context << Instruction::DUP2 << s_loadInstruction;
+			m_context << Instruction::DUP2 << Instruction::SLOAD;
 			// stack: value storage_ref multiplier old_full_value
 			// clear bytes in old value
 			m_context
@@ -362,14 +358,13 @@ void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langut
 			}
 			m_context  << Instruction::MUL << Instruction::OR;
 			// stack: value storage_ref updated_value
-			m_context << Instruction::SWAP1 << s_storeInstruction;
+			m_context << Instruction::SWAP1 << Instruction::SSTORE;
 			if (_move)
 				utils.popStackElement(*m_dataType);
 		}
 	}
 	else
 	{
-		solUnimplementedAssert(!IsTransient, "Transient storage reference types are not supported yet.");
 		solAssert(
 			_sourceType.category() == m_dataType->category(),
 			"Wrong type conversation for assignment."
@@ -401,7 +396,7 @@ void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langut
 				solAssert(sourceType.sizeOnStack() == 1, "");
 				solAssert(structType.sizeOnStack() == 1, "");
 				m_context << Instruction::DUP2 << Instruction::DUP2;
-				m_context.callYulFunction(m_context.utilFunctions().updateStorageValueFunction(sourceType, structType, VariableDeclaration::Location::Unspecified, 0), 2, 0);
+				m_context.callYulFunction(m_context.utilFunctions().updateStorageValueFunction(sourceType, structType, 0), 2, 0);
 			}
 			else
 			{
@@ -446,23 +441,23 @@ void GenericStorageItem<IsTransient>::storeValue(Type const& _sourceType, langut
 				m_context << Instruction::SWAP1 << Instruction::POP;
 		}
 		else
-			solAssert(false, "Invalid non-value type for assignment.");
+			BOOST_THROW_EXCEPTION(
+				InternalCompilerError()
+					<< errinfo_sourceLocation(_location)
+					<< util::errinfo_comment("Invalid non-value type for assignment."));
 	}
 }
 
-template<bool IsTransient>
-void GenericStorageItem<IsTransient>::setToZero(langutil::SourceLocation const&, bool _removeReference) const
+void StorageItem::setToZero(SourceLocation const&, bool _removeReference) const
 {
 	if (m_dataType->category() == Type::Category::Array)
 	{
-		solUnimplementedAssert(!IsTransient, "Transient storage reference types are not supported yet.");
 		if (!_removeReference)
 			CompilerUtils(m_context).copyToStackTop(sizeOnStack(), sizeOnStack());
 		ArrayUtils(m_context).clearArray(dynamic_cast<ArrayType const&>(*m_dataType));
 	}
 	else if (m_dataType->category() == Type::Category::Struct)
 	{
-		solUnimplementedAssert(!IsTransient, "Transient storage reference types are not supported yet.");
 		// stack layout: storage_key storage_offset
 		// @todo this can be improved: use StorageItem for non-value types, and just store 0 in
 		// all slots that contain value types later.
@@ -492,14 +487,14 @@ void GenericStorageItem<IsTransient>::setToZero(langutil::SourceLocation const&,
 			// offset should be zero
 			m_context
 				<< Instruction::POP << u256(0)
-				<< Instruction::SWAP1 << s_storeInstruction;
+				<< Instruction::SWAP1 << Instruction::SSTORE;
 		}
 		else
 		{
 			m_context << u256(0x100) << Instruction::EXP;
 			// stack: storage_ref multiplier
 			// fetch old value
-			m_context << Instruction::DUP2 << s_loadInstruction;
+			m_context << Instruction::DUP2 << Instruction::SLOAD;
 			// stack: storage_ref multiplier old_full_value
 			// clear bytes in old value
 			m_context
@@ -507,7 +502,7 @@ void GenericStorageItem<IsTransient>::setToZero(langutil::SourceLocation const&,
 				<< Instruction::MUL;
 			m_context << Instruction::NOT << Instruction::AND;
 			// stack: storage_ref cleared_value
-			m_context << Instruction::SWAP1 << s_storeInstruction;
+			m_context << Instruction::SWAP1 << Instruction::SSTORE;
 		}
 	}
 }
@@ -618,6 +613,3 @@ void TupleObject::setToZero(SourceLocation const&, bool) const
 {
 	solAssert(false, "Tried to delete tuple.");
 }
-
-template class solidity::frontend::GenericStorageItem<false>;
-template class solidity::frontend::GenericStorageItem<true>;

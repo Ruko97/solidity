@@ -147,7 +147,7 @@ private:
 						return _call.function.get().name.str();
 					},
 					[&](SSACFG::BuiltinCall const& _call) {
-						return _call.builtin.get().name;
+						return _call.builtin.get().name.str();
 					},
 				}, operation.kind);
 				if (!operation.outputs.empty())

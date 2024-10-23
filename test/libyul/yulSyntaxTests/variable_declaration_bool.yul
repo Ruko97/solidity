@@ -1,5 +1,7 @@
 {
-    let x := true
-    let y := false
+    let x:bool := true:bool
+    let y:bool := false:bool
 }
+// ====
+// dialect: evmTyped
 // ----

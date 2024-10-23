@@ -33,8 +33,7 @@ namespace solidity::evmasm
 class EVMAssemblyStack: public AbstractAssemblyStack
 {
 public:
-	explicit EVMAssemblyStack(langutil::EVMVersion _evmVersion, std::optional<uint8_t> _eofVersion):
-		m_evmVersion(_evmVersion), m_eofVersion(_eofVersion) {}
+	explicit EVMAssemblyStack(langutil::EVMVersion _evmVersion): m_evmVersion(_evmVersion) {}
 
 	/// Runs parsing and analysis steps.
 	/// Multiple calls overwrite the previous state.
@@ -44,7 +43,7 @@ public:
 	/// Runs analysis steps.
 	/// Multiple calls overwrite the previous state.
 	/// @throws AssemblyImportException, if JSON could not be validated.
-	void analyze(std::string const& _sourceName, Json const& _assemblyJson);
+	void analyze(std::string const& _sourceName, Json::Value const& _assemblyJson);
 
 	void assemble();
 
@@ -59,7 +58,7 @@ public:
 	virtual std::string const* sourceMapping(std::string const& _contractName) const override;
 	virtual std::string const* runtimeSourceMapping(std::string const& _contractName) const override;
 
-	virtual Json assemblyJSON(std::string const& _contractName) const override;
+	virtual Json::Value assemblyJSON(std::string const& _contractName) const override;
 	virtual std::string assemblyString(std::string const& _contractName, StringMap const& _sourceCodes) const override;
 
 	virtual std::string const filesystemFriendlyName(std::string const& _contractName) const override;
@@ -77,7 +76,6 @@ public:
 
 private:
 	langutil::EVMVersion m_evmVersion;
-	std::optional<uint8_t> m_eofVersion;
 	std::string m_name;
 	std::shared_ptr<evmasm::Assembly> m_evmAssembly;
 	std::shared_ptr<evmasm::Assembly> m_evmRuntimeAssembly;

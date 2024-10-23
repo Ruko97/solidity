@@ -24,7 +24,7 @@
 #include <libyul/optimiser/NameDispenser.h>
 
 #include <libyul/AST.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 #include <libsolutil/CommonData.h>
 
 #include <range/v3/algorithm/any_of.hpp>
@@ -55,7 +55,7 @@ void FunctionSpecializer::operator()(FunctionCall& _f)
 
 	// TODO When backtracking is implemented, the restriction of recursive functions can be lifted.
 	if (
-		m_dialect.findBuiltin(_f.functionName.name.str()) ||
+		m_dialect.builtin(_f.functionName.name) ||
 		m_recursiveFunctions.count(_f.functionName.name)
 	)
 		return;
@@ -64,7 +64,7 @@ void FunctionSpecializer::operator()(FunctionCall& _f)
 
 	if (ranges::any_of(arguments, [](auto& _a) { return _a.has_value(); }))
 	{
-		YulName oldName = std::move(_f.functionName.name);
+		YulString oldName = std::move(_f.functionName.name);
 		auto newName = m_nameDispenser.newName(oldName);
 
 		m_oldToNewMap[oldName].emplace_back(std::make_pair(newName, arguments));
@@ -79,19 +79,19 @@ void FunctionSpecializer::operator()(FunctionCall& _f)
 
 FunctionDefinition FunctionSpecializer::specialize(
 	FunctionDefinition const& _f,
-	YulName _newName,
+	YulString _newName,
 	FunctionSpecializer::LiteralArguments _arguments
 )
 {
 	yulAssert(_arguments.size() == _f.parameters.size(), "");
 
-	std::map<YulName, YulName> translatedNames = applyMap(
+	std::map<YulString, YulString> translatedNames = applyMap(
 		NameCollector{_f, NameCollector::OnlyVariables}.names(),
-		[&](auto& _name) -> std::pair<YulName, YulName>
+		[&](auto& _name) -> std::pair<YulString, YulString>
 		{
 			return std::make_pair(_name, m_nameDispenser.newName(_name));
 		},
-		std::map<YulName, YulName>{}
+		std::map<YulString, YulString>{}
 	);
 
 	FunctionDefinition newFunction = std::get<FunctionDefinition>(FunctionCopier{translatedNames}(_f));
@@ -104,7 +104,7 @@ FunctionDefinition FunctionSpecializer::specialize(
 			missingVariableDeclarations.emplace_back(
 				VariableDeclaration{
 					_f.debugData,
-					std::vector<NameWithDebugData>{newFunction.parameters[index]},
+					std::vector<TypedName>{newFunction.parameters[index]},
 					std::make_unique<Expression>(std::move(*argument))
 				}
 			);

@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 5,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,10 +13,12 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
           "id": 3,
-          "members": [
+          "members":
+          [
             {
               "id": 1,
               "name": "A",

@@ -7,7 +7,9 @@ EVM assembly:
   iszero
   tag_1
   jumpi
-  revert(0x00, 0x00)
+  0x00
+  dup1
+  revert
 tag_1:
   pop
   dataSize(sub_0)
@@ -26,7 +28,9 @@ sub_0: assembly {
       iszero
       tag_1
       jumpi
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_1:
       pop
       jumpi(tag_2, lt(calldatasize, 0x04))
@@ -37,7 +41,9 @@ sub_0: assembly {
       tag_3
       jumpi
     tag_2:
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_3:
       stop
 

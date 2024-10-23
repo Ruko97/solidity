@@ -21,12 +21,13 @@
 #include <tools/yulPhaser/Selections.h>
 #include <tools/yulPhaser/PairSelections.h>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::phaser;
 
-std::function<Crossover> phaser::buildCrossoverOperator(
+function<Crossover> phaser::buildCrossoverOperator(
 	CrossoverChoice _choice,
-	std::optional<double> _uniformCrossoverSwapChance
+	optional<double> _uniformCrossoverSwapChance
 )
 {
 	switch (_choice)
@@ -43,9 +44,9 @@ std::function<Crossover> phaser::buildCrossoverOperator(
 	};
 }
 
-std::function<SymmetricCrossover> phaser::buildSymmetricCrossoverOperator(
+function<SymmetricCrossover> phaser::buildSymmetricCrossoverOperator(
 	CrossoverChoice _choice,
-	std::optional<double> _uniformCrossoverSwapChance
+	optional<double> _uniformCrossoverSwapChance
 )
 {
 	switch (_choice)
@@ -145,14 +146,14 @@ Population ClassicGeneticAlgorithm::select(Population _population, size_t _selec
 
 	size_t maxFitness = 0;
 	for (auto const& individual: _population.individuals())
-		maxFitness = std::max(maxFitness, individual.fitness);
+		maxFitness = max(maxFitness, individual.fitness);
 
 	size_t rouletteRange = 0;
 	for (auto const& individual: _population.individuals())
 		// Add 1 to make sure that every chromosome has non-zero probability of being chosen
 		rouletteRange += maxFitness + 1 - individual.fitness;
 
-	std::vector<Individual> selectedIndividuals;
+	vector<Individual> selectedIndividuals;
 	for (size_t i = 0; i < _selectionSize; ++i)
 	{
 		size_t ball = SimulationRNG::uniformInt(0, rouletteRange - 1);

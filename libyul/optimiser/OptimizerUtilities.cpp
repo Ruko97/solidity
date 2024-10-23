@@ -36,17 +36,6 @@ using namespace solidity::langutil;
 using namespace solidity::util;
 using namespace solidity::yul;
 
-namespace
-{
-
-bool hasLeadingOrTrailingDot(std::string_view const _s)
-{
-	yulAssert(!_s.empty());
-	return _s.front() == '.' || _s.back() == '.';
-}
-
-}
-
 void yul::removeEmptyBlocks(Block& _block)
 {
 	auto isEmptyBlock = [](Statement const& _st) -> bool {
@@ -55,16 +44,16 @@ void yul::removeEmptyBlocks(Block& _block)
 	ranges::actions::remove_if(_block.statements, isEmptyBlock);
 }
 
-bool yul::isRestrictedIdentifier(Dialect const& _dialect, YulName const& _identifier)
+bool yul::isRestrictedIdentifier(Dialect const& _dialect, YulString const& _identifier)
 {
-	return _identifier.empty() || hasLeadingOrTrailingDot(_identifier.str()) || TokenTraits::isYulKeyword(_identifier.str()) || _dialect.reservedIdentifier(_identifier.str());
+	return _identifier.empty() || TokenTraits::isYulKeyword(_identifier.str()) || _dialect.reservedIdentifier(_identifier);
 }
 
-std::optional<evmasm::Instruction> yul::toEVMInstruction(Dialect const& _dialect, YulName const& _name)
+std::optional<evmasm::Instruction> yul::toEVMInstruction(Dialect const& _dialect, YulString const& _name)
 {
 	if (auto const* dialect = dynamic_cast<EVMDialect const*>(&_dialect))
-		if (std::optional<BuiltinHandle> const builtinHandle = dialect->findBuiltin(_name.str()))
-			return dialect->builtin(*builtinHandle).instruction;
+		if (BuiltinFunctionForEVM const* builtin = dialect->builtin(_name))
+			return builtin->instruction;
 	return std::nullopt;
 }
 

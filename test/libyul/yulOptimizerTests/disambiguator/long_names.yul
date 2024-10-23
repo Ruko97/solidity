@@ -1,4 +1,6 @@
-{ { let aanteuhdaoneudbrgkjiuaothduiathudaoeuh } { let aanteuhdaoneudbrgkjiuaothduiathudaoeuh } }
+{ { let aanteuhdaoneudbrgkjiuaothduiathudaoeuh:u256 } { let aanteuhdaoneudbrgkjiuaothduiathudaoeuh:u256 } }
+// ====
+// dialect: yul
 // ----
 // step: disambiguator
 //

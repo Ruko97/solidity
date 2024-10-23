@@ -33,26 +33,38 @@
 
 #include <sstream>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::evmasm;
 using namespace solidity::frontend;
 using namespace solidity::langutil;
 using namespace solidity::util;
 
-static std::vector<EVMVersion> s_evmVersions = EVMVersion::allVersions();
+static vector<EVMVersion> s_evmVersions = {
+	EVMVersion::homestead(),
+	EVMVersion::tangerineWhistle(),
+	EVMVersion::spuriousDragon(),
+	EVMVersion::byzantium(),
+	EVMVersion::constantinople(),
+	EVMVersion::petersburg(),
+	EVMVersion::istanbul(),
+	EVMVersion::berlin(),
+	EVMVersion::london(),
+	EVMVersion::paris()
+};
 
-void FuzzerUtil::testCompilerJsonInterface(std::string const& _input, bool _optimize, bool _quiet)
+void FuzzerUtil::testCompilerJsonInterface(string const& _input, bool _optimize, bool _quiet)
 {
 	if (!_quiet)
-		std::cout << "Testing compiler " << (_optimize ? "with" : "without") << " optimizer." << std::endl;
+		cout << "Testing compiler " << (_optimize ? "with" : "without") << " optimizer." << endl;
 
-	Json config;
+	Json::Value config = Json::objectValue;
 	config["language"] = "Solidity";
-	config["sources"] = Json::object();
-	config["sources"][""] = Json::object();
+	config["sources"] = Json::objectValue;
+	config["sources"][""] = Json::objectValue;
 	config["sources"][""]["content"] = _input;
-	config["settings"] = Json::object();
-	config["settings"]["optimizer"] = Json::object();
+	config["settings"] = Json::objectValue;
+	config["settings"]["optimizer"] = Json::objectValue;
 	config["settings"]["optimizer"]["enabled"] = _optimize;
 	config["settings"]["optimizer"]["runs"] = static_cast<int>(OptimiserSettings{}.expectedExecutionsPerDeployment);
 	config["settings"]["evmVersion"] = "berlin";
@@ -70,7 +82,7 @@ void FuzzerUtil::forceSMT(StringMap& _input)
 	// Add SMT checker pragma if not already present in source
 	static auto constexpr smtPragma = "pragma experimental SMTChecker;";
 	for (auto &sourceUnit: _input)
-		if (sourceUnit.second.find(smtPragma) == std::string::npos)
+		if (sourceUnit.second.find(smtPragma) == string::npos)
 			sourceUnit.second += smtPragma;
 }
 
@@ -116,6 +128,12 @@ void FuzzerUtil::testCompiler(
 	{
 		compiler.compile();
 	}
+	catch (Error const&)
+	{
+	}
+	catch (FatalError const&)
+	{
+	}
 	catch (UnimplementedFeatureError const&)
 	{
 	}
@@ -126,46 +144,46 @@ void FuzzerUtil::testCompiler(
 	}
 }
 
-void FuzzerUtil::runCompiler(std::string const& _input, bool _quiet)
+void FuzzerUtil::runCompiler(string const& _input, bool _quiet)
 {
 	if (!_quiet)
-		std::cout << "Input JSON: " << _input << std::endl;
-	std::string outputString(solidity_compile(_input.c_str(), nullptr, nullptr));
+		cout << "Input JSON: " << _input << endl;
+	string outputString(solidity_compile(_input.c_str(), nullptr, nullptr));
 	if (!_quiet)
-		std::cout << "Output JSON: " << outputString << std::endl;
+		cout << "Output JSON: " << outputString << endl;
 
 	// This should be safe given the above copies the output.
 	solidity_reset();
 
-	Json output;
+	Json::Value output;
 	if (!jsonParseStrict(outputString, output))
 	{
-		std::string msg{"Compiler produced invalid JSON output."};
-		std::cout << msg << std::endl;
+		string msg{"Compiler produced invalid JSON output."};
+		cout << msg << endl;
 		BOOST_THROW_EXCEPTION(std::runtime_error(std::move(msg)));
 	}
-	if (output.contains("errors"))
+	if (output.isMember("errors"))
 		for (auto const& error: output["errors"])
 		{
-			std::string invalid = findAnyOf(error["type"].get<std::string>(), std::vector<std::string>{
+			string invalid = findAnyOf(error["type"].asString(), vector<string>{
 					"Exception",
 					"InternalCompilerError"
 			});
 			if (!invalid.empty())
 			{
-				std::string msg = "Invalid error: \"" + error["type"].get<std::string>() + "\"";
-				std::cout << msg << std::endl;
+				string msg = "Invalid error: \"" + error["type"].asString() + "\"";
+				cout << msg << endl;
 				BOOST_THROW_EXCEPTION(std::runtime_error(std::move(msg)));
 			}
 		}
 }
 
-void FuzzerUtil::testConstantOptimizer(std::string const& _input, bool _quiet)
+void FuzzerUtil::testConstantOptimizer(string const& _input, bool _quiet)
 {
 	if (!_quiet)
-		std::cout << "Testing constant optimizer" << std::endl;
-	std::vector<u256> numbers;
-	std::stringstream sin(_input);
+		cout << "Testing constant optimizer" << endl;
+	vector<u256> numbers;
+	stringstream sin(_input);
 
 	while (!sin.eof())
 	{
@@ -174,15 +192,15 @@ void FuzzerUtil::testConstantOptimizer(std::string const& _input, bool _quiet)
 		numbers.push_back(u256(data));
 	}
 	if (!_quiet)
-		std::cout << "Got " << numbers.size() << " inputs:" << std::endl;
+		cout << "Got " << numbers.size() << " inputs:" << endl;
 
 	for (bool isCreation: {false, true})
 	{
-		Assembly assembly{langutil::EVMVersion{}, isCreation, std::nullopt, {}};
+		Assembly assembly{langutil::EVMVersion{}, isCreation, {}};
 		for (u256 const& n: numbers)
 		{
 			if (!_quiet)
-				std::cout << n << std::endl;
+				cout << n << endl;
 			assembly.append(n);
 		}
 		for (unsigned runs: {1u, 2u, 3u, 20u, 40u, 100u, 200u, 400u, 1000u})
@@ -199,10 +217,10 @@ void FuzzerUtil::testConstantOptimizer(std::string const& _input, bool _quiet)
 	}
 }
 
-void FuzzerUtil::testStandardCompiler(std::string const& _input, bool _quiet)
+void FuzzerUtil::testStandardCompiler(string const& _input, bool _quiet)
 {
 	if (!_quiet)
-		std::cout << "Testing compiler via JSON interface." << std::endl;
+		cout << "Testing compiler via JSON interface." << endl;
 
 	runCompiler(_input, _quiet);
 }

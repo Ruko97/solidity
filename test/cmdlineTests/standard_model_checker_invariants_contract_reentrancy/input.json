@@ -6,8 +6,9 @@
 		{
 			"content": "// SPDX-License-Identifier: GPL-3.0\npragma solidity >=0.0;\n\ncontract test {
 					uint x;
-					function f() view public {
-						assert(x == 0);
+					function f(address _a) public {
+						_a.call(\"\");
+						assert(x == 10);
 					}
 				}"
 		}

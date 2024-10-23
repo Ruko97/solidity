@@ -23,8 +23,6 @@
 
 #pragma once
 
-#include <libsolutil/JSON.h>
-
 #include <libsolidity/ast/ASTForward.h>
 #include <libsolidity/ast/CallGraph.h>
 #include <libsolidity/codegen/ir/IRGenerationContext.h>
@@ -33,6 +31,8 @@
 
 #include <liblangutil/CharStreamProvider.h>
 #include <liblangutil/EVMVersion.h>
+
+#include <json/json.h>
 
 #include <string>
 

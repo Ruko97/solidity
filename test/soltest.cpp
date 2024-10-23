@@ -115,9 +115,17 @@ void runTestCase(TestCase::Config const& _config, TestCase::TestCaseCreator cons
 					break;
 			}
 	}
+	catch (boost::exception const& _e)
+	{
+		BOOST_ERROR("Exception during extracted test: " << boost::diagnostic_information(_e));
+	}
+	catch (std::exception const& _e)
+	{
+		BOOST_ERROR("Exception during extracted test: " << boost::diagnostic_information(_e));
+	}
 	catch (...)
 	{
-		BOOST_ERROR("Exception during extracted test: " << boost::current_exception_diagnostic_information());
+		BOOST_ERROR("Unknown exception during extracted test: " << boost::current_exception_diagnostic_information());
 	}
 }
 

@@ -8,9 +8,11 @@ contract C {
 //     :C
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
-//         "components": [
+//         "components":
+//         [
 //           {
 //             "internalType": "uint256",
 //             "name": "a",
@@ -28,9 +30,11 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
-//         "components": [
+//         "components":
+//         [
 //           {
 //             "internalType": "uint256",
 //             "name": "a",

@@ -10,7 +10,7 @@
 *.o
 *.obj
 *.pyc
-__pycache__/
+__pycache__
 
 # Precompiled Headers
 *.gch
@@ -36,16 +36,12 @@ __pycache__/
 *.app
 
 # Build directory
-/cmake-build-*/
-/build*/
+/build*
 emscripten_build/
-/docs/_build/
+/docs/_build
 /docs/_static/robots.txt
-/deps/
-
-# Reports and benchmarks
-/reports/
-/benchmarks/
+/deps
+/reports
 
 # vim stuff
 [._]*.sw[a-p]

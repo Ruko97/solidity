@@ -19,5 +19,5 @@ contract C {
 // ----
 // test() -> FAILURE
 // gas irOptimized: 98437877
-// gas legacy: 98437871
-// gas legacyOptimized: 98437872
+// gas legacy: 98437872
+// gas legacyOptimized: 98437873

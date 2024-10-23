@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 7,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,23 +13,30 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 4,
             "nodeType": "Block",
             "src": "42:58:1",
-            "statements": [
+            "statements":
+            [
               {
-                "AST": {
+                "AST":
+                {
                   "nativeSrc": "61:33:1",
                   "nodeType": "YulBlock",
                   "src": "61:33:1",
-                  "statements": [
+                  "statements":
+                  [
                     {
-                      "cases": [
+                      "cases":
+                      [
                         {
-                          "body": {
+                          "body":
+                          {
                             "nativeSrc": "79:2:1",
                             "nodeType": "YulBlock",
                             "src": "79:2:1",
@@ -37,7 +45,8 @@
                           "nativeSrc": "72:9:1",
                           "nodeType": "YulCase",
                           "src": "72:9:1",
-                          "value": {
+                          "value":
+                          {
                             "kind": "number",
                             "nativeSrc": "77:1:1",
                             "nodeType": "YulLiteral",
@@ -47,7 +56,8 @@
                           }
                         },
                         {
-                          "body": {
+                          "body":
+                          {
                             "nativeSrc": "90:2:1",
                             "nodeType": "YulBlock",
                             "src": "90:2:1",
@@ -59,7 +69,8 @@
                           "value": "default"
                         }
                       ],
-                      "expression": {
+                      "expression":
+                      {
                         "kind": "number",
                         "nativeSrc": "70:1:1",
                         "nodeType": "YulLiteral",
@@ -88,13 +99,15 @@
           "name": "g",
           "nameLocation": "26:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "27:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],

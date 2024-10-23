@@ -18,8 +18,6 @@
 
 #pragma once
 
-#include <liblangutil/SourceLocation.h>
-
 #include <boost/exception/exception.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/exception/info_tuple.hpp>
@@ -41,9 +39,6 @@ struct Exception: virtual std::exception, virtual boost::exception
 
 	/// @returns the errinfo_comment of this exception.
 	std::string const* comment() const noexcept;
-
-	/// @returns the errinfo_sourceLocation of this exception
-	langutil::SourceLocation sourceLocation() const noexcept;
 };
 
 /// Throws an exception with a given description and extra information about the location the
@@ -81,7 +76,6 @@ DEV_SIMPLE_EXCEPTION(FileNotFound);
 DEV_SIMPLE_EXCEPTION(NotAFile);
 DEV_SIMPLE_EXCEPTION(DataTooLong);
 DEV_SIMPLE_EXCEPTION(StringTooLong);
-DEV_SIMPLE_EXCEPTION(InvalidType);
 
 // error information to be added to exceptions
 using errinfo_comment = boost::error_info<struct tag_comment, std::string>;

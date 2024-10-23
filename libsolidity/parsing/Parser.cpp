@@ -176,9 +176,10 @@ ASTPointer<SourceUnit> Parser::parse(CharStream& _charStream)
 		solAssert(m_recursionDepth == 0, "");
 		return nodeFactory.createNode<SourceUnit>(findLicenseString(nodes), nodes, m_experimentalSolidityEnabledInCurrentSourceUnit);
 	}
-	catch (FatalError const& error)
+	catch (FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return nullptr;
 	}
 }
@@ -885,19 +886,6 @@ ASTPointer<VariableDeclaration> Parser::parseVariableDeclaration(
 					}
 				}
 			}
-			else if (
-				_options.kind == VarDeclKind::State &&
-				token == Token::Identifier &&
-				m_scanner->currentLiteral() == "transient" &&
-				m_scanner->peekNextToken() != Token::Assign &&
-				m_scanner->peekNextToken() != Token::Semicolon
-			)
-			{
-				if (location != VariableDeclaration::Location::Unspecified)
-					parserError(ErrorId{3548}, "Location already specified.");
-				else
-					location = VariableDeclaration::Location::Transient;
-			}
 			else
 				break;
 			nodeFactory.markEndPosition();
@@ -1448,7 +1436,7 @@ ASTPointer<InlineAssembly> Parser::parseInlineAssembly(ASTPointer<ASTString> con
 	SourceLocation location = currentLocation();
 
 	expectToken(Token::Assembly);
-	yul::Dialect const& dialect = yul::EVMDialect::strictAssemblyForEVM(m_evmVersion, m_eofVersion);
+	yul::Dialect const& dialect = yul::EVMDialect::strictAssemblyForEVM(m_evmVersion);
 	if (m_scanner->currentToken() == Token::StringLiteral)
 	{
 		if (m_scanner->currentLiteral() != "evmasm")
@@ -1473,12 +1461,12 @@ ASTPointer<InlineAssembly> Parser::parseInlineAssembly(ASTPointer<ASTString> con
 	}
 
 	yul::Parser asmParser(m_errorReporter, dialect);
-	std::shared_ptr<yul::AST> ast = asmParser.parseInline(m_scanner);
-	if (ast == nullptr)
+	std::shared_ptr<yul::Block> block = asmParser.parseInline(m_scanner);
+	if (block == nullptr)
 		BOOST_THROW_EXCEPTION(FatalError());
 
-	location.end = nativeLocationOf(ast->root()).end;
-	return std::make_shared<InlineAssembly>(nextID(), location, _docString, dialect, std::move(flags), ast);
+	location.end = nativeLocationOf(*block).end;
+	return std::make_shared<InlineAssembly>(nextID(), location, _docString, dialect, std::move(flags), block);
 }
 
 ASTPointer<IfStatement> Parser::parseIfStatement(ASTPointer<ASTString> const& _docString)
@@ -2152,7 +2140,7 @@ ASTPointer<Expression> Parser::parseUnaryExpression(
 		ASTNodeFactory(*this, _partiallyParsedExpression) : ASTNodeFactory(*this);
 	Token token = m_scanner->currentToken();
 
-	if (!_partiallyParsedExpression && token == Token::Add)
+	if (token == Token::Add)
 		fatalParserError(9636_error, "Use of unary + is disallowed.");
 
 	if (!_partiallyParsedExpression && (TokenTraits::isUnaryOp(token) || TokenTraits::isCountOp(token)))

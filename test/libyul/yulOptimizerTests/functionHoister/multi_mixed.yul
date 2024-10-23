@@ -1,10 +1,12 @@
 {
-    let a
-    function f() { let b }
-    let c
-    function g() { let d }
-    let e
+    let a:u256
+    function f() { let b:u256 }
+    let c:u256
+    function g() { let d:u256 }
+    let e:u256
 }
+// ====
+// dialect: yul
 // ----
 // step: functionHoister
 //

@@ -21,12 +21,9 @@
 
 #pragma once
 
-#include <libsolutil/Assertions.h>
-
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <vector>
 
 #include <boost/operators.hpp>
 
@@ -63,36 +60,13 @@ public:
 	static EVMVersion paris() { return {Version::Paris}; }
 	static EVMVersion shanghai() { return {Version::Shanghai}; }
 	static EVMVersion cancun() { return {Version::Cancun}; }
-	static EVMVersion prague() { return {Version::Prague}; }
-
-	static std::vector<EVMVersion> allVersions() {
-		return {
-			homestead(),
-			tangerineWhistle(),
-			spuriousDragon(),
-			byzantium(),
-			constantinople(),
-			petersburg(),
-			istanbul(),
-			berlin(),
-			london(),
-			paris(),
-			shanghai(),
-			cancun(),
-			prague(),
-		};
-	}
 
 	static std::optional<EVMVersion> fromString(std::string const& _version)
 	{
-		for (auto const& v: allVersions())
+		for (auto const& v: {homestead(), tangerineWhistle(), spuriousDragon(), byzantium(), constantinople(), petersburg(), istanbul(), berlin(), london(), paris(), shanghai(), cancun()})
 			if (_version == v.name())
 				return v;
 		return std::nullopt;
-	}
-
-	bool isExperimental() const {
-		return m_version == Version::Prague;
 	}
 
 	bool operator==(EVMVersion const& _other) const { return m_version == _other.m_version; }
@@ -114,9 +88,8 @@ public:
 		case Version::Paris: return "paris";
 		case Version::Shanghai: return "shanghai";
 		case Version::Cancun: return "cancun";
-		case Version::Prague: return "prague";
 		}
-		util::unreachable();
+		return "INVALID";
 	}
 
 	/// Has the RETURNDATACOPY and RETURNDATASIZE opcodes.
@@ -135,28 +108,14 @@ public:
 	bool hasMcopy() const { return *this >= cancun(); }
 	bool supportsTransientStorage() const { return *this >= cancun(); }
 
-	bool hasOpcode(evmasm::Instruction _opcode, std::optional<uint8_t> _eofVersion) const;
+	bool hasOpcode(evmasm::Instruction _opcode) const;
 
 	/// Whether we have to retain the costs for the call opcode itself (false),
 	/// or whether we can just forward easily all remaining gas (true).
 	bool canOverchargeGasForCall() const { return *this >= tangerineWhistle(); }
 
 private:
-	enum class Version {
-		Homestead,
-		TangerineWhistle,
-		SpuriousDragon,
-		Byzantium,
-		Constantinople,
-		Petersburg,
-		Istanbul,
-		Berlin,
-		London,
-		Paris,
-		Shanghai,
-		Cancun,
-		Prague
-	};
+	enum class Version { Homestead, TangerineWhistle, SpuriousDragon, Byzantium, Constantinople, Petersburg, Istanbul, Berlin, London, Paris, Shanghai, Cancun };
 
 	EVMVersion(Version _version): m_version(_version) {}
 

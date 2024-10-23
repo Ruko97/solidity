@@ -79,8 +79,8 @@ void UnusedAssignEliminator::operator()(FunctionCall const& _functionCall)
 	UnusedStoreBase::operator()(_functionCall);
 
 	ControlFlowSideEffects sideEffects;
-	if (std::optional<BuiltinHandle> const builtinHandle = m_dialect.findBuiltin(_functionCall.functionName.name.str()))
-		sideEffects = m_dialect.builtin(*builtinHandle).controlFlowSideEffects;
+	if (auto builtin = m_dialect.builtin(_functionCall.functionName.name))
+		sideEffects = builtin->controlFlowSideEffects;
 	else
 		sideEffects = m_controlFlowSideEffects.at(_functionCall.functionName.name);
 
@@ -92,7 +92,7 @@ void UnusedAssignEliminator::operator()(FunctionCall const& _functionCall)
 
 void UnusedAssignEliminator::operator()(Leave const&)
 {
-	for (YulName name: m_returnVariables)
+	for (YulString name: m_returnVariables)
 		markUsed(name);
 	m_activeStores.clear();
 }
@@ -152,7 +152,7 @@ void UnusedAssignEliminator::finalizeFunctionDefinition(FunctionDefinition const
 		markUsed(retParam.name);
 }
 
-void UnusedAssignEliminator::markUsed(YulName _variable)
+void UnusedAssignEliminator::markUsed(YulString _variable)
 {
 	for (auto& assignment: m_activeStores[_variable])
 		m_usedStores.insert(assignment);

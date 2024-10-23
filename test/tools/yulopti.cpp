@@ -58,10 +58,13 @@
 #include <range/v3/view/stride.hpp>
 #include <range/v3/view/transform.hpp>
 
+#include <cctype>
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <variant>
 
+using namespace std;
 using namespace solidity;
 using namespace solidity::util;
 using namespace solidity::langutil;
@@ -76,51 +79,50 @@ public:
 	static void printErrors(CharStream const& _charStream, ErrorList const& _errors)
 	{
 		SourceReferenceFormatter{
-			std::cerr,
+			cerr,
 			SingletonCharStreamProvider(_charStream),
 			true,
 			false
 		}.printErrorInformation(_errors);
 	}
 
-	void parse(std::string const& _input)
+	void parse(string const& _input)
 	{
 		ErrorList errors;
 		ErrorReporter errorReporter(errors);
 		CharStream _charStream(_input, "");
 		try
 		{
-			auto ast = yul::Parser(errorReporter, m_dialect).parse(_charStream);
-			if (!m_astRoot || errorReporter.hasErrors())
+			m_ast = yul::Parser(errorReporter, m_dialect).parse(_charStream);
+			if (!m_ast || !errorReporter.errors().empty())
 			{
-				std::cerr << "Error parsing source." << std::endl;
+				cerr << "Error parsing source." << endl;
 				printErrors(_charStream, errors);
 				throw std::runtime_error("Could not parse source.");
 			}
-			m_astRoot = std::make_shared<yul::Block>(std::get<yul::Block>(ASTCopier{}(ast->root())));
-			m_analysisInfo = std::make_unique<yul::AsmAnalysisInfo>();
+			m_analysisInfo = make_unique<yul::AsmAnalysisInfo>();
 			AsmAnalyzer analyzer(
 				*m_analysisInfo,
 				errorReporter,
 				m_dialect
 			);
-			if (!analyzer.analyze(*m_astRoot) || errorReporter.hasErrors())
+			if (!analyzer.analyze(*m_ast) || !errorReporter.errors().empty())
 			{
-				std::cerr << "Error analyzing source." << std::endl;
+				cerr << "Error analyzing source." << endl;
 				printErrors(_charStream, errors);
 				throw std::runtime_error("Could not analyze source.");
 			}
 		}
 		catch(...)
 		{
-			std::cerr << "Fatal error during parsing: " << std::endl;
+			cerr << "Fatal error during parsing: " << endl;
 			printErrors(_charStream, errors);
 			throw;
 		}
 	}
 
 	void printUsageBanner(
-		std::map<char, std::string> const& _extraOptions,
+		map<char, string> const& _extraOptions,
 		size_t _columns
 	)
 	{
@@ -132,10 +134,10 @@ public:
 			max_element(_extraOptions.begin(), _extraOptions.end(), hasShorterString)->second.size()
 		);
 
-		std::vector<std::string> overlappingAbbreviations =
+		vector<string> overlappingAbbreviations =
 			ranges::views::set_intersection(_extraOptions | ranges::views::keys, optimiserSteps | ranges::views::keys) |
-			ranges::views::transform([](char _abbreviation){ return std::string(1, _abbreviation); }) |
-			ranges::to<std::vector>();
+			ranges::views::transform([](char _abbreviation){ return string(1, _abbreviation); }) |
+			ranges::to<vector>();
 
 		yulAssert(
 			overlappingAbbreviations.empty(),
@@ -146,10 +148,10 @@ public:
 			"Please update the code to use a different character and recompile yulopti."
 		);
 
-		std::vector<std::tuple<char, std::string>> sortedOptions =
+		vector<tuple<char, string>> sortedOptions =
 			ranges::views::concat(optimiserSteps, _extraOptions) |
-			ranges::to<std::vector<std::tuple<char, std::string>>>() |
-			ranges::actions::sort([](std::tuple<char, std::string> const& _a, std::tuple<char, std::string> const& _b) {
+			ranges::to<vector<tuple<char, string>>>() |
+			ranges::actions::sort([](tuple<char, string> const& _a, tuple<char, string> const& _b) {
 				return (
 					!boost::algorithm::iequals(get<1>(_a), get<1>(_b)) ?
 					boost::algorithm::lexicographical_compare(get<1>(_a), get<1>(_b), boost::algorithm::is_iless()) :
@@ -162,35 +164,35 @@ public:
 		for (size_t row = 0; row < rows; ++row)
 		{
 			for (auto const& [key, name]: sortedOptions | ranges::views::drop(row) | ranges::views::stride(rows))
-				std::cout << key << ": " << std::setw(static_cast<int>(longestDescriptionLength)) << std::setiosflags(std::ios::left) << name << " ";
+				cout << key << ": " << setw(static_cast<int>(longestDescriptionLength)) << setiosflags(ios::left) << name << " ";
 
-			std::cout << std::endl;
+			cout << endl;
 		}
 	}
 
 	void disambiguate()
 	{
-		*m_astRoot = std::get<yul::Block>(Disambiguator(m_dialect, *m_analysisInfo)(*m_astRoot));
+		*m_ast = std::get<yul::Block>(Disambiguator(m_dialect, *m_analysisInfo)(*m_ast));
 		m_analysisInfo.reset();
-		m_nameDispenser.reset(*m_astRoot);
+		m_nameDispenser.reset(*m_ast);
 	}
 
-	void runSteps(std::string _source, std::string _steps)
+	void runSteps(string _source, string _steps)
 	{
 		parse(_source);
 		disambiguate();
-		OptimiserSuite{m_context}.runSequence(_steps, *m_astRoot);
-		std::cout << AsmPrinter{}(*m_astRoot) << std::endl;
+		OptimiserSuite{m_context}.runSequence(_steps, *m_ast);
+		cout << AsmPrinter{m_dialect}(*m_ast) << endl;
 	}
 
-	void runInteractive(std::string _source, bool _disambiguated = false)
+	void runInteractive(string _source, bool _disambiguated = false)
 	{
 		bool disambiguated = _disambiguated;
 		while (true)
 		{
 			parse(_source);
 			disambiguated = disambiguated || (disambiguate(), true);
-			std::map<char, std::string> const& extraOptions = {
+			map<char, string> const& extraOptions = {
 				// QUIT starts with a non-letter character on purpose to get it to show up on top of the list
 				{'#', ">>> QUIT <<<"},
 				{',', "VarNameCleaner"},
@@ -198,10 +200,10 @@ public:
 			};
 
 			printUsageBanner(extraOptions, 4);
-			std::cout << "? ";
-			std::cout.flush();
+			cout << "? ";
+			cout.flush();
 			char option = static_cast<char>(readStandardInputChar());
-			std::cout << ' ' << option << std::endl;
+			cout << ' ' << option << endl;
 
 			try
 			{
@@ -211,40 +213,40 @@ public:
 					case '#':
 						return;
 					case ',':
-						VarNameCleaner::run(m_context, *m_astRoot);
+						VarNameCleaner::run(m_context, *m_ast);
 						// VarNameCleaner destroys the unique names guarantee of the disambiguator.
 						disambiguated = false;
 						break;
 					case ';':
 					{
 						Object obj;
-						obj.setCode(std::make_shared<AST>(std::get<yul::Block>(ASTCopier{}(*m_astRoot))));
-						*m_astRoot = std::get<1>(StackCompressor::run(m_dialect, obj, true, 16));
+						obj.code = m_ast;
+						StackCompressor::run(m_dialect, obj, true, 16);
 						break;
 					}
 					default:
 						OptimiserSuite{m_context}.runSequence(
 							std::string_view(&option, 1),
-							*m_astRoot
+							*m_ast
 						);
 				}
-				_source = AsmPrinter{}(*m_astRoot);
+				_source = AsmPrinter{m_dialect}(*m_ast);
 			}
 			catch (...)
 			{
-				std::cerr << std::endl << "Exception during optimiser step:" << std::endl;
-				std::cerr << boost::current_exception_diagnostic_information() << std::endl;
+				cerr << endl << "Exception during optimiser step:" << endl;
+				cerr << boost::current_exception_diagnostic_information() << endl;
 			}
-			std::cout << "----------------------" << std::endl;
-			std::cout << _source << std::endl;
+			cout << "----------------------" << endl;
+			cout << _source << endl;
 		}
 	}
 
 private:
-	std::shared_ptr<yul::Block> m_astRoot;
-	Dialect const& m_dialect{EVMDialect::strictAssemblyForEVMObjects(EVMVersion{}, std::nullopt)};
-	std::unique_ptr<AsmAnalysisInfo> m_analysisInfo;
-	std::set<YulName> const m_reservedIdentifiers = {};
+	shared_ptr<yul::Block> m_ast;
+	Dialect const& m_dialect{EVMDialect::strictAssemblyForEVMObjects(EVMVersion{})};
+	unique_ptr<AsmAnalysisInfo> m_analysisInfo;
+	set<YulString> const m_reservedIdentifiers = {};
 	NameDispenser m_nameDispenser{m_dialect, m_reservedIdentifiers};
 	OptimiserStepContext m_context{
 		m_dialect,
@@ -273,12 +275,12 @@ int main(int argc, char** argv)
 		options.add_options()
 			(
 				"input-file",
-				po::value<std::string>(),
+				po::value<string>(),
 				"input file"
 			)
 			(
 				"steps",
-				po::value<std::string>(),
+				po::value<string>(),
 				"steps to execute non-interactively"
 			)
 			(
@@ -300,43 +302,43 @@ int main(int argc, char** argv)
 
 		if (arguments.count("help"))
 		{
-			std::cout << options;
+			cout << options;
 			return 0;
 		}
 
-		std::string input;
+		string input;
 		if (arguments.count("input-file"))
 		{
-			std::string filename = arguments["input-file"].as<std::string>();
+			string filename = arguments["input-file"].as<string>();
 			if (filename == "-")
 			{
 				nonInteractive = true;
-				input = readUntilEnd(std::cin);
+				input = readUntilEnd(cin);
 			}
 			else
-				input = readFileAsString(arguments["input-file"].as<std::string>());
+				input = readFileAsString(arguments["input-file"].as<string>());
 		}
 		else
 		{
-			std::cout << options;
+			cout << options;
 			return 1;
 		}
 
 		if (nonInteractive && !arguments.count("steps"))
 		{
-			std::cout << options;
+			cout << options;
 			return 1;
 		}
 
 		YulOpti yulOpti;
 		bool disambiguated = false;
 		if (!nonInteractive)
-			std::cout << input << std::endl;
+			cout << input << endl;
 		if (arguments.count("steps"))
 		{
-			std::string sequence = arguments["steps"].as<std::string>();
+			string sequence = arguments["steps"].as<string>();
 			if (!nonInteractive)
-				std::cout << "----------------------" << std::endl;
+				cout << "----------------------" << endl;
 			yulOpti.runSteps(input, sequence);
 			disambiguated = true;
 		}
@@ -347,23 +349,23 @@ int main(int argc, char** argv)
 	}
 	catch (po::error const& _exception)
 	{
-		std::cerr << _exception.what() << std::endl;
+		cerr << _exception.what() << endl;
 		return 1;
 	}
 	catch (FileNotFound const& _exception)
 	{
-		std::cerr << "File not found:" << _exception.comment() << std::endl;
+		cerr << "File not found:" << _exception.comment() << endl;
 		return 1;
 	}
 	catch (NotAFile const& _exception)
 	{
-		std::cerr << "Not a regular file:" << _exception.comment() << std::endl;
+		cerr << "Not a regular file:" << _exception.comment() << endl;
 		return 1;
 	}
 	catch(...)
 	{
-		std::cerr << std::endl << "Exception:" << std::endl;
-		std::cerr << boost::current_exception_diagnostic_information() << std::endl;
+		cerr << endl << "Exception:" << endl;
+		cerr << boost::current_exception_diagnostic_information() << endl;
 		return 1;
 	}
 }

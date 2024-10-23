@@ -1042,7 +1042,7 @@ BoolResult RationalNumberType::isExplicitlyConvertibleTo(Type const& _convertTo)
 	if (category == Category::FixedBytes)
 		return false;
 	else if (auto addressType = dynamic_cast<AddressType const*>(&_convertTo))
-		return (m_value == 0) ||
+		return	(m_value == 0) ||
 			((addressType->stateMutability() != StateMutability::Payable) &&
 			!isNegative() &&
 			!isFractional() &&
@@ -1544,8 +1544,6 @@ TypeResult ReferenceType::unaryOperatorResult(Token _operator) const
 		return TypeProvider::emptyTuple();
 	case DataLocation::Storage:
 		return isPointer() ? nullptr : TypeProvider::emptyTuple();
-	case DataLocation::Transient:
-		solUnimplemented("Transient data location is only supported for value types.");
 	}
 	return nullptr;
 }
@@ -1573,9 +1571,6 @@ std::string ReferenceType::stringForReferencePart() const
 		return "calldata";
 	case DataLocation::Memory:
 		return "memory";
-	case DataLocation::Transient:
-		solUnimplemented("Transient data location is only supported for value types.");
-		break;
 	}
 	solAssert(false, "");
 	return "";
@@ -1588,9 +1583,6 @@ std::string ReferenceType::identifierLocationSuffix() const
 	{
 	case DataLocation::Storage:
 		id += "_storage";
-		break;
-	case DataLocation::Transient:
-		solUnimplemented("Transient data location is only supported for value types.");
 		break;
 	case DataLocation::Memory:
 		id += "_memory";
@@ -1756,9 +1748,6 @@ BoolResult ArrayType::validForLocation(DataLocation _loc) const
 			if (storageSizeUpperBound() >= bigint(1) << 256)
 				return BoolResult::err("Type too large for storage.");
 			break;
-		case DataLocation::Transient:
-			solUnimplemented("Transient data location is only supported for value types.");
-			break;
 	}
 	return true;
 }
@@ -1839,9 +1828,6 @@ std::vector<std::tuple<std::string, Type const*>> ArrayType::makeStackItems() co
 		case DataLocation::Storage:
 			// byte offset inside storage value is omitted
 			return {std::make_tuple("slot", TypeProvider::uint256())};
-		case DataLocation::Transient:
-			solUnimplemented("Transient data location is only supported for value types.");
-			break;
 	}
 	solAssert(false, "");
 }
@@ -2140,25 +2126,12 @@ FunctionType const* ContractType::newExpressionType() const
 	return m_constructorType;
 }
 
-std::vector<std::tuple<VariableDeclaration const*, u256, unsigned>> ContractType::stateVariables(DataLocation _location) const
+std::vector<std::tuple<VariableDeclaration const*, u256, unsigned>> ContractType::stateVariables() const
 {
-	VariableDeclaration::Location location;
-	switch (_location)
-	{
-	case DataLocation::Storage:
-		location = VariableDeclaration::Location::Unspecified;
-		break;
-	case DataLocation::Transient:
-		location = VariableDeclaration::Location::Transient;
-		break;
-	default:
-		solAssert(false);
-	}
-
 	std::vector<VariableDeclaration const*> variables;
 	for (ContractDefinition const* contract: m_contract.annotation().linearizedBaseContracts | ranges::views::reverse)
 		for (VariableDeclaration const* variable: contract->stateVariables())
-			if (!(variable->isConstant() || variable->immutable()) && variable->referenceLocation() == location)
+			if (!(variable->isConstant() || variable->immutable()))
 				variables.push_back(variable);
 	TypePointers types;
 	for (auto variable: variables)
@@ -2595,9 +2568,6 @@ std::vector<std::tuple<std::string, Type const*>> StructType::makeStackItems() c
 			return {std::make_tuple("mpos", TypeProvider::uint256())};
 		case DataLocation::Storage:
 			return {std::make_tuple("slot", TypeProvider::uint256())};
-		case DataLocation::Transient:
-			solUnimplemented("Transient data location is only supported for value types.");
-			break;
 	}
 	solAssert(false, "");
 }
@@ -2949,15 +2919,13 @@ FunctionType::FunctionType(ErrorDefinition const& _error):
 		m_parameterTypes.push_back(var->annotation().type);
 	}
 
-	m_returnParameterNames.push_back("");
-	m_returnParameterTypes.push_back(TypeProvider::magic(MagicType::Kind::Error));
-
 	solAssert(
 		m_parameterNames.size() == m_parameterTypes.size(),
 		"Parameter names list must match parameter types list!"
 	);
 	solAssert(
-		m_returnParameterNames.size() == m_returnParameterTypes.size(),
+		m_returnParameterNames.size() == 0 &&
+		m_returnParameterTypes.size() == 0,
 		""
 	);
 }
@@ -4123,8 +4091,6 @@ std::string MagicType::richIdentifier() const
 	case Kind::MetaType:
 		solAssert(m_typeArgument, "");
 		return "t_magic_meta_type_" + m_typeArgument->richIdentifier();
-	case Kind::Error:
-		return "t_error";
 	}
 	return "";
 }
@@ -4230,8 +4196,6 @@ MemberList::MemberMap MagicType::nativeMembers(ASTNode const*) const
 				FunctionType::Options::withArbitraryParameters()
 			)}
 		});
-	case Kind::Error:
-		return {};
 	case Kind::MetaType:
 	{
 		solAssert(
@@ -4295,8 +4259,6 @@ std::string MagicType::toString(bool _withoutDataLocation) const
 	case Kind::MetaType:
 		solAssert(m_typeArgument, "");
 		return "type(" + m_typeArgument->toString(_withoutDataLocation) + ")";
-	case Kind::Error:
-		return "error";
 	}
 	solAssert(false, "Unknown kind of magic.");
 	return {};

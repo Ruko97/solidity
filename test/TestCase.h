@@ -112,10 +112,6 @@ protected:
 
 class EVMVersionRestrictedTestCase: public TestCase
 {
-private:
-	void processEVMVersionSetting();
-	void processBytecodeFormatSetting();
-
 protected:
 	EVMVersionRestrictedTestCase(std::string const& _filename);
 };

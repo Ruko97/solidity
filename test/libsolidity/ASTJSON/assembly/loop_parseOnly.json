@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 7,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,25 +13,32 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 4,
             "nodeType": "Block",
             "src": "42:74:1",
-            "statements": [
+            "statements":
+            [
               {
-                "AST": {
+                "AST":
+                {
                   "nativeSrc": "61:49:1",
                   "nodeType": "YulBlock",
                   "src": "61:49:1",
-                  "statements": [
+                  "statements":
+                  [
                     {
-                      "body": {
+                      "body":
+                      {
                         "nativeSrc": "90:18:1",
                         "nodeType": "YulBlock",
                         "src": "90:18:1",
-                        "statements": [
+                        "statements":
+                        [
                           {
                             "nativeSrc": "92:5:1",
                             "nodeType": "YulBreak",
@@ -43,7 +51,8 @@
                           }
                         ]
                       },
-                      "condition": {
+                      "condition":
+                      {
                         "kind": "number",
                         "nativeSrc": "70:1:1",
                         "nodeType": "YulLiteral",
@@ -53,16 +62,21 @@
                       },
                       "nativeSrc": "63:45:1",
                       "nodeType": "YulForLoop",
-                      "post": {
+                      "post":
+                      {
                         "nativeSrc": "72:17:1",
                         "nodeType": "YulBlock",
                         "src": "72:17:1",
-                        "statements": [
+                        "statements":
+                        [
                           {
-                            "expression": {
-                              "arguments": [
+                            "expression":
+                            {
+                              "arguments":
+                              [
                                 {
-                                  "arguments": [
+                                  "arguments":
+                                  [
                                     {
                                       "kind": "number",
                                       "nativeSrc": "84:1:1",
@@ -72,7 +86,8 @@
                                       "value": "0"
                                     }
                                   ],
-                                  "functionName": {
+                                  "functionName":
+                                  {
                                     "name": "sload",
                                     "nativeSrc": "78:5:1",
                                     "nodeType": "YulIdentifier",
@@ -83,7 +98,8 @@
                                   "src": "78:8:1"
                                 }
                               ],
-                              "functionName": {
+                              "functionName":
+                              {
                                 "name": "pop",
                                 "nativeSrc": "74:3:1",
                                 "nodeType": "YulIdentifier",
@@ -99,7 +115,8 @@
                           }
                         ]
                       },
-                      "pre": {
+                      "pre":
+                      {
                         "nativeSrc": "67:2:1",
                         "nodeType": "YulBlock",
                         "src": "67:2:1",
@@ -124,13 +141,15 @@
           "name": "g",
           "nameLocation": "26:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "27:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],

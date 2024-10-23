@@ -51,12 +51,10 @@ SMTEncoder::SMTEncoder(
 	ModelCheckerSettings _settings,
 	UniqueErrorReporter& _errorReporter,
 	UniqueErrorReporter& _unsupportedErrorReporter,
-	ErrorReporter& _provedSafeReporter,
 	langutil::CharStreamProvider const& _charStreamProvider
 ):
 	m_errorReporter(_errorReporter),
 	m_unsupportedErrors(_unsupportedErrorReporter),
-	m_provedSafeReporter(_provedSafeReporter),
 	m_context(_context),
 	m_settings(std::move(_settings)),
 	m_charStreamProvider(_charStreamProvider)
@@ -313,7 +311,7 @@ bool SMTEncoder::visit(InlineAssembly const& _inlineAsm)
 	{
 		AssignedExternalsCollector(InlineAssembly const& _inlineAsm): externalReferences(_inlineAsm.annotation().externalReferences)
 		{
-			this->operator()(_inlineAsm.operations().root());
+			this->operator()(_inlineAsm.operations());
 		}
 
 		std::map<yul::Identifier const*, InlineAssemblyAnnotation::ExternalIdentifierInfo> const& externalReferences;
@@ -330,7 +328,7 @@ bool SMTEncoder::visit(InlineAssembly const& _inlineAsm)
 		}
 	};
 
-	yul::SideEffectsCollector sideEffectsCollector(_inlineAsm.dialect(), _inlineAsm.operations().root());
+	yul::SideEffectsCollector sideEffectsCollector(_inlineAsm.dialect(), _inlineAsm.operations());
 	if (sideEffectsCollector.invalidatesMemory())
 		resetMemoryVariables();
 	if (sideEffectsCollector.invalidatesStorage())
@@ -1298,27 +1296,8 @@ void SMTEncoder::addArrayLiteralAssertions(
 )
 {
 	m_context.addAssertion(_symArray.length() == _elementValues.size());
-
-	// Assert to the solver that _elementValues are exactly the elements at the beginning of the array.
-	// Since we create new symbolic representation for every array literal in the source file, we want to ensure that
-	// representations of two equal literals are also equal. For this reason we always start from constant-zero array.
-	// This ensures SMT-LIB arrays (which are infinite) are also equal beyond the length of the Solidity array literal.
-	auto type = _symArray.type();
-	smtAssert(type);
-	auto valueType = [&]() {
-		if (auto const* arrayType = dynamic_cast<ArrayType const*>(type))
-			return arrayType->baseType();
-		if (smt::isStringLiteral(*type))
-			return TypeProvider::stringMemory()->baseType();
-		smtAssert(false);
-	}();
-	auto tupleSort = std::dynamic_pointer_cast<smtutil::TupleSort>(smt::smtSort(*type));
-	auto sortSort = std::make_shared<smtutil::SortSort>(tupleSort->components.front());
-	smtutil::Expression arrayExpr = smtutil::Expression::const_array(smtutil::Expression(sortSort), smt::zeroValue(valueType));
-	smtAssert(arrayExpr.sort->kind == smtutil::Kind::Array);
 	for (size_t i = 0; i < _elementValues.size(); i++)
-		arrayExpr = smtutil::Expression::store(arrayExpr, smtutil::Expression(i), _elementValues[i]);
-	m_context.addAssertion(_symArray.elements() == arrayExpr);
+		m_context.addAssertion(smtutil::Expression::select(_symArray.elements(), i) == _elementValues[i]);
 }
 
 void SMTEncoder::bytesToFixedBytesAssertions(

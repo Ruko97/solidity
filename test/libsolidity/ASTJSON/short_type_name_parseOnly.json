@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 12,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,18 +13,23 @@
       "name": "c",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 9,
             "nodeType": "Block",
             "src": "33:20:1",
-            "statements": [
+            "statements":
+            [
               {
-                "assignments": [
+                "assignments":
+                [
                   7
                 ],
-                "declarations": [
+                "declarations":
+                [
                   {
                     "constant": false,
                     "id": 7,
@@ -35,8 +41,10 @@
                     "stateVariable": false,
                     "storageLocation": "memory",
                     "typeDescriptions": {},
-                    "typeName": {
-                      "baseType": {
+                    "typeName":
+                    {
+                      "baseType":
+                      {
                         "id": 5,
                         "name": "uint",
                         "nodeType": "ElementaryTypeName",
@@ -64,13 +72,15 @@
           "name": "f",
           "nameLocation": "22:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "23:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],

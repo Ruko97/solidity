@@ -51,10 +51,6 @@ enum AssemblyItemType
 	PushDeployTimeAddress, ///< Push an address to be filled at deploy time. Should not be touched by the optimizer.
 	PushImmutable, ///< Push the currently unknown value of an immutable variable. The actual value will be filled in by the constructor.
 	AssignImmutable, ///< Assigns the current value on the stack to an immutable variable. Only valid during creation code.
-
-	/// Loads 32 bytes from static auxiliary data of EOF data section. The offset does *not* have to be always from the beginning
-	/// of the data EOF section. More details here: https://github.com/ipsilon/eof/blob/main/spec/eof.md#data-section-lifecycle
-	AuxDataLoadN,
 	VerbatimBytecode ///< Contains data that is inserted into the bytecode code section without modification.
 };
 
@@ -165,11 +161,10 @@ public:
 
 	/// @returns an upper bound for the number of bytes required by this item, assuming that
 	/// the value of a jump tag takes @a _addressLength bytes.
-	/// @param _evmVersion the EVM version
 	/// @param _precision Whether to return a precise count (which involves
 	///                   counting immutable references which are only set after
 	///                   a call to `assemble()`) or an approx. count.
-	size_t bytesRequired(size_t _addressLength, langutil::EVMVersion _evmVersion, Precision _precision = Precision::Precise) const;
+	size_t bytesRequired(size_t _addressLength, Precision _precision = Precision::Precise) const;
 	size_t arguments() const;
 	size_t returnValues() const;
 	size_t deposit() const { return returnValues() - arguments(); }
@@ -233,11 +228,11 @@ private:
 	mutable std::optional<size_t> m_immutableOccurrences;
 };
 
-inline size_t bytesRequired(AssemblyItems const& _items, size_t _addressLength, langutil::EVMVersion _evmVersion, Precision _precision = Precision::Precise)
+inline size_t bytesRequired(AssemblyItems const& _items, size_t _addressLength,  Precision _precision = Precision::Precise)
 {
 	size_t size = 0;
 	for (AssemblyItem const& item: _items)
-		size += item.bytesRequired(_addressLength, _evmVersion, _precision);
+		size += item.bytesRequired(_addressLength, _precision);
 	return size;
 }
 

@@ -249,6 +249,7 @@ Each one includes a ``list.json`` file listing the available binaries. For examp
       "keccak256": "0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3",
       "sha256": "0x2b55ed5fec4d9625b6c7b3ab1abd2b7fb7dd2a9c68543bf0323db2c7e2d55af2",
       "urls": [
+        "bzzr://16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1",
         "dweb:/ipfs/QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS"
       ]
     }
@@ -263,7 +264,7 @@ This means that:
   In this case git is not necessary and symlinks are resolved transparently, either by serving a copy
   of the file or returning a HTTP redirect.
 - The file is also available on IPFS at `QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS`_.
-  Please, be aware that the order of items in the ``urls`` array is not predetermined or guaranteed and users should not rely on it.
+- The file might in future be available on Swarm at `16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1`_.
 - You can verify the integrity of the binary by comparing its keccak256 hash to
   ``0x300330ecd127756b824aa13e843cb1f43c473cb22eaf3750d5fb9c99279af8c3``.  The hash can be computed
   on the command-line using ``keccak256sum`` utility provided by `sha3sum`_ or `keccak256() function
@@ -304,12 +305,14 @@ This means that:
     in the long-term.
 
 .. _IPFS: https://ipfs.io
+.. _Swarm: https://swarm-gateways.net/bzz:/swarm.eth
 .. _solc-bin: https://github.com/ethereum/solc-bin/
 .. _Solidity release page on GitHub: https://github.com/ethereum/solidity/releases
 .. _sha3sum: https://github.com/maandree/sha3sum
 .. _keccak256() function from ethereumjs-util: https://github.com/ethereumjs/ethereumjs-util/blob/master/docs/modules/_hash_.md#const-keccak256
 .. _WebAssembly builds: https://emscripten.org/docs/compiling/WebAssembly.html
 .. _QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS: https://gateway.ipfs.io/ipfs/QmTLs5MuLEWXQkths41HiACoXDiH8zxyqBHGFDRSzVE5CS
+.. _16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1: https://swarm-gateways.net/bzz:/16c5f09109c793db99fe35f037c6092b061bd39260ee7a677c8a97f18c955ab1/
 
 .. _building-from-source:
 
@@ -327,13 +330,16 @@ The following are dependencies for all builds of Solidity:
 | Windows, 3.13+ otherwise)         |                                                       |
 +-----------------------------------+-------------------------------------------------------+
 | `Boost`_ (version 1.77+ on        | C++ libraries.                                        |
-| Windows, 1.67+ otherwise)         |                                                       |
+| Windows, 1.65+ otherwise)         |                                                       |
 +-----------------------------------+-------------------------------------------------------+
 | `Git`_                            | Command-line tool for retrieving source code.         |
 +-----------------------------------+-------------------------------------------------------+
 | `z3`_ (version 4.8.16+, Optional) | For use with SMT checker.                             |
 +-----------------------------------+-------------------------------------------------------+
+| `cvc4`_ (Optional)                | For use with SMT checker.                             |
++-----------------------------------+-------------------------------------------------------+
 
+.. _cvc4: https://cvc4.cs.stanford.edu/web/
 .. _Git: https://git-scm.com/download
 .. _Boost: https://www.boost.org
 .. _CMake: https://cmake.org/download/
@@ -527,12 +533,24 @@ If you are interested what CMake options are available run ``cmake .. -LH``.
 
 SMT Solvers
 -----------
-Solidity can optionally use SMT solvers, namely ``z3``, ``cvc5`` and ``Eldarica``,
-but their presence is checked only at runtime, they are not needed for the build to succeed.
+Solidity can be built against SMT solvers and will do so by default if
+they are found in the system. Each solver can be disabled by a ``cmake`` option.
 
-.. note::
+*Note: In some cases, this can also be a potential workaround for build failures.*
 
-    The emscripten builds require Z3 and will statically link against it instead.
+
+Inside the build folder you can disable them, since they are enabled by default:
+
+.. code-block:: bash
+
+    # disables only Z3 SMT Solver.
+    cmake .. -DUSE_Z3=OFF
+
+    # disables only CVC4 SMT Solver.
+    cmake .. -DUSE_CVC4=OFF
+
+    # disables both Z3 and CVC4
+    cmake .. -DUSE_CVC4=OFF -DUSE_Z3=OFF
 
 The Version String in Detail
 ============================

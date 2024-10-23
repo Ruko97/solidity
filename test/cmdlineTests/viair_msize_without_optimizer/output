@@ -31,7 +31,9 @@ tag_1:
   swap1
   jump	// out
 tag_2:
-  revert(0x00, 0x00)
+  0x00
+  dup1
+  revert
 tag_3:
   jump	// out
 stop
@@ -82,9 +84,13 @@ sub_0: assembly {
       swap1
       jump	// out
     tag_3:
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_4:
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_5:
       0x00
       dup2
@@ -104,7 +110,7 @@ sub_0: assembly {
       jump	// out
     tag_6:
       0x00
-      0x00
+      dup1
       dup3
       add
       swap1
@@ -145,12 +151,15 @@ sub_0: assembly {
       dup3
       return
     tag_8:
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_9:
       jump(tag_35)
     tag_34:
       0x00
-      mload(0x00)
+      dup1
+      mload
       swap1
       pop
       swap1

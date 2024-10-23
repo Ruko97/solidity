@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 6,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,9 +13,11 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 3,
             "nodeType": "Block",
             "src": "34:2:1",
@@ -27,13 +30,15 @@
           "name": "",
           "nameLocation": "-1:-1:-1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "22:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],

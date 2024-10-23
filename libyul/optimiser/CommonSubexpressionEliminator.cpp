@@ -46,7 +46,7 @@ void CommonSubexpressionEliminator::run(OptimiserStepContext& _context, Block& _
 
 CommonSubexpressionEliminator::CommonSubexpressionEliminator(
 	Dialect const& _dialect,
-	std::map<YulName, SideEffects> _functionSideEffects
+	std::map<YulString, SideEffects> _functionSideEffects
 ):
 	DataFlowAnalyzer(_dialect, MemoryAndStorage::Ignore, std::move(_functionSideEffects))
 {
@@ -72,14 +72,13 @@ void CommonSubexpressionEliminator::visit(Expression& _e)
 	{
 		FunctionCall& funCall = std::get<FunctionCall>(_e);
 
-		if (std::optional<BuiltinHandle> builtinHandle = m_dialect.findBuiltin(funCall.functionName.name.str()))
+		if (BuiltinFunction const* builtin = m_dialect.builtin(funCall.functionName.name))
 		{
-			BuiltinFunction const& builtin = m_dialect.builtin(*builtinHandle);
 			for (size_t i = funCall.arguments.size(); i > 0; i--)
 				// We should not modify function arguments that have to be literals
 				// Note that replacing the function call entirely is fine,
 				// if the function call is movable.
-				if (!builtin.literalArgument(i - 1))
+				if (!builtin->literalArgument(i - 1))
 					visit(funCall.arguments[i - 1]);
 
 			descend = false;
@@ -96,7 +95,7 @@ void CommonSubexpressionEliminator::visit(Expression& _e)
 
 	if (Identifier const* identifier = std::get_if<Identifier>(&_e))
 	{
-		YulName identifierName = identifier->name;
+		YulString identifierName = identifier->name;
 		if (AssignedValue const* assignedValue = variableValue(identifierName))
 		{
 			assertThrow(assignedValue->value, OptimizerException, "");
@@ -115,7 +114,7 @@ void CommonSubexpressionEliminator::visit(Expression& _e)
 				if (
 					m_returnVariables.count(variable) &&
 					std::holds_alternative<Literal>(*value->value) &&
-					std::get<Literal>(*value->value).value.value() == 0
+					valueOfLiteral(std::get<Literal>(*value->value)) == 0
 				)
 					continue;
 				// We check for syntactic equality again because the value might have changed.
@@ -127,7 +126,7 @@ void CommonSubexpressionEliminator::visit(Expression& _e)
 			}
 }
 
-void CommonSubexpressionEliminator::assignValue(YulName _variable, Expression const* _value)
+void CommonSubexpressionEliminator::assignValue(YulString _variable, Expression const* _value)
 {
 	if (_value)
 		m_replacementCandidates[*_value].insert(_variable);

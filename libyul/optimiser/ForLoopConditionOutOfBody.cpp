@@ -36,9 +36,9 @@ void ForLoopConditionOutOfBody::operator()(ForLoop& _forLoop)
 	ASTModifier::operator()(_forLoop);
 
 	if (
-		!m_dialect.booleanNegationFunctionHandle() ||
+		!m_dialect.booleanNegationFunction() ||
 		!std::holds_alternative<Literal>(*_forLoop.condition) ||
-		std::get<Literal>(*_forLoop.condition).value.value() == 0 ||
+		valueOfLiteral(std::get<Literal>(*_forLoop.condition)) == u256(0) ||
 		_forLoop.body.statements.empty() ||
 		!std::holds_alternative<If>(_forLoop.body.statements.front())
 	)
@@ -53,7 +53,7 @@ void ForLoopConditionOutOfBody::operator()(ForLoop& _forLoop)
 	if (!SideEffectsCollector(m_dialect, *firstStatement.condition).movable())
 		return;
 
-	YulName const iszero{m_dialect.builtin(*m_dialect.booleanNegationFunctionHandle()).name};
+	YulString iszero = m_dialect.booleanNegationFunction()->name;
 	langutil::DebugData::ConstPtr debugData = debugDataOf(*firstStatement.condition);
 
 	if (

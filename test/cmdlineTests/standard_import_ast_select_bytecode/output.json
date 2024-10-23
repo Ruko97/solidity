@@ -1,9 +1,14 @@
 {
-    "contracts": {
-        "A": {
-            "test": {
-                "evm": {
-                    "bytecode": {
+    "contracts":
+    {
+        "A":
+        {
+            "test":
+            {
+                "evm":
+                {
+                    "bytecode":
+                    {
                         "functionDebugData": {},
                         "generatedSources": [],
                         "linkReferences": {},
@@ -15,8 +20,10 @@
             }
         }
     },
-    "sources": {
-        "A": {
+    "sources":
+    {
+        "A":
+        {
             "id": 0
         }
     }

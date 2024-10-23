@@ -34,7 +34,8 @@
 #include <libsolutil/FixedHash.h>
 #include <libsolutil/LazyInit.h>
 #include <libsolutil/Visitor.h>
-#include <libsolutil/JSON.h>
+
+#include <json/json.h>
 
 #include <range/v3/view/subrange.hpp>
 #include <range/v3/view/map.hpp>
@@ -48,7 +49,7 @@
 namespace solidity::yul
 {
 // Forward-declaration to <yul/AST.h>
-class AST;
+struct Block;
 struct Dialect;
 }
 
@@ -1052,7 +1053,7 @@ private:
 class VariableDeclaration: public Declaration, public StructurallyDocumented
 {
 public:
-	enum Location { Unspecified, Storage, Transient, Memory, CallData };
+	enum Location { Unspecified, Storage, Memory, CallData };
 	enum class Mutability { Mutable, Immutable, Constant };
 	static std::string mutabilityToString(Mutability _mutability)
 	{
@@ -1569,7 +1570,7 @@ public:
 		ASTPointer<ASTString> const& _docString,
 		yul::Dialect const& _dialect,
 		ASTPointer<std::vector<ASTPointer<ASTString>>> _flags,
-		std::shared_ptr<yul::AST> _operations
+		std::shared_ptr<yul::Block> _operations
 	):
 		Statement(_id, _location, _docString),
 		m_dialect(_dialect),
@@ -1580,7 +1581,7 @@ public:
 	void accept(ASTConstVisitor& _visitor) const override;
 
 	yul::Dialect const& dialect() const { return m_dialect; }
-	yul::AST const& operations() const { return *m_operations; }
+	yul::Block const& operations() const { return *m_operations; }
 	ASTPointer<std::vector<ASTPointer<ASTString>>> const& flags() const { return m_flags; }
 
 	InlineAssemblyAnnotation& annotation() const override;
@@ -1588,7 +1589,7 @@ public:
 private:
 	yul::Dialect const& m_dialect;
 	ASTPointer<std::vector<ASTPointer<ASTString>>> m_flags;
-	std::shared_ptr<yul::AST> m_operations;
+	std::shared_ptr<yul::Block> m_operations;
 };
 
 /**

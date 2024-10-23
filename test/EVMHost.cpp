@@ -119,8 +119,6 @@ EVMHost::EVMHost(langutil::EVMVersion _evmVersion, evmc::VM& _vm):
 		m_evmRevision = EVMC_SHANGHAI;
 	else if (_evmVersion == langutil::EVMVersion::cancun())
 		m_evmRevision = EVMC_CANCUN;
-	else if (_evmVersion == langutil::EVMVersion::prague())
-		m_evmRevision = EVMC_PRAGUE;
 	else
 		assertThrow(false, Exception, "Unsupported EVM version");
 
@@ -193,7 +191,7 @@ void EVMHost::newTransactionFrame()
 		for (auto& [slot, value]: account.storage)
 		{
 			value.access_status = EVMC_ACCESS_COLD; // Clear EIP-2929 storage access indicator
-			value.original = value.current;         // Clear EIP-2200 dirty slot
+			value.original = value.current;			// Clear EIP-2200 dirty slot
 		}
 
 		// Clear transient storage according to EIP 1153

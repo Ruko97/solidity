@@ -108,13 +108,14 @@ bytes compileFirstExpression(
 	{
 		ErrorList errors;
 		ErrorReporter errorReporter(errors);
-		sourceUnit = Parser(
-			errorReporter,
-			solidity::test::CommonOptions::get().evmVersion(),
-			solidity::test::CommonOptions::get().eofVersion()
-		).parse(stream);
+		sourceUnit = Parser(errorReporter, solidity::test::CommonOptions::get().evmVersion()).parse(stream);
 		if (!sourceUnit)
 			return bytes();
+	}
+	catch (boost::exception const& _e)
+	{
+		std::string msg = "Parsing source code failed with:\n" + boost::diagnostic_information(_e);
+		BOOST_FAIL(msg);
 	}
 	catch (...)
 	{

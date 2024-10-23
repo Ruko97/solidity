@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "formattedMessage": "Only optimizerSteps can be set in yulDetails when Yul optimizer is disabled.",

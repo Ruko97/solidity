@@ -56,11 +56,7 @@ evmasm::AssemblyItems compileContract(std::shared_ptr<CharStream> _sourceCode)
 {
 	ErrorList errors;
 	ErrorReporter errorReporter(errors);
-	Parser parser(
-		errorReporter,
-		solidity::test::CommonOptions::get().evmVersion(),
-		solidity::test::CommonOptions::get().eofVersion()
-	);
+	Parser parser(errorReporter, solidity::test::CommonOptions::get().evmVersion());
 	ASTPointer<SourceUnit> sourceUnit;
 	BOOST_REQUIRE_NO_THROW(sourceUnit = parser.parse(*_sourceCode));
 	BOOST_CHECK(!!sourceUnit);
@@ -95,8 +91,7 @@ evmasm::AssemblyItems compileContract(std::shared_ptr<CharStream> _sourceCode)
 			);
 			compiler.compileContract(*contract, std::map<ContractDefinition const*, std::shared_ptr<Compiler const>>{}, bytes());
 
-			BOOST_REQUIRE(compiler.runtimeAssembly().codeSections().size() == 1);
-			return compiler.runtimeAssembly().codeSections().at(0).items;
+			return compiler.runtimeAssembly().items();
 		}
 	BOOST_FAIL("No contract found in source.");
 	return AssemblyItems();

@@ -35,7 +35,7 @@ namespace
  *
  * A single-file implementation of SHA-3 and SHAKE.
  *
- * implementer: David Leon Gil
+ * Implementor: David Leon Gil
  * License: CC0, attribution kindly requested. Blame taken too,
  * but not liability.
  */

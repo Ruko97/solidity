@@ -302,7 +302,7 @@ bool TypeInference::visit(InlineAssembly const& _inlineAssembly)
 		_inlineAssembly.dialect(),
 		identifierAccess
 	);
-	if (!analyzer.analyze(_inlineAssembly.operations().root()))
+	if (!analyzer.analyze(_inlineAssembly.operations()))
 		solAssert(m_errorReporter.hasErrors());
 	return false;
 }

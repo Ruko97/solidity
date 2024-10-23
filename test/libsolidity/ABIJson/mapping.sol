@@ -7,7 +7,8 @@ contract test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "address",
 //         "name": "owner",
@@ -20,7 +21,8 @@ contract test {
 //       }
 //     ],
 //     "name": "allowance",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "uint256",
 //         "name": "value",
@@ -31,7 +33,8 @@ contract test {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "bytes32",
 //         "name": "",
@@ -39,7 +42,8 @@ contract test {
 //       }
 //     ],
 //     "name": "commits",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "address",
 //         "name": "sender",
@@ -50,7 +54,8 @@ contract test {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "bytes32",
 //         "name": "",
@@ -58,7 +63,8 @@ contract test {
 //       }
 //     ],
 //     "name": "something",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "bytes32",
 //         "name": "",

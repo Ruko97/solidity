@@ -5,19 +5,18 @@
   sstore(add(x, 0), z)
 }
 // ====
-// EVMVersion: >=shanghai
 // optimizationPreset: full
 // ----
 // Assembly:
-//     /* "source":63:64   */
+//     /* "source":26:27   */
 //   0x00
-//     /* "source":46:61   */
+//     /* "source":13:28   */
 //   dup1
 //   calldataload
-//     /* "source":39:65   */
+//     /* "source":79:99   */
 //   sstore
-//     /* "source":27:73   */
+//     /* "source":0:101   */
 //   stop
 // Bytecode: 5f80355500
 // Opcodes: PUSH0 DUP1 CALLDATALOAD SSTORE STOP
-// SourceMappings: 63:1:0:-:0;46:15;;39:26;27:46
+// SourceMappings: 26:1:0:-:0;13:15;;79:20;0:101

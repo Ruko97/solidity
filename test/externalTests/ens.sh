@@ -62,7 +62,7 @@ function ens_test
     neutralize_package_json_hooks
     force_hardhat_compiler_binary "$config_file" "$BINARY_TYPE" "$BINARY_PATH"
     force_hardhat_compiler_settings "$config_file" "$(first_word "$SELECTED_PRESETS")"
-    pnpm install
+    yarn install
 
     replace_version_pragmas
     neutralize_packaged_contracts

@@ -74,15 +74,14 @@ struct MiniEVMInterpreter
 
 	u256 operator()(FunctionCall const& _funCall)
 	{
-		std::optional<BuiltinHandle> funHandle = m_dialect.findBuiltin(_funCall.functionName.name.str());
-		yulAssert(funHandle, "Expected builtin function.");
-		BuiltinFunctionForEVM const& fun = m_dialect.builtin(*funHandle);
-		yulAssert(fun.instruction, "Expected EVM instruction.");
-		return eval(*fun.instruction, _funCall.arguments);
+		BuiltinFunctionForEVM const* fun = m_dialect.builtin(_funCall.functionName.name);
+		yulAssert(fun, "Expected builtin function.");
+		yulAssert(fun->instruction, "Expected EVM instruction.");
+		return eval(*fun->instruction, _funCall.arguments);
 	}
 	u256 operator()(Literal const& _literal)
 	{
-		return _literal.value.value();
+		return valueOfLiteral(_literal);
 	}
 	u256 operator()(Identifier const&) { yulAssert(false, ""); }
 
@@ -101,7 +100,7 @@ void ConstantOptimiser::visit(Expression& _e)
 		if (
 			Expression const* repr =
 				RepresentationFinder(m_dialect, m_meter, debugDataOf(_e), m_cache)
-				.tryFindRepresentation(literal.value.value())
+				.tryFindRepresentation(valueOfLiteral(literal))
 		)
 			_e = ASTCopier{}.translate(*repr);
 	}
@@ -130,7 +129,7 @@ Representation const& RepresentationFinder::findRepresentation(u256 const& _valu
 
 	if (numberEncodingSize(~_value) < numberEncodingSize(_value))
 		// Negated is shorter to represent
-		routine = min(std::move(routine), represent("not"_yulname, findRepresentation(~_value)));
+		routine = min(std::move(routine), represent("not"_yulstring, findRepresentation(~_value)));
 
 	// Decompose value into a * 2**k + b where abs(b) << 2**k
 	for (unsigned bits = 255; bits > 8 && m_maxSteps > 0; --bits)
@@ -153,21 +152,21 @@ Representation const& RepresentationFinder::findRepresentation(u256 const& _valu
 			continue;
 		Representation newRoutine;
 		if (m_dialect.evmVersion().hasBitwiseShifting())
-			newRoutine = represent("shl"_yulname, represent(bits), findRepresentation(upperPart));
+			newRoutine = represent("shl"_yulstring, represent(bits), findRepresentation(upperPart));
 		else
 		{
-			newRoutine = represent("exp"_yulname, represent(2), represent(bits));
+			newRoutine = represent("exp"_yulstring, represent(2), represent(bits));
 			if (upperPart != 1)
-				newRoutine = represent("mul"_yulname, findRepresentation(upperPart), newRoutine);
+				newRoutine = represent("mul"_yulstring, findRepresentation(upperPart), newRoutine);
 		}
 
 		if (newRoutine.cost >= routine.cost)
 			continue;
 
 		if (lowerPart > 0)
-			newRoutine = represent("add"_yulname, newRoutine, findRepresentation(u256(abs(lowerPart))));
+			newRoutine = represent("add"_yulstring, newRoutine, findRepresentation(u256(abs(lowerPart))));
 		else if (lowerPart < 0)
-			newRoutine = represent("sub"_yulname, newRoutine, findRepresentation(u256(abs(lowerPart))));
+			newRoutine = represent("sub"_yulstring, newRoutine, findRepresentation(u256(abs(lowerPart))));
 
 		if (m_maxSteps > 0)
 			m_maxSteps--;
@@ -180,13 +179,13 @@ Representation const& RepresentationFinder::findRepresentation(u256 const& _valu
 Representation RepresentationFinder::represent(u256 const& _value) const
 {
 	Representation repr;
-	repr.expression = std::make_unique<Expression>(Literal{m_debugData, LiteralKind::Number, LiteralValue{_value, formatNumber(_value)}});
+	repr.expression = std::make_unique<Expression>(Literal{m_debugData, LiteralKind::Number, YulString{formatNumber(_value)}, {}});
 	repr.cost = m_meter.costs(*repr.expression);
 	return repr;
 }
 
 Representation RepresentationFinder::represent(
-	YulName _instruction,
+	YulString _instruction,
 	Representation const& _argument
 ) const
 {
@@ -196,14 +195,12 @@ Representation RepresentationFinder::represent(
 		Identifier{m_debugData, _instruction},
 		{ASTCopier{}.translate(*_argument.expression)}
 	});
-	repr.cost = _argument.cost + m_meter.instructionCosts(
-		*m_dialect.builtin(*m_dialect.findBuiltin(_instruction.str())).instruction
-	);
+	repr.cost = _argument.cost + m_meter.instructionCosts(*m_dialect.builtin(_instruction)->instruction);
 	return repr;
 }
 
 Representation RepresentationFinder::represent(
-	YulName _instruction,
+	YulString _instruction,
 	Representation const& _arg1,
 	Representation const& _arg2
 ) const
@@ -214,8 +211,7 @@ Representation RepresentationFinder::represent(
 		Identifier{m_debugData, _instruction},
 		{ASTCopier{}.translate(*_arg1.expression), ASTCopier{}.translate(*_arg2.expression)}
 	});
-	repr.cost = m_meter.instructionCosts(
-		*m_dialect.builtin(*m_dialect.findBuiltin(_instruction.str())).instruction) + _arg1.cost + _arg2.cost;
+	repr.cost = m_meter.instructionCosts(*m_dialect.builtin(_instruction)->instruction) + _arg1.cost + _arg2.cost;
 	return repr;
 }
 

@@ -5,32 +5,30 @@ object "a" {
     data "data1" "Hello, World!"
   }
 }
-// ====
-// EVMVersion: >=shanghai
 // ----
 // Assembly:
-//     /* "source":44:61   */
+//     /* "source":32:49   */
 //   dataOffset(sub_0)
-//     /* "source":41:42   */
+//     /* "source":29:30   */
 //   0x00
-//     /* "source":34:62   */
+//     /* "source":22:50   */
 //   sstore
-//     /* "source":22:70   */
+//     /* "source":20:52   */
 //   stop
 // stop
 //
 // sub_0: assembly {
-//         /* "source":117:118   */
+//         /* "source":91:92   */
 //       0x08
-//         /* "source":114:115   */
+//         /* "source":88:89   */
 //       0x00
-//         /* "source":107:119   */
+//         /* "source":81:93   */
 //       sstore
-//         /* "source":103:123   */
+//         /* "source":79:95   */
 //       stop
 //     stop
 //     data_acaf3289d7b601cbd114fb36c4d29c85bbfd5e133f14cb355c3fd8d99367964f 48656c6c6f2c20576f726c6421
 // }
 // Bytecode: 60065f5500fe60085f5500fe
 // Opcodes: PUSH1 0x6 PUSH0 SSTORE STOP INVALID PUSH1 0x8 PUSH0 SSTORE STOP INVALID
-// SourceMappings: 44:17:0:-:0;41:1;34:28;22:48
+// SourceMappings: 32:17:0:-:0;29:1;22:28;20:32

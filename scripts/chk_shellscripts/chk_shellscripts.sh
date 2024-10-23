@@ -13,5 +13,5 @@ if [ ! -f "${SHELLCHECK}" ]; then
     exit 1
 fi
 
-mapfile -t FILES < <(find . -type f -name "*.sh" -not -path "./deps/*")
+mapfile -t FILES < <(find . -type f -name "*.sh")
 "${SHELLCHECK}" "${FILES[@]}"

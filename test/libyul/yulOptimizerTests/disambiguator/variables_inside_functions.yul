@@ -1,10 +1,12 @@
 {
-    { let c let b }
-    function f(a, c) -> b { let x }
+    { let c:u256 let b:u256 }
+    function f(a:u256, c:u256) -> b:u256 { let x:u256 }
     {
-        let a let x
+        let a:u256 let x:u256
     }
 }
+// ====
+// dialect: yul
 // ----
 // step: disambiguator
 //

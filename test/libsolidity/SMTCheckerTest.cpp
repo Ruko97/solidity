@@ -25,11 +25,8 @@ using namespace solidity;
 using namespace solidity::langutil;
 using namespace solidity::frontend;
 using namespace solidity::frontend::test;
-using namespace solidity::test;
 
-SMTCheckerTest::SMTCheckerTest(std::string const& _filename):
-	SyntaxTest(_filename, EVMVersion{}),
-	universalCallback(nullptr, smtCommand)
+SMTCheckerTest::SMTCheckerTest(std::string const& _filename): SyntaxTest(_filename, EVMVersion{})
 {
 	auto contract = m_reader.stringSetting("SMTContract", "");
 	if (!contract.empty())
@@ -40,14 +37,6 @@ SMTCheckerTest::SMTCheckerTest(std::string const& _filename):
 		m_modelCheckerSettings.externalCalls = *extCallsMode;
 	else
 		BOOST_THROW_EXCEPTION(std::runtime_error("Invalid SMT external calls mode."));
-
-	auto const& showProvedSafe = m_reader.stringSetting("SMTShowProvedSafe", "no");
-	if (showProvedSafe == "no")
-		m_modelCheckerSettings.showProvedSafe = false;
-	else if (showProvedSafe == "yes")
-		m_modelCheckerSettings.showProvedSafe = true;
-	else
-		BOOST_THROW_EXCEPTION(std::runtime_error("Invalid SMT \"show proved safe\" choice."));
 
 	auto const& showUnproved = m_reader.stringSetting("SMTShowUnproved", "yes");
 	if (showUnproved == "no")
@@ -107,6 +96,8 @@ SMTCheckerTest::SMTCheckerTest(std::string const& _filename):
 				filtered.emplace_back(e);
 		return filtered;
 	};
+	if (m_modelCheckerSettings.invariants.invariants.empty())
+		m_expectations = removeInv(std::move(m_expectations));
 
 	auto const& ignoreInv = m_reader.stringSetting("SMTIgnoreInv", "yes");
 	if (ignoreInv == "no")
@@ -115,9 +106,6 @@ SMTCheckerTest::SMTCheckerTest(std::string const& _filename):
 		m_modelCheckerSettings.invariants = ModelCheckerInvariants::None();
 	else
 		BOOST_THROW_EXCEPTION(std::runtime_error("Invalid SMT invariant choice."));
-
-	if (m_modelCheckerSettings.invariants.invariants.empty())
-		m_expectations = removeInv(std::move(m_expectations));
 
 	auto const& ignoreOSSetting = m_reader.stringSetting("SMTIgnoreOS", "none");
 	for (std::string const& os: ignoreOSSetting | ranges::views::split(',') | ranges::to<std::vector<std::string>>())
@@ -171,8 +159,4 @@ void SMTCheckerTest::printUpdatedExpectations(std::ostream &_stream, const std::
 		printErrorList(_stream, m_unfilteredErrorList, _linePrefix, false);
 	else
 		CommonSyntaxTest::printUpdatedExpectations(_stream, _linePrefix);
-}
-
-std::unique_ptr<CompilerStack> SMTCheckerTest::createStack() const {
-	return std::make_unique<CompilerStack>(universalCallback.callback());
 }

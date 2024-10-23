@@ -43,7 +43,7 @@ void ConditionalUnsimplifier::operator()(Switch& _switch)
 		ASTModifier::operator()(_switch);
 		return;
 	}
-	YulName expr = std::get<Identifier>(*_switch.expression).name;
+	YulString expr = std::get<Identifier>(*_switch.expression).name;
 	for (auto& _case: _switch.cases)
 	{
 		if (_case.value)
@@ -59,7 +59,7 @@ void ConditionalUnsimplifier::operator()(Switch& _switch)
 					assignment.variableNames.size() == 1 &&
 					assignment.variableNames.front().name == expr &&
 					std::holds_alternative<Literal>(*assignment.value) &&
-					std::get<Literal>(*assignment.value).value == _case.value->value
+					valueOfLiteral(std::get<Literal>(*assignment.value)) == valueOfLiteral(*_case.value)
 				)
 					_case.body.statements.erase(_case.body.statements.begin());
 			}
@@ -83,7 +83,7 @@ void ConditionalUnsimplifier::operator()(Block& _block)
 					!_if.body.statements.empty()
 				)
 				{
-					YulName condition = std::get<Identifier>(*_if.condition).name;
+					YulString condition = std::get<Identifier>(*_if.condition).name;
 					if (
 						std::holds_alternative<Assignment>(_stmt2) &&
 						TerminationFinder(m_dialect, &m_functionSideEffects).controlFlowKind(_if.body.statements.back()) !=
@@ -95,7 +95,7 @@ void ConditionalUnsimplifier::operator()(Block& _block)
 							assignment.variableNames.size() == 1 &&
 							assignment.variableNames.front().name == condition &&
 							std::holds_alternative<Literal>(*assignment.value) &&
-							std::get<Literal>(*assignment.value).value.value() == 0
+							valueOfLiteral(std::get<Literal>(*assignment.value)) == 0
 						)
 							return {make_vector<Statement>(std::move(_stmt1))};
 					}

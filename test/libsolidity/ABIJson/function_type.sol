@@ -5,7 +5,8 @@ contract test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "function (uint256) external returns (uint256)",
 //         "name": "x",

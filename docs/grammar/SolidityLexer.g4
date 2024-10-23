@@ -85,7 +85,6 @@ SignedIntegerType:
 Storage: 'storage';
 String: 'string';
 Struct: 'struct';
-Transient: 'transient';  // not a real keyword
 True: 'true';
 Try: 'try';
 Type: 'type';

@@ -1,9 +1,11 @@
 {
-	function f() -> x {}
+	function f() -> x:bool {}
 
 	if f()
 	{
-		let b := f()
+		let b:bool := f()
 	}
 }
+// ====
+// dialect: evmTyped
 // ----

@@ -25,7 +25,6 @@
 
 #include <libyul/Object.h>
 #include <libyul/AsmPrinter.h>
-#include <libyul/AST.h>
 
 #include <liblangutil/CharStreamProvider.h>
 #include <liblangutil/SourceReferenceFormatter.h>
@@ -56,11 +55,7 @@ YulOptimizerTest::YulOptimizerTest(std::string const& _filename):
 	m_source = m_reader.source();
 
 	auto dialectName = m_reader.stringSetting("dialect", "evm");
-	m_dialect = &dialect(
-		dialectName,
-		solidity::test::CommonOptions::get().evmVersion(),
-		solidity::test::CommonOptions::get().eofVersion()
-	);
+	m_dialect = &dialect(dialectName, solidity::test::CommonOptions::get().evmVersion());
 
 	m_expectation = m_reader.simpleExpectations();
 }
@@ -82,23 +77,20 @@ TestCase::TestResult YulOptimizerTest::run(std::ostream& _stream, std::string co
 		AnsiColorized(_stream, _formatted, {formatting::BOLD, formatting::RED}) << _linePrefix << "Invalid optimizer step: " << m_optimizerStep << std::endl;
 		return TestResult::FatalError;
 	}
-	auto optimizedObject = tester.optimizedObject();
-	std::string printedOptimizedObject;
-	if (optimizedObject->subObjects.empty())
-		printedOptimizedObject = AsmPrinter{}(optimizedObject->code()->root());
-	else
-		printedOptimizedObject = optimizedObject->toString();
+
+	auto const printed = (m_object->subObjects.empty() ? AsmPrinter{ *m_dialect }(*m_object->code) : m_object->toString(m_dialect));
 
 	// Re-parse new code for compilability
-	if (!std::get<0>(parse(_stream, _linePrefix, _formatted, printedOptimizedObject)))
+	// TODO: support for wordSizeTransform which needs different input and output dialects
+	if (m_optimizerStep != "wordSizeTransform" && !std::get<0>(parse(_stream, _linePrefix, _formatted, printed)))
 	{
 		util::AnsiColorized(_stream, _formatted, {util::formatting::BOLD, util::formatting::CYAN})
 			<< _linePrefix << "Result after the optimiser:" << std::endl;
-		printPrefixed(_stream, printedOptimizedObject, _linePrefix + "  ");
+		printPrefixed(_stream, printed, _linePrefix + "  ");
 		return TestResult::FatalError;
 	}
 
-	m_obtainedResult = "step: " + m_optimizerStep + "\n\n" + printedOptimizedObject + "\n";
+	m_obtainedResult = "step: " + m_optimizerStep + "\n\n" + printed + "\n";
 
 	return checkResult(_stream, _linePrefix, _formatted);
 }

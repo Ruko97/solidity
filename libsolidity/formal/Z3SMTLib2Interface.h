@@ -32,7 +32,6 @@ public:
 	);
 private:
 	void setupSmtCallback() override;
-	std::string querySolver(std::string const& _query) override;
 };
 
 }

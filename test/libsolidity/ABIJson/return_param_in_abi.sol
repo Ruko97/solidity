@@ -11,7 +11,8 @@ contract test {
 //     :test
 // [
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "enum test.ActionChoices",
 //         "name": "param",
@@ -24,7 +25,8 @@ contract test {
 //   {
 //     "inputs": [],
 //     "name": "ret",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "enum test.ActionChoices",
 //         "name": "",

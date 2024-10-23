@@ -47,9 +47,8 @@
 #include <libsolutil/Common.h>
 #include <libsolutil/FixedHash.h>
 #include <libsolutil/LazyInit.h>
-#include <libsolutil/JSON.h>
 
-#include <libyul/ObjectOptimizer.h>
+#include <json/json.h>
 
 #include <functional>
 #include <memory>
@@ -69,11 +68,6 @@ namespace solidity::evmasm
 class Assembly;
 class AssemblyItem;
 using AssemblyItems = std::vector<AssemblyItem>;
-}
-
-namespace solidity::yul
-{
-class YulStack;
 }
 
 namespace solidity::frontend
@@ -133,54 +127,6 @@ public:
 		SolidityAST,
 	};
 
-	/// Indicates which stages of the compilation pipeline were explicitly requested and provides
-	/// logic to determine which ones are effectively needed to accomplish that.
-	/// Note that parsing and analysis are not selectable, since they cannot be skipped.
-	struct PipelineConfig
-	{
-		bool irCodegen = false;      ///< Want IR output straight from code generator.
-		bool irOptimization = false; ///< Want reparsed IR that went through YulStack. May be optimized or not, depending on settings.
-		bool bytecode = false;       ///< Want EVM-level outputs, especially EVM assembly and bytecode. May be optimized or not, depending on settings.
-
-		bool needIR(bool _viaIR) const
-		{
-			return
-				irCodegen ||
-				irOptimization ||
-				(bytecode && _viaIR);
-		}
-
-		bool needIRCodegenOnly(bool _viaIR) const
-		{
-			return !(bytecode && _viaIR) && !irOptimization;
-		}
-
-		bool needBytecode() const
-		{
-			return bytecode;
-		}
-
-		PipelineConfig operator|(PipelineConfig const& _other) const
-		{
-			return {
-				irCodegen || _other.irCodegen,
-				irOptimization || _other.irOptimization,
-				bytecode || _other.bytecode,
-			};
-		}
-
-		bool operator!=(PipelineConfig const& _other) const { return !(*this == _other); }
-		bool operator==(PipelineConfig const& _other) const
-		{
-			return
-				irCodegen == _other.irCodegen &&
-				irOptimization == _other.irOptimization &&
-				bytecode == _other.bytecode;
-		}
-	};
-
-	using ContractSelection = std::map<std::string, std::map<std::string, CompilerStack::PipelineConfig>>;
-
 	/// Creates a new compiler stack.
 	/// @param _readFile callback used to read files for import statements. Must return
 	/// and must not emit exceptions.
@@ -235,13 +181,20 @@ public:
 	/// Set model checker settings.
 	void setModelCheckerSettings(ModelCheckerSettings _settings);
 
-	/// Sets names of the contracts from each source that should be compiled.
-	/// If empty, no filtering is performed and every contract found in the supplied sources goes
-	/// through the default pipeline stages (bytecode-only, no IR).
-	/// Source/contract names are not validated - ones that do not exist are ignored.
-	/// The empty source/contract name can be used as a wildcard that matches all sources/contracts.
-	/// If a contract matches more than one entry, the pipeline selection from all matches is combined.
-	void selectContracts(ContractSelection const& _selectedContracts);
+	/// Sets the requested contract names by source.
+	/// If empty, no filtering is performed and every contract
+	/// found in the supplied sources is compiled.
+	/// Names are cleared iff @a _contractNames is missing.
+	void setRequestedContractNames(std::map<std::string, std::set<std::string>> const& _contractNames = std::map<std::string, std::set<std::string>>{})
+	{
+		m_requestedContractNames = _contractNames;
+	}
+
+	/// Enable EVM Bytecode generation. This is enabled by default.
+	void enableEvmBytecodeGeneration(bool _enable = true) { m_generateEvmBytecode = _enable; }
+
+	/// Enable generation of Yul IR code.
+	void enableIRGeneration(bool _enable = true) { m_generateIR = _enable; }
 
 	/// @arg _metadataLiteralSources When true, store sources as literals in the contract metadata.
 	/// Must be set before parsing.
@@ -268,7 +221,7 @@ public:
 
 	/// Imports given SourceUnits so they can be analyzed. Leads to the same internal state as parse().
 	/// Will throw errors if the import fails
-	void importASTs(std::map<std::string, Json> const& _sources);
+	void importASTs(std::map<std::string, Json::Value> const& _sources);
 
 	/// Performs the analysis steps (imports, scopesetting, syntaxCheck, referenceResolving,
 	///  typechecking, staticAnalysis) on previously parsed sources.
@@ -321,18 +274,16 @@ public:
 	virtual std::string const filesystemFriendlyName(std::string const& _contractName) const override;
 
 	/// @returns the IR representation of a contract.
-	std::optional<std::string> const& yulIR(std::string const& _contractName) const;
+	std::string const& yulIR(std::string const& _contractName) const;
 
 	/// @returns the IR representation of a contract AST in format.
-	std::optional<Json> yulIRAst(std::string const& _contractName) const;
+	Json::Value const& yulIRAst(std::string const& _contractName) const;
 
 	/// @returns the optimized IR representation of a contract.
-	std::optional<std::string> const& yulIROptimized(std::string const& _contractName) const;
+	std::string const& yulIROptimized(std::string const& _contractName) const;
 
 	/// @returns the optimized IR representation of a contract AST in JSON format.
-	std::optional<Json> yulIROptimizedAst(std::string const& _contractName) const;
-
-	std::optional<Json> yulCFGJson(std::string const& _contractName) const;
+	Json::Value const& yulIROptimizedAst(std::string const& _contractName) const;
 
 	/// @returns the assembled object for a contract.
 	virtual evmasm::LinkerObject const& object(std::string const& _contractName) const override;
@@ -348,7 +299,7 @@ public:
 
 	/// @returns an array containing all utility sources generated during compilation.
 	/// Format: [ { name: string, id: number, language: "Yul", contents: string }, ... ]
-	Json generatedSources(std::string const& _contractName, bool _runtime = false) const;
+	Json::Value generatedSources(std::string const& _contractName, bool _runtime = false) const;
 
 	/// @returns the string that provides a mapping between bytecode and sourcecode or a nullptr
 	/// if the contract does not (yet) have bytecode.
@@ -366,30 +317,26 @@ public:
 	/// @returns a JSON representation of the assembly.
 	/// @arg _sourceCodes is the map of input files to source code strings
 	/// Prerequisite: Successful compilation.
-	virtual Json assemblyJSON(std::string const& _contractName) const override;
+	virtual Json::Value assemblyJSON(std::string const& _contractName) const override;
 
 	/// @returns a JSON representing the contract ABI.
 	/// Prerequisite: Successful call to parse or compile.
-	Json const& contractABI(std::string const& _contractName) const;
+	Json::Value const& contractABI(std::string const& _contractName) const;
 
 	/// @returns a JSON representing the storage layout of the contract.
 	/// Prerequisite: Successful call to parse or compile.
-	Json const& storageLayout(std::string const& _contractName) const;
-
-	/// @returns a JSON representing the transient storage layout of the contract.
-	/// Prerequisite: Successful call to parse or compile.
-	Json const& transientStorageLayout(std::string const& _contractName) const;
+	Json::Value const& storageLayout(std::string const& _contractName) const;
 
 	/// @returns a JSON representing the contract's user documentation.
 	/// Prerequisite: Successful call to parse or compile.
-	Json const& natspecUser(std::string const& _contractName) const;
+	Json::Value const& natspecUser(std::string const& _contractName) const;
 
 	/// @returns a JSON representing the contract's developer documentation.
 	/// Prerequisite: Successful call to parse or compile.
-	Json const& natspecDev(std::string const& _contractName) const;
+	Json::Value const& natspecDev(std::string const& _contractName) const;
 
 	/// @returns a JSON object with the three members ``methods``, ``events``, ``errors``. Each is a map, mapping identifiers (hashes) to function names.
-	Json interfaceSymbols(std::string const& _contractName) const;
+	Json::Value interfaceSymbols(std::string const& _contractName) const;
 
 	/// @returns the Contract Metadata matching the pipeline selected using the viaIR setting.
 	std::string const& metadata(std::string const& _contractName) const { return metadata(contract(_contractName)); }
@@ -403,7 +350,7 @@ public:
 	bytes cborMetadata(std::string const& _contractName, bool _forIR) const;
 
 	/// @returns a JSON representing the estimated gas usage for contract creation, internal and external functions
-	Json gasEstimates(std::string const& _contractName) const;
+	Json::Value gasEstimates(std::string const& _contractName) const;
 
 	/// Changes the format of the metadata appended at the end of the bytecode.
 	void setMetadataFormat(MetadataFormat _metadataFormat) { m_metadataFormat = _metadataFormat; }
@@ -416,8 +363,6 @@ public:
 	{
 		return VersionIsRelease ? MetadataFormat::WithReleaseVersionTag : MetadataFormat::WithPrereleaseVersionTag;
 	}
-
-	yul::ObjectOptimizer const& objectOptimizer() const { return *m_objectOptimizer; }
 
 private:
 	/// The state per source unit. Filled gradually during parsing.
@@ -438,21 +383,22 @@ private:
 	struct Contract
 	{
 		ContractDefinition const* contract = nullptr;
-
+		std::shared_ptr<Compiler> compiler;
 		std::shared_ptr<evmasm::Assembly> evmAssembly;
 		std::shared_ptr<evmasm::Assembly> evmRuntimeAssembly;
-		std::optional<std::string> generatedYulUtilityCode; ///< Extra Yul utility code that was used when compiling the creation assembly
-		std::optional<std::string> runtimeGeneratedYulUtilityCode; ///< Extra Yul utility code that was used when compiling the deployed assembly
 		evmasm::LinkerObject object; ///< Deployment object (includes the runtime sub-object).
 		evmasm::LinkerObject runtimeObject; ///< Runtime object.
-		std::optional<std::string> yulIR; ///< Yul IR code straight from the code generator.
-		std::optional<std::string> yulIROptimized; ///< Reparsed and possibly optimized Yul IR code.
+		std::string yulIR; ///< Yul IR code.
+		std::string yulIROptimized; ///< Optimized Yul IR code.
+		Json::Value yulIRAst; ///< JSON AST of Yul IR code.
+		Json::Value yulIROptimizedAst; ///< JSON AST of optimized Yul IR code.
 		util::LazyInit<std::string const> metadata; ///< The metadata json that will be hashed into the chain.
-		util::LazyInit<Json const> abi;
-		util::LazyInit<Json const> storageLayout;
-		util::LazyInit<Json const> transientStorageLayout;
-		util::LazyInit<Json const> userDocumentation;
-		util::LazyInit<Json const> devDocumentation;
+		util::LazyInit<Json::Value const> abi;
+		util::LazyInit<Json::Value const> storageLayout;
+		util::LazyInit<Json::Value const> userDocumentation;
+		util::LazyInit<Json::Value const> devDocumentation;
+		util::LazyInit<Json::Value const> generatedSources;
+		util::LazyInit<Json::Value const> runtimeGeneratedSources;
 		mutable std::optional<std::string const> sourceMapping;
 		mutable std::optional<std::string const> runtimeSourceMapping;
 	};
@@ -479,11 +425,6 @@ private:
 	/// @returns true if the contract is requested to be compiled.
 	bool isRequestedContract(ContractDefinition const& _contract) const;
 
-	/// @returns The effective pipeline configuration for a given contract.
-	///     Applies defaults for contracts that were not explicitly selected and combines
-	///     multiple entries if the contact is matched by wildcards.
-	PipelineConfig requestedPipelineConfig(ContractDefinition const& _contract) const;
-
 	/// Perform the analysis steps of legacy language mode.
 	/// @returns false on error.
 	bool analyzeLegacy(bool _noErrorsSoFar);
@@ -509,14 +450,8 @@ private:
 	);
 
 	/// Generate Yul IR for a single contract.
-	/// Unoptimized IR is stored but otherwise unused, while optimized IR may be used for code
-	/// generation if compilation via IR is enabled. Note that whether "optimized IR" is actually
-	/// optimized depends on the optimizer settings.
-	/// @param _contract Contract to generate IR for.
-	/// @param _unoptimizedOnly If true, only the IR coming directly from the codegen is stored.
-	///     Optimizer is not invoked and optimized IR output is not available, which means that
-	///     optimized IR, its AST or compilation via IR must not be requested.
-	void generateIR(ContractDefinition const& _contract, bool _unoptimizedOnly);
+	/// The IR is stored but otherwise unused.
+	void generateIR(ContractDefinition const& _contract);
 
 	/// Generate EVM representation for a single contract.
 	/// Depends on output generated by generateIR.
@@ -525,11 +460,6 @@ private:
 	/// Links all the known library addresses in the available objects. Any unknown
 	/// library will still be kept as an unlinked placeholder in the objects.
 	void link();
-
-	/// Parses and analyzes specified Yul source and returns the YulStack that can be used to manipulate it.
-	/// Assumes that the IR was generated from sources loaded currently into CompilerStack, which
-	/// means that it is error-free and uses the same settings.
-	yul::YulStack loadGeneratedIR(std::string const& _ir) const;
 
 	/// @returns the contract object for the given @a _contractName.
 	/// Can only be called after state is CompilationSuccessful.
@@ -549,23 +479,19 @@ private:
 
 	/// @returns the contract ABI as a JSON object.
 	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
-	Json const& contractABI(Contract const&) const;
+	Json::Value const& contractABI(Contract const&) const;
 
 	/// @returns the storage layout of the contract as a JSON object.
 	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
-	Json const& storageLayout(Contract const&) const;
-
-	/// @returns the transient storage layout of the contract as a JSON object.
-	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
-	Json const& transientStorageLayout(Contract const&) const;
+	Json::Value const& storageLayout(Contract const&) const;
 
 	/// @returns the Natspec User documentation as a JSON object.
 	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
-	Json const& natspecUser(Contract const&) const;
+	Json::Value const& natspecUser(Contract const&) const;
 
 	/// @returns the Natspec Developer documentation as a JSON object.
 	/// This will generate the JSON object and store it in the Contract object if it is not present yet.
-	Json const& natspecDev(Contract const&) const;
+	Json::Value const& natspecDev(Contract const&) const;
 
 	/// @returns the Contract Metadata matching the pipeline selected using the viaIR setting.
 	/// This will generate the metadata and store it in the Contract object if it is not present yet.
@@ -578,8 +504,6 @@ private:
 		FunctionDefinition const& _function
 	) const;
 
-	void reportUnimplementedFeatureError(langutil::UnimplementedFeatureError const& _error);
-
 	ReadCallback::Callback m_readFile;
 	OptimiserSettings m_optimiserSettings;
 	RevertStrings m_revertStrings = RevertStrings::Default;
@@ -588,7 +512,9 @@ private:
 	langutil::EVMVersion m_evmVersion;
 	std::optional<uint8_t> m_eofVersion;
 	ModelCheckerSettings m_modelCheckerSettings;
-	ContractSelection m_selectedContracts;
+	std::map<std::string, std::set<std::string>> m_requestedContractNames;
+	bool m_generateEvmBytecode = true;
+	bool m_generateIR = false;
 	std::map<std::string, util::h160> m_libraries;
 	ImportRemapper m_importRemapper;
 	std::map<std::string const, Source> m_sources;
@@ -598,7 +524,6 @@ private:
 	std::shared_ptr<GlobalContext> m_globalContext;
 	std::vector<Source const*> m_sourceOrder;
 	std::map<std::string const, Contract> m_contracts;
-	std::shared_ptr<yul::ObjectOptimizer> m_objectOptimizer;
 
 	langutil::ErrorList m_errorList;
 	langutil::ErrorReporter m_errorReporter;

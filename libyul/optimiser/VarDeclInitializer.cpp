@@ -40,7 +40,7 @@ void VarDeclInitializer::operator()(Block& _block)
 
 			if (_varDecl.variables.size() == 1)
 			{
-				_varDecl.value = std::make_unique<Expression>(m_dialect.zeroLiteral());
+				_varDecl.value = std::make_unique<Expression>(m_dialect.zeroLiteralForType(_varDecl.variables.front().type));
 				return {};
 			}
 			else
@@ -48,7 +48,7 @@ void VarDeclInitializer::operator()(Block& _block)
 				OptionalStatements ret{std::vector<Statement>{}};
 				for (auto& var: _varDecl.variables)
 				{
-					std::unique_ptr<Expression> expr = std::make_unique<Expression>(m_dialect.zeroLiteral());
+					std::unique_ptr<Expression> expr = std::make_unique<Expression >(m_dialect.zeroLiteralForType(var.type));
 					ret->emplace_back(VariableDeclaration{std::move(_varDecl.debugData), {std::move(var)}, std::move(expr)});
 				}
 				return ret;

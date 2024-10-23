@@ -40,7 +40,7 @@ struct yulFuzzerUtil
 	/// eliminator.
 	static TerminationReason interpret(
 		std::ostream& _os,
-		yul::Block const& _astRoot,
+		std::shared_ptr<yul::Block> _ast,
 		Dialect const& _dialect,
 		bool _disableMemoryTracing = false,
 		bool _outputStorageOnly = false,

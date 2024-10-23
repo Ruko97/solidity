@@ -26,29 +26,30 @@
 
 using namespace solidity::test::solprotofuzzer;
 using namespace solidity::util;
+using namespace std;
 
-std::string ProtoConverter::protoToSolidity(Program const& _p)
+string ProtoConverter::protoToSolidity(Program const& _p)
 {
 	// Create random number generator with fuzzer supplied
 	// seed.
-	m_randomGen = std::make_shared<SolRandomNumGenerator>(_p.seed());
+	m_randomGen = make_shared<SolRandomNumGenerator>(_p.seed());
 	return visit(_p);
 }
 
-std::pair<std::string, std::string> ProtoConverter::generateTestCase(TestContract const& _testContract)
+pair<string, string> ProtoConverter::generateTestCase(TestContract const& _testContract)
 {
-	std::ostringstream testCode;
-	std::string usingLibDecl;
+	ostringstream testCode;
+	string usingLibDecl;
 	switch (_testContract.type())
 	{
 	case TestContract::LIBRARY:
 	{
 		m_libraryTest = true;
 		auto testTuple = pseudoRandomLibraryTest();
-		m_libraryName = std::get<0>(testTuple);
+		m_libraryName = get<0>(testTuple);
 		Whiskers u(R"(<ind>using <libraryName> for uint;)");
 		u("ind", "\t");
-		u("libraryName", std::get<0>(testTuple));
+		u("libraryName", get<0>(testTuple));
 		usingLibDecl = u.render();
 		Whiskers test(R"(<endl><ind><varDecl><endl><ind><ifStmt>)");
 		test("endl", "\n");
@@ -56,8 +57,8 @@ std::pair<std::string, std::string> ProtoConverter::generateTestCase(TestContrac
 		test("varDecl", "uint x;");
 		Whiskers ifStmt(R"(if (<cond>)<endl><ind>return 1;)");
 		Whiskers ifCond(R"(x.<testFunction>() != <expectedOutput>)");
-		ifCond("testFunction", std::get<1>(testTuple));
-		ifCond("expectedOutput", std::get<2>(testTuple));
+		ifCond("testFunction", get<1>(testTuple));
+		ifCond("expectedOutput", get<2>(testTuple));
 		ifStmt("cond", ifCond.render());
 		ifStmt("endl", "\n");
 		ifStmt("ind", "\t\t\t");
@@ -76,8 +77,8 @@ std::pair<std::string, std::string> ProtoConverter::generateTestCase(TestContrac
 			// running into stack too deep errors
 			if (contractVarIndex >= s_maxVars)
 				break;
-			std::string contractName = testTuple.first;
-			std::string contractVarName = "tc" + std::to_string(contractVarIndex);
+			string contractName = testTuple.first;
+			string contractVarName = "tc" + to_string(contractVarIndex);
 			Whiskers init(R"(<endl><ind><contractName> <contractVarName> = new <contractName>();)");
 			init("endl", "\n");
 			init("ind", "\t\t");
@@ -97,7 +98,7 @@ std::pair<std::string, std::string> ProtoConverter::generateTestCase(TestContrac
 				ifStmt("endl", "\n");
 				ifStmt("cond", ifCond.render());
 				ifStmt("ind", "\t\t\t");
-				ifStmt("errorCode", std::to_string(errorCode));
+				ifStmt("errorCode", to_string(errorCode));
 				tc("ifStmt", ifStmt.render());
 				testCode << tc.render();
 				errorCode++;
@@ -112,10 +113,10 @@ std::pair<std::string, std::string> ProtoConverter::generateTestCase(TestContrac
 	return {usingLibDecl, testCode.str()};
 }
 
-std::string ProtoConverter::visit(TestContract const& _testContract)
+string ProtoConverter::visit(TestContract const& _testContract)
 {
-	std::string testCode;
-	std::string usingLibDecl;
+	string testCode;
+	string usingLibDecl;
 	m_libraryTest = false;
 
 	// Simply return valid uint (zero) if there are
@@ -142,15 +143,15 @@ bool ProtoConverter::libraryTest() const
 	return m_libraryTest;
 }
 
-std::string ProtoConverter::libraryName() const
+string ProtoConverter::libraryName() const
 {
 	return m_libraryName;
 }
 
-std::string ProtoConverter::visit(Program const& _p)
+string ProtoConverter::visit(Program const& _p)
 {
-	std::ostringstream program;
-	std::ostringstream contracts;
+	ostringstream program;
+	ostringstream contracts;
 
 	for (auto &contract: _p.contracts())
 		contracts << visit(contract);
@@ -162,7 +163,7 @@ std::string ProtoConverter::visit(Program const& _p)
 	return p.render();
 }
 
-std::string ProtoConverter::visit(ContractType const& _contractType)
+string ProtoConverter::visit(ContractType const& _contractType)
 {
 	switch (_contractType.contract_type_oneof_case())
 	{
@@ -177,25 +178,25 @@ std::string ProtoConverter::visit(ContractType const& _contractType)
 	}
 }
 
-std::string ProtoConverter::visit(Contract const& _contract)
+string ProtoConverter::visit(Contract const& _contract)
 {
 	openProgramScope(&_contract);
 	return "";
 }
 
-std::string ProtoConverter::visit(Interface const& _interface)
+string ProtoConverter::visit(Interface const& _interface)
 {
 	openProgramScope(&_interface);
 	return "";
 }
 
-std::string ProtoConverter::visit(Library const& _library)
+string ProtoConverter::visit(Library const& _library)
 {
 	openProgramScope(&_library);
 	return "";
 }
 
-std::tuple<std::string, std::string, std::string> ProtoConverter::pseudoRandomLibraryTest()
+tuple<string, string, string> ProtoConverter::pseudoRandomLibraryTest()
 {
 	solAssert(m_libraryTests.size() > 0, "Sol proto fuzzer: No library tests found");
 	unsigned index = randomNumber() % m_libraryTests.size();
@@ -204,18 +205,18 @@ std::tuple<std::string, std::string, std::string> ProtoConverter::pseudoRandomLi
 
 void ProtoConverter::openProgramScope(CIL _program)
 {
-	std::string programNamePrefix;
-	if (std::holds_alternative<Contract const*>(_program))
+	string programNamePrefix;
+	if (holds_alternative<Contract const*>(_program))
 		programNamePrefix = "C";
-	else if (std::holds_alternative<Interface const*>(_program))
+	else if (holds_alternative<Interface const*>(_program))
 		programNamePrefix = "I";
 	else
 		programNamePrefix = "L";
-	std::string programName = programNamePrefix + std::to_string(m_programNumericSuffix++);
+	string programName = programNamePrefix + to_string(m_programNumericSuffix++);
 	m_programNameMap.emplace(_program, programName);
 }
 
-std::string ProtoConverter::programName(CIL _program)
+string ProtoConverter::programName(CIL _program)
 {
 	solAssert(m_programNameMap.count(_program), "Sol proto fuzzer: Unregistered program");
 	return m_programNameMap[_program];

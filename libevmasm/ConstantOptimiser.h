@@ -79,7 +79,7 @@ protected:
 	static bigint simpleRunGas(AssemblyItems const& _items, langutil::EVMVersion _evmVersion);
 	/// @returns the gas needed to store the given data literally
 	bigint dataGas(bytes const& _data) const;
-	static size_t bytesRequired(AssemblyItems const& _items, langutil::EVMVersion _evmVersion);
+	static size_t bytesRequired(AssemblyItems const& _items);
 	/// @returns the combined estimated gas usage taking @a m_params into account.
 	bigint combineGas(
 		bigint const& _runGas,
@@ -123,7 +123,7 @@ public:
 	AssemblyItems execute(Assembly& _assembly) const override;
 
 protected:
-	AssemblyItems copyRoutine(AssemblyItem* _pushData = nullptr) const;
+	static AssemblyItems const& copyRoutine();
 };
 
 /**

@@ -33,7 +33,7 @@ void ForLoopConditionIntoBody::run(OptimiserStepContext& _context, Block& _ast)
 void ForLoopConditionIntoBody::operator()(ForLoop& _forLoop)
 {
 	if (
-		m_dialect.booleanNegationFunctionHandle() &&
+		m_dialect.booleanNegationFunction() &&
 		!std::holds_alternative<Literal>(*_forLoop.condition) &&
 		!std::holds_alternative<Identifier>(*_forLoop.condition)
 	)
@@ -47,7 +47,7 @@ void ForLoopConditionIntoBody::operator()(ForLoop& _forLoop)
 				std::make_unique<Expression>(
 					FunctionCall {
 						debugData,
-						{debugData, YulName{m_dialect.builtin(*m_dialect.booleanNegationFunctionHandle()).name}},
+						{debugData, m_dialect.booleanNegationFunction()->name},
 						util::make_vector<Expression>(std::move(*_forLoop.condition))
 					}
 				),
@@ -58,7 +58,8 @@ void ForLoopConditionIntoBody::operator()(ForLoop& _forLoop)
 			Literal {
 				debugData,
 				LiteralKind::Boolean,
-				LiteralValue{true}
+				"true"_yulstring,
+				m_dialect.boolType
 			}
 		);
 	}

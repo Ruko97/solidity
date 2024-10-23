@@ -1,9 +1,11 @@
 {
 	for {} 1 {}
 	{
-		let x
+		let x:bool
 		for { continue } x {} {}
 	}
 }
+// ====
+// dialect: evmTyped
 // ----
-// SyntaxError 9615: (34-42): Keyword "continue" in for-loop init block is not allowed.
+// SyntaxError 9615: (39-47): Keyword "continue" in for-loop init block is not allowed.

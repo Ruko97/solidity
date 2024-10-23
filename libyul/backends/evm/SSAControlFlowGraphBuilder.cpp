@@ -349,12 +349,12 @@ void SSAControlFlowGraphBuilder::operator()(Switch const& _switch)
 				{*_case.value /* skip second argument */ }
 			});
 			auto outputValue = m_graph.newVariable(m_currentBlock);
-			std::optional<BuiltinHandle> builtinHandle = m_dialect.findBuiltin(ghostCall.functionName.name.str());
+			BuiltinFunction const* builtin = m_dialect.builtin(ghostCall.functionName.name);
 			currentBlock().operations.emplace_back(SSACFG::Operation{
 				{outputValue},
 				SSACFG::BuiltinCall{
 					debugDataOf(_case),
-					m_dialect.builtin(*builtinHandle),
+					*builtin,
 					ghostCall
 				},
 				{m_graph.newLiteral(debugDataOf(_case), _case.value->value.value()), expression}
@@ -421,7 +421,6 @@ void SSAControlFlowGraphBuilder::operator()(ForLoop const& _loop)
 
 	if (constantCondition.has_value())
 	{
-		std::visit(*this, *_loop.condition);
 		if (*constantCondition)
 		{
 			jump(debugDataOf(*_loop.condition), loopBody);
@@ -547,16 +546,15 @@ std::vector<SSACFG::ValueId> SSAControlFlowGraphBuilder::visitFunctionCall(Funct
 {
 	bool canContinue = true;
 	SSACFG::Operation operation = [&](){
-		if (std::optional<BuiltinHandle> const& builtinHandle = m_dialect.findBuiltin(_call.functionName.name.str()))
+		if (BuiltinFunction const* builtin = m_dialect.builtin(_call.functionName.name))
 		{
-			auto const& builtinFunction = m_dialect.builtin(*builtinHandle);
-			SSACFG::Operation result{{}, SSACFG::BuiltinCall{_call.debugData, builtinFunction, _call}, {}};
+			SSACFG::Operation result{{}, SSACFG::BuiltinCall{_call.debugData, *builtin, _call}, {}};
 			for (auto&& [idx, arg]: _call.arguments | ranges::views::enumerate | ranges::views::reverse)
-				if (!builtinFunction.literalArgument(idx).has_value())
+				if (!builtin->literalArgument(idx).has_value())
 					result.inputs.emplace_back(std::visit(*this, arg));
-			for (size_t i = 0; i < builtinFunction.numReturns; ++i)
+			for (size_t i = 0; i < builtin->numReturns; ++i)
 				result.outputs.emplace_back(m_graph.newVariable(m_currentBlock));
-			canContinue = builtinFunction.controlFlowSideEffects.canContinue;
+			canContinue = builtin->controlFlowSideEffects.canContinue;
 			return result;
 		}
 		else

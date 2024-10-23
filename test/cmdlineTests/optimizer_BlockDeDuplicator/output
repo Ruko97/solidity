@@ -23,7 +23,9 @@ EVM assembly:
   iszero
   tag_5
   jumpi
-  revert(0x00, 0x00)
+  0x00
+  dup1
+  revert
 tag_5:
   pop
   jump(tag_6)
@@ -49,7 +51,9 @@ sub_0: assembly {
       iszero
       tag_1
       jumpi
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
     tag_1:
       pop
       jumpi(tag_2, lt(calldatasize, 0x04))
@@ -70,7 +74,9 @@ sub_0: assembly {
       tag_3
       jumpi
     tag_2:
-      revert(0x00, 0x00)
+      0x00
+      dup1
+      revert
         /* "optimizer_BlockDeDuplicator/input.sol":138:174  function f() public { true ? 1 : 3;} */
     tag_3:
       stop

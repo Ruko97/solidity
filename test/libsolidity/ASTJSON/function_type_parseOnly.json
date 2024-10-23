@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 18,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,9 +13,11 @@
       "name": "C",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 15,
             "nodeType": "Block",
             "src": "127:2:1",
@@ -27,10 +30,12 @@
           "name": "f",
           "nameLocation": "22:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 7,
             "nodeType": "ParameterList",
-            "parameters": [
+            "parameters":
+            [
               {
                 "constant": false,
                 "id": 6,
@@ -42,19 +47,23 @@
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {},
-                "typeName": {
+                "typeName":
+                {
                   "id": 5,
                   "nodeType": "FunctionTypeName",
-                  "parameterTypes": {
+                  "parameterTypes":
+                  {
                     "id": 1,
                     "nodeType": "ParameterList",
                     "parameters": [],
                     "src": "32:2:1"
                   },
-                  "returnParameterTypes": {
+                  "returnParameterTypes":
+                  {
                     "id": 4,
                     "nodeType": "ParameterList",
-                    "parameters": [
+                    "parameters":
+                    [
                       {
                         "constant": false,
                         "id": 3,
@@ -66,7 +75,8 @@
                         "stateVariable": false,
                         "storageLocation": "default",
                         "typeDescriptions": {},
-                        "typeName": {
+                        "typeName":
+                        {
                           "id": 2,
                           "name": "uint",
                           "nodeType": "ElementaryTypeName",
@@ -88,10 +98,12 @@
             ],
             "src": "23:46:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 14,
             "nodeType": "ParameterList",
-            "parameters": [
+            "parameters":
+            [
               {
                 "constant": false,
                 "id": 13,
@@ -103,19 +115,23 @@
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {},
-                "typeName": {
+                "typeName":
+                {
                   "id": 12,
                   "nodeType": "FunctionTypeName",
-                  "parameterTypes": {
+                  "parameterTypes":
+                  {
                     "id": 8,
                     "nodeType": "ParameterList",
                     "parameters": [],
                     "src": "94:2:1"
                   },
-                  "returnParameterTypes": {
+                  "returnParameterTypes":
+                  {
                     "id": 11,
                     "nodeType": "ParameterList",
-                    "parameters": [
+                    "parameters":
+                    [
                       {
                         "constant": false,
                         "id": 10,
@@ -127,7 +143,8 @@
                         "stateVariable": false,
                         "storageLocation": "default",
                         "typeDescriptions": {},
-                        "typeName": {
+                        "typeName":
+                        {
                           "id": 9,
                           "name": "uint",
                           "nodeType": "ElementaryTypeName",

@@ -26,8 +26,6 @@ add_executable(isoltest
 	../libsolidity/GasTest.cpp
 	../libsolidity/MemoryGuardTest.cpp
 	../libsolidity/NatspecJSONTest.cpp
-	../libsolidity/OptimizedIRCachingTest.cpp
-	../libsolidity/OptimizedIRCachingTest.h
 	../libsolidity/SyntaxTest.cpp
 	../libsolidity/SemanticTest.cpp
 	../libsolidity/AnalysisFramework.cpp
@@ -40,7 +38,6 @@ add_executable(isoltest
 	../libsolidity/SMTCheckerTest.cpp
 	../libyul/Common.cpp
 	../libyul/ControlFlowGraphTest.cpp
-	../libyul/SSAControlFlowGraphTest.cpp
 	../libyul/ControlFlowSideEffectsTest.cpp
 	../libyul/EVMCodeTransformTest.cpp
 	../libyul/FunctionSideEffects.cpp

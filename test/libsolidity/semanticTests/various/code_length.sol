@@ -59,6 +59,6 @@ contract C {
 }
 // ----
 // constructor()
-// gas legacy: 66989
-// gas legacy code: 57800
+// gas legacy: 66936
+// gas legacy code: 57200
 // f(): true, true -> true, true

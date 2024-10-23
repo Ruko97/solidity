@@ -38,7 +38,7 @@ struct Block;
 namespace solidity::yul::test
 {
 
-class ObjectCompilerTest: public solidity::frontend::test::EVMVersionRestrictedTestCase
+class ObjectCompilerTest: public solidity::frontend::test::TestCase
 {
 public:
 	static std::unique_ptr<TestCase> create(Config const& _config)

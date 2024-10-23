@@ -6,13 +6,16 @@
 #include <evmc/evmc.hpp>
 #include <algorithm>
 #include <cassert>
-#include <string>
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace evmc
 {
+/// The string of bytes.
+using bytes = std::basic_string<uint8_t>;
+
 /// Extended value (with original value and access flag) for account storage.
 struct StorageValue
 {

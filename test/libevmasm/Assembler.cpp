@@ -27,7 +27,6 @@
 #include <libevmasm/Disassemble.h>
 #include <libyul/Exceptions.h>
 
-#include <test/Common.h>
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
@@ -62,15 +61,15 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 		{ "verbatim.asm", 2 }
 	};
 	EVMVersion evmVersion = solidity::test::CommonOptions::get().evmVersion();
-	Assembly _assembly{evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), {}};
+	Assembly _assembly{evmVersion, false, {}};
 	auto root_asm = std::make_shared<std::string>("root.asm");
 	_assembly.setSourceLocation({1, 3, root_asm});
 
-	Assembly _subAsm{evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), {}};
+	Assembly _subAsm{evmVersion, false, {}};
 	auto sub_asm = std::make_shared<std::string>("sub.asm");
 	_subAsm.setSourceLocation({6, 8, sub_asm});
 
-	Assembly _verbatimAsm(evmVersion, true, solidity::test::CommonOptions::get().eofVersion(), "");
+	Assembly _verbatimAsm(evmVersion, true, "");
 	auto verbatim_asm = std::make_shared<std::string>("verbatim.asm");
 	_verbatimAsm.setSourceLocation({8, 18, verbatim_asm});
 
@@ -211,7 +210,7 @@ BOOST_AUTO_TEST_CASE(all_assembly_items)
 		"{\"begin\":8,\"end\":18,\"name\":\"MSTORE\",\"source\":2}"
 		"]},\"A6885B3731702DA62E8E4A8F584AC46A7F6822F4E2BA50FBA902F67B1588D23B\":\"01020304\"},\"sourceList\":[\"root.asm\",\"sub.asm\",\"verbatim.asm\"]}"
 	};
-	Json jsonValue;
+	Json::Value jsonValue;
 	BOOST_CHECK(util::jsonParseStrict(json, jsonValue));
 	BOOST_CHECK_EQUAL(util::jsonCompactPrint(_assembly.assemblyJSON(indices)), util::jsonCompactPrint(jsonValue));
 }
@@ -247,7 +246,7 @@ BOOST_AUTO_TEST_CASE(immutables_and_its_source_maps)
 				{ *subName, 1 }
 			};
 
-			auto subAsm = std::make_shared<Assembly>(evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), std::string{});
+			auto subAsm = std::make_shared<Assembly>(evmVersion, false, std::string{});
 			for (char i = 0; i < numImmutables; ++i)
 			{
 				for (int r = 0; r < numActualRefs; ++r)
@@ -257,7 +256,7 @@ BOOST_AUTO_TEST_CASE(immutables_and_its_source_maps)
 				}
 			}
 
-			Assembly assembly{evmVersion, true, solidity::test::CommonOptions::get().eofVersion(), {}};
+			Assembly assembly{evmVersion, true, {}};
 			for (char i = 1; i <= numImmutables; ++i)
 			{
 				assembly.setSourceLocation({10*i, 10*i + 3+i, assemblyName});
@@ -270,8 +269,7 @@ BOOST_AUTO_TEST_CASE(immutables_and_its_source_maps)
 
 			checkCompilation(assembly);
 
-			BOOST_REQUIRE(assembly.codeSections().size() == 1);
-			std::string const sourceMappings = AssemblyItem::computeSourceMapping(assembly.codeSections().at(0).items, indices);
+			std::string const sourceMappings = AssemblyItem::computeSourceMapping(assembly.items(), indices);
 			auto const numberOfMappings = std::count(sourceMappings.begin(), sourceMappings.end(), ';');
 
 			LinkerObject const& obj = assembly.assemble();
@@ -308,11 +306,11 @@ BOOST_AUTO_TEST_CASE(immutable)
 		{ "sub.asm", 1 }
 	};
 	EVMVersion evmVersion = solidity::test::CommonOptions::get().evmVersion();
-	Assembly _assembly{evmVersion, true, solidity::test::CommonOptions::get().eofVersion(), {}};
+	Assembly _assembly{evmVersion, true, {}};
 	auto root_asm = std::make_shared<std::string>("root.asm");
 	_assembly.setSourceLocation({1, 3, root_asm});
 
-	Assembly _subAsm{evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), {}};
+	Assembly _subAsm{evmVersion, false, {}};
 	auto sub_asm = std::make_shared<std::string>("sub.asm");
 	_subAsm.setSourceLocation({6, 8, sub_asm});
 	_subAsm.appendImmutable("someImmutable");
@@ -406,10 +404,10 @@ BOOST_AUTO_TEST_CASE(immutable)
 BOOST_AUTO_TEST_CASE(subobject_encode_decode)
 {
 	EVMVersion evmVersion = solidity::test::CommonOptions::get().evmVersion();
-	Assembly assembly{evmVersion, true, solidity::test::CommonOptions::get().eofVersion(), {}};
+	Assembly assembly{evmVersion, true, {}};
 
-	std::shared_ptr<Assembly> subAsmPtr = std::make_shared<Assembly>(evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), std::string{});
-	std::shared_ptr<Assembly> subSubAsmPtr = std::make_shared<Assembly>(evmVersion, false, solidity::test::CommonOptions::get().eofVersion(), std::string{});
+	std::shared_ptr<Assembly> subAsmPtr = std::make_shared<Assembly>(evmVersion, false, std::string{});
+	std::shared_ptr<Assembly> subSubAsmPtr = std::make_shared<Assembly>(evmVersion, false, std::string{});
 
 	assembly.appendSubroutine(subAsmPtr);
 	subAsmPtr->appendSubroutine(subSubAsmPtr);

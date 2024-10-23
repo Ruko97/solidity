@@ -30,7 +30,6 @@
 #include <boost/algorithm/string.hpp>
 #include <unordered_set>
 
-using namespace std::string_literals;
 using namespace solidity::langutil;
 
 namespace solidity::frontend
@@ -61,9 +60,10 @@ bool NameAndTypeResolver::registerDeclarations(SourceUnit& _sourceUnit, ASTNode 
 	{
 		DeclarationRegistrationHelper registrar(m_scopes, _sourceUnit, m_errorReporter, m_globalContext, _currentScope);
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;
@@ -135,9 +135,10 @@ bool NameAndTypeResolver::resolveNamesAndTypes(SourceUnit& _source)
 				return false;
 		}
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;
@@ -150,9 +151,10 @@ bool NameAndTypeResolver::updateDeclaration(Declaration const& _declaration)
 		m_scopes[nullptr]->registerDeclaration(_declaration, false, true);
 		solAssert(_declaration.scope() == nullptr, "Updated declaration outside global scope.");
 	}
-	catch (langutil::FatalError const& error)
+	catch (langutil::FatalError const&)
 	{
-		solAssert(m_errorReporter.hasErrors(), "Unreported fatal error: "s + error.what());
+		if (m_errorReporter.errors().empty())
+			throw; // Something is weird here, rather throw again.
 		return false;
 	}
 	return true;

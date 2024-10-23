@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 30,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "id": 3,
       "implemented": false,
@@ -11,13 +12,15 @@
       "name": "g",
       "nameLocation": "9:1:1",
       "nodeType": "FunctionDefinition",
-      "parameters": {
+      "parameters":
+      {
         "id": 1,
         "nodeType": "ParameterList",
         "parameters": [],
         "src": "10:2:1"
       },
-      "returnParameters": {
+      "returnParameters":
+      {
         "id": 2,
         "nodeType": "ParameterList",
         "parameters": [],
@@ -37,10 +40,12 @@
       "name": "I",
       "nameLocation": "31:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
           "id": 7,
-          "members": [
+          "members":
+          [
             {
               "constant": false,
               "id": 6,
@@ -52,13 +57,16 @@
               "stateVariable": false,
               "storageLocation": "default",
               "typeDescriptions": {},
-              "typeName": {
+              "typeName":
+              {
                 "id": 5,
                 "nodeType": "UserDefinedTypeName",
-                "pathNode": {
+                "pathNode":
+                {
                   "id": 4,
                   "name": "S",
-                  "nameLocations": [
+                  "nameLocations":
+                  [
                     "50:1:1"
                   ],
                   "nodeType": "IdentifierPath",
@@ -77,16 +85,20 @@
           "visibility": "public"
         },
         {
-          "body": {
+          "body":
+          {
             "id": 27,
             "nodeType": "Block",
             "src": "85:88:1",
-            "statements": [
+            "statements":
+            [
               {
-                "assignments": [
+                "assignments":
+                [
                   15
                 ],
-                "declarations": [
+                "declarations":
+                [
                   {
                     "constant": false,
                     "id": 15,
@@ -98,13 +110,16 @@
                     "stateVariable": false,
                     "storageLocation": "default",
                     "typeDescriptions": {},
-                    "typeName": {
+                    "typeName":
+                    {
                       "id": 14,
                       "nodeType": "UserDefinedTypeName",
-                      "pathNode": {
+                      "pathNode":
+                      {
                         "id": 13,
                         "name": "error",
-                        "nameLocations": [
+                        "nameLocations":
+                        [
                           "95:5:1"
                         ],
                         "nodeType": "IdentifierPath",
@@ -121,9 +136,11 @@
                 "src": "95:7:1"
               },
               {
-                "eventCall": {
+                "eventCall":
+                {
                   "arguments": [],
-                  "expression": {
+                  "expression":
+                  {
                     "id": 17,
                     "name": "E",
                     "nodeType": "Identifier",
@@ -144,13 +161,15 @@
                 "src": "112:8:1"
               },
               {
-                "expression": {
+                "expression":
+                {
                   "id": 21,
                   "nodeType": "UnaryOperation",
                   "operator": "++",
                   "prefix": true,
                   "src": "130:3:1",
-                  "subExpression": {
+                  "subExpression":
+                  {
                     "id": 20,
                     "name": "c",
                     "nodeType": "Identifier",
@@ -165,10 +184,12 @@
                 "src": "130:3:1"
               },
               {
-                "assignments": [
+                "assignments":
+                [
                   24
                 ],
-                "declarations": [
+                "declarations":
+                [
                   {
                     "constant": false,
                     "id": 24,
@@ -180,7 +201,8 @@
                     "stateVariable": false,
                     "storageLocation": "calldata",
                     "typeDescriptions": {},
-                    "typeName": {
+                    "typeName":
+                    {
                       "id": 23,
                       "name": "uint",
                       "nodeType": "ElementaryTypeName",
@@ -191,7 +213,8 @@
                   }
                 ],
                 "id": 26,
-                "initialValue": {
+                "initialValue":
+                {
                   "hexValue": "3132332e34",
                   "id": 25,
                   "kind": "number",
@@ -212,10 +235,12 @@
           "name": "f",
           "nameLocation": "70:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 11,
             "nodeType": "ParameterList",
-            "parameters": [
+            "parameters":
+            [
               {
                 "constant": false,
                 "id": 10,
@@ -227,13 +252,16 @@
                 "stateVariable": false,
                 "storageLocation": "storage",
                 "typeDescriptions": {},
-                "typeName": {
+                "typeName":
+                {
                   "id": 9,
                   "nodeType": "UserDefinedTypeName",
-                  "pathNode": {
+                  "pathNode":
+                  {
                     "id": 8,
                     "name": "E",
-                    "nameLocations": [
+                    "nameLocations":
+                    [
                       "72:1:1"
                     ],
                     "nodeType": "IdentifierPath",
@@ -247,7 +275,8 @@
             ],
             "src": "71:13:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 12,
             "nodeType": "ParameterList",
             "parameters": [],

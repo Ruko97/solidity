@@ -2,7 +2,8 @@
   "absolutePath": "a",
   "id": 12,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -12,18 +13,23 @@
       "name": "c",
       "nameLocation": "9:1:1",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
-          "body": {
+          "body":
+          {
             "id": 9,
             "nodeType": "Block",
             "src": "33:19:1",
-            "statements": [
+            "statements":
+            [
               {
-                "assignments": [
+                "assignments":
+                [
                   4
                 ],
-                "declarations": [
+                "declarations":
+                [
                   {
                     "constant": false,
                     "id": 4,
@@ -35,7 +41,8 @@
                     "stateVariable": false,
                     "storageLocation": "default",
                     "typeDescriptions": {},
-                    "typeName": {
+                    "typeName":
+                    {
                       "id": 3,
                       "name": "uint",
                       "nodeType": "ElementaryTypeName",
@@ -46,10 +53,12 @@
                   }
                 ],
                 "id": 8,
-                "initialValue": {
+                "initialValue":
+                {
                   "commonType": {},
                   "id": 7,
-                  "leftExpression": {
+                  "leftExpression":
+                  {
                     "hexValue": "32",
                     "id": 5,
                     "kind": "number",
@@ -60,7 +69,8 @@
                   },
                   "nodeType": "BinaryOperation",
                   "operator": "+",
-                  "rightExpression": {
+                  "rightExpression":
+                  {
                     "hexValue": "33",
                     "id": 6,
                     "kind": "number",
@@ -84,13 +94,15 @@
           "name": "f",
           "nameLocation": "22:1:1",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 1,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "23:2:1"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 2,
             "nodeType": "ParameterList",
             "parameters": [],

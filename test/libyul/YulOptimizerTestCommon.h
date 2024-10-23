@@ -21,17 +21,16 @@
 #include <libyul/optimiser/OptimiserStep.h>
 #include <libyul/optimiser/NameDispenser.h>
 
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 
 #include <set>
 #include <memory>
 
 namespace solidity::yul
 {
-struct AsmAnalysisInfo;
-struct Object;
-struct Dialect;
-class AST;
+	struct AsmAnalysisInfo;
+	struct Object;
+	struct Dialect;
 }
 
 namespace solidity::yul::test
@@ -40,7 +39,7 @@ class YulOptimizerTestCommon
 {
 public:
 	explicit YulOptimizerTestCommon(
-		std::shared_ptr<Object const> _obj,
+		std::shared_ptr<Object> _obj,
 		Dialect const& _dialect
 	);
 	/// Sets optimiser step to be run to @param
@@ -48,7 +47,7 @@ public:
 	void setStep(std::string const& _optimizerStep);
 	/// Runs chosen optimiser step returning pointer
 	/// to yul AST Block post optimisation.
-	Block const* run();
+	std::shared_ptr<Block> run();
 	/// Runs chosen optimiser step returning true if
 	/// successful, false otherwise.
 	bool runStep();
@@ -57,22 +56,21 @@ public:
 	/// @param _seed is an unsigned integer that
 	/// seeds the random selection.
 	std::string randomOptimiserStep(unsigned _seed);
-	/// the resulting object after performing optimization steps
-	std::shared_ptr<Object> optimizedObject() const;
 private:
-	Block disambiguate();
-	void updateContext(Block const& _block);
+	void disambiguate();
+	void updateContext();
 
 	std::string m_optimizerStep;
 
 	Dialect const* m_dialect = nullptr;
-	std::set<YulName> m_reservedIdentifiers;
+	std::set<YulString> m_reservedIdentifiers;
 	std::unique_ptr<NameDispenser> m_nameDispenser;
 	std::unique_ptr<OptimiserStepContext> m_context;
 
-	std::shared_ptr<Object const> m_object;
-	std::shared_ptr<Object> m_optimizedObject;
-	std::map<std::string, std::function<Block(void)>> m_namedSteps;
+	std::shared_ptr<Object> m_object;
+	std::shared_ptr<Block> m_ast;
+	std::shared_ptr<AsmAnalysisInfo> m_analysisInfo;
+	std::map<std::string, std::function<void(void)>> m_namedSteps;
 };
 
 }

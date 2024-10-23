@@ -121,7 +121,7 @@ public:
 
 	explicit UnusedAssignEliminator(
 		Dialect const& _dialect,
-		std::map<YulName, ControlFlowSideEffects> _controlFlowSideEffects
+		std::map<YulString, ControlFlowSideEffects> _controlFlowSideEffects
 	):
 		UnusedStoreBase(_dialect),
 		m_controlFlowSideEffects(_controlFlowSideEffects)
@@ -141,10 +141,10 @@ private:
 	void shortcutNestedLoop(ActiveStores const& _beforeLoop) override;
 	void finalizeFunctionDefinition(FunctionDefinition const& _functionDefinition) override;
 
-	void markUsed(YulName _variable);
+	void markUsed(YulString _variable);
 
-	std::set<YulName> m_returnVariables;
-	std::map<YulName, ControlFlowSideEffects> m_controlFlowSideEffects;
+	std::set<YulString> m_returnVariables;
+	std::map<YulString, ControlFlowSideEffects> m_controlFlowSideEffects;
 };
 
 }

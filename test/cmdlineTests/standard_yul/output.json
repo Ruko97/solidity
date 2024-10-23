@@ -1,22 +1,27 @@
 {
-    "contracts": {
-        "A": {
-            "object": {
-                "evm": {
-                    "assembly": "    /* \"A\":99:100   */
+    "contracts":
+    {
+        "A":
+        {
+            "object":
+            {
+                "evm":
+                {
+                    "assembly": "    /* \"A\":38:39   */
   0x00
-    /* \"A\":60:68   */
+    /* \"A\":11:19   */
   dup1
   dup1
   mload
-    /* \"A\":88:97   */
+    /* \"A\":27:36   */
   add
-    /* \"A\":81:101   */
+    /* \"A\":20:40   */
   sstore
-    /* \"A\":27:117   */
+    /* \"A\":0:42   */
   stop
 ",
-                    "bytecode": {
+                    "bytecode":
+                    {
                         "functionDebugData": {},
                         "generatedSources": [],
                         "linkReferences": {},
@@ -44,21 +49,29 @@
             }
         }
     },
-    "sources": {
-        "A": {
-            "ast": {
-                "code": {
-                    "block": {
+    "sources":
+    {
+        "A":
+        {
+            "ast":
+            {
+                "code":
+                {
+                    "block":
+                    {
                         "nativeSrc": "0:42:0",
                         "nodeType": "YulBlock",
                         "src": "0:42:0",
-                        "statements": [
+                        "statements":
+                        [
                             {
                                 "nativeSrc": "2:17:0",
                                 "nodeType": "YulVariableDeclaration",
                                 "src": "2:17:0",
-                                "value": {
-                                    "arguments": [
+                                "value":
+                                {
+                                    "arguments":
+                                    [
                                         {
                                             "kind": "number",
                                             "nativeSrc": "17:1:0",
@@ -68,7 +81,8 @@
                                             "value": "0"
                                         }
                                     ],
-                                    "functionName": {
+                                    "functionName":
+                                    {
                                         "name": "mload",
                                         "nativeSrc": "11:5:0",
                                         "nodeType": "YulIdentifier",
@@ -78,7 +92,8 @@
                                     "nodeType": "YulFunctionCall",
                                     "src": "11:8:0"
                                 },
-                                "variables": [
+                                "variables":
+                                [
                                     {
                                         "name": "x",
                                         "nativeSrc": "6:1:0",
@@ -89,10 +104,13 @@
                                 ]
                             },
                             {
-                                "expression": {
-                                    "arguments": [
+                                "expression":
+                                {
+                                    "arguments":
+                                    [
                                         {
-                                            "arguments": [
+                                            "arguments":
+                                            [
                                                 {
                                                     "name": "x",
                                                     "nativeSrc": "31:1:0",
@@ -108,7 +126,8 @@
                                                     "value": "0"
                                                 }
                                             ],
-                                            "functionName": {
+                                            "functionName":
+                                            {
                                                 "name": "add",
                                                 "nativeSrc": "27:3:0",
                                                 "nodeType": "YulIdentifier",
@@ -127,7 +146,8 @@
                                             "value": "0"
                                         }
                                     ],
-                                    "functionName": {
+                                    "functionName":
+                                    {
                                         "name": "sstore",
                                         "nativeSrc": "20:6:0",
                                         "nodeType": "YulIdentifier",

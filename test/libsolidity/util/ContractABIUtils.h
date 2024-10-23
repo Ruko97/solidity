@@ -19,7 +19,8 @@
 #include <test/libsolidity/util/SoltestErrors.h>
 
 #include <libsolutil/CommonData.h>
-#include <libsolutil/JSON.h>
+
+#include <json/json.h>
 
 namespace solidity::frontend::test
 {
@@ -39,7 +40,7 @@ public:
 	/// auto-correction during interactive update routine.
 	static std::optional<ParameterList> parametersFromJsonOutputs(
 		ErrorReporter& _errorReporter,
-		Json const& _contractABI,
+		Json::Value const& _contractABI,
 		std::string const& _functionSignature
 	);
 
@@ -85,7 +86,7 @@ private:
 	/// `bytes` -> [`Unsigned`, `Unsigned`, `HexString`]
 	/// ...
 	static bool appendTypesFromName(
-		Json const& _functionOutput,
+		Json::Value const& _functionOutput,
 		ABITypes& _inplaceTypes,
 		ABITypes& _dynamicTypes,
 		bool _isCompoundType = false

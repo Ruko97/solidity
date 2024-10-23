@@ -2,11 +2,11 @@
 ======= strict_asm_output_selection_asm_only/input.yul (EVM) =======
 
 Text representation:
-    /* "strict_asm_output_selection_asm_only/input.yul":41:43   */
+    /* "strict_asm_output_selection_asm_only/input.yul":15:17   */
   0x2a
-    /* "strict_asm_output_selection_asm_only/input.yul":38:39   */
+    /* "strict_asm_output_selection_asm_only/input.yul":29:30   */
   0x00
-    /* "strict_asm_output_selection_asm_only/input.yul":31:44   */
+    /* "strict_asm_output_selection_asm_only/input.yul":22:34   */
   sstore
-    /* "strict_asm_output_selection_asm_only/input.yul":27:48   */
+    /* "strict_asm_output_selection_asm_only/input.yul":0:36   */
   stop

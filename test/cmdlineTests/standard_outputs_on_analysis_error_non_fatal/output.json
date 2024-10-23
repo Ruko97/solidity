@@ -1,5 +1,6 @@
 {
-    "errors": [
+    "errors":
+    [
         {
             "component": "general",
             "errorCode": "7407",
@@ -12,7 +13,8 @@
 ",
             "message": "Type uint256 is not implicitly convertible to expected type string storage ref.",
             "severity": "error",
-            "sourceLocation": {
+            "sourceLocation":
+            {
                 "end": 235,
                 "file": "C",
                 "start": 234

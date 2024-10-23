@@ -28,8 +28,9 @@ using namespace solidity::test::fuzzer;
 using namespace solidity::frontend;
 using namespace solidity::langutil;
 using namespace solidity::util;
+using namespace std;
 
-std::optional<CompilerOutput> SolidityCompilationFramework::compileContract()
+optional<CompilerOutput> SolidityCompilationFramework::compileContract()
 {
 	m_compiler.setSources(m_compilerInput.sourceCode);
 	m_compiler.setLibraries(m_compilerInput.libraryAddresses);
@@ -40,8 +41,8 @@ std::optional<CompilerOutput> SolidityCompilationFramework::compileContract()
 	{
 		if (m_compilerInput.debugFailure)
 		{
-			std::cerr << "Compiling contract failed" << std::endl;
-			std::cerr << SourceReferenceFormatter::formatErrorInformation(
+			cerr << "Compiling contract failed" << endl;
+			cerr << SourceReferenceFormatter::formatErrorInformation(
 				m_compiler.errors(),
 				m_compiler
 			);
@@ -50,13 +51,13 @@ std::optional<CompilerOutput> SolidityCompilationFramework::compileContract()
 	}
 	else
 	{
-		std::string contractName;
+		string contractName;
 		if (m_compilerInput.contractName.empty())
 			contractName = m_compiler.lastContractName();
 		else
 			contractName = m_compilerInput.contractName;
 		evmasm::LinkerObject obj = m_compiler.object(contractName);
-		Json methodIdentifiers = m_compiler.interfaceSymbols(contractName)["methods"];
+		Json::Value methodIdentifiers = m_compiler.interfaceSymbols(contractName)["methods"];
 		return CompilerOutput{obj.bytecode, methodIdentifiers};
 	}
 }
@@ -102,7 +103,7 @@ evmc::Result EvmoneUtility::deployContract(bytes const& _code)
 
 evmc::Result EvmoneUtility::deployAndExecute(
 	bytes const& _byteCode,
-	std::string const& _hexEncodedInput
+	string const& _hexEncodedInput
 )
 {
 	// Deploy contract and signal failure if deploy failed
@@ -127,9 +128,9 @@ evmc::Result EvmoneUtility::deployAndExecute(
 	return callResult;
 }
 
-evmc::Result EvmoneUtility::compileDeployAndExecute(std::string _fuzzIsabelle)
+evmc::Result EvmoneUtility::compileDeployAndExecute(string _fuzzIsabelle)
 {
-	std::map<std::string, h160> libraryAddressMap;
+	map<string, h160> libraryAddressMap;
 	// Stage 1: Compile and deploy library if present.
 	if (!m_libraryName.empty())
 	{
@@ -157,16 +158,16 @@ evmc::Result EvmoneUtility::compileDeployAndExecute(std::string _fuzzIsabelle)
 		"SolidityEvmoneInterface: Invalid compilation output."
 	);
 
-	std::string methodName;
+	string methodName;
 	if (!_fuzzIsabelle.empty())
 		// TODO: Remove this once a cleaner solution is found for querying
 		// isabelle test entry point. At the moment, we are sure that the
 		// entry point is the second method in the contract (hence the ++)
 		// but not its name.
-		methodName = (++cOutput->methodIdentifiersInContract.begin())->get<std::string>() +
+		methodName = (++cOutput->methodIdentifiersInContract.begin())->asString() +
 			_fuzzIsabelle.substr(2, _fuzzIsabelle.size());
 	else
-		methodName = cOutput->methodIdentifiersInContract[m_methodName].get<std::string>();
+		methodName = cOutput->methodIdentifiersInContract[m_methodName].asString();
 
 	return deployAndExecute(
 		cOutput->byteCode,
@@ -174,7 +175,7 @@ evmc::Result EvmoneUtility::compileDeployAndExecute(std::string _fuzzIsabelle)
 	);
 }
 
-std::optional<CompilerOutput> EvmoneUtility::compileContract()
+optional<CompilerOutput> EvmoneUtility::compileContract()
 {
 	try
 	{

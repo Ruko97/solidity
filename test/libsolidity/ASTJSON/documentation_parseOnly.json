@@ -3,13 +3,15 @@
   "absolutePath": "a",
   "id": 3,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
       "contractDependencies": [],
       "contractKind": "contract",
-      "documentation": {
+      "documentation":
+      {
         "id": 1,
         "nodeType": "StructuredDocumentation",
         "src": "0:27:1",
@@ -31,13 +33,15 @@
   "absolutePath": "b",
   "id": 6,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
       "contractDependencies": [],
       "contractKind": "contract",
-      "documentation": {
+      "documentation":
+      {
         "id": 4,
         "nodeType": "StructuredDocumentation",
         "src": "0:61:2",
@@ -59,7 +63,8 @@
   "absolutePath": "c",
   "id": 24,
   "nodeType": "SourceUnit",
-  "nodes": [
+  "nodes":
+  [
     {
       "abstract": false,
       "baseContracts": [],
@@ -69,7 +74,8 @@
       "name": "C",
       "nameLocation": "9:1:3",
       "nodeType": "ContractDefinition",
-      "nodes": [
+      "nodes":
+      [
         {
           "constant": false,
           "id": 9,
@@ -81,7 +87,8 @@
           "stateVariable": false,
           "storageLocation": "default",
           "typeDescriptions": {},
-          "typeName": {
+          "typeName":
+          {
             "id": 8,
             "name": "uint",
             "nodeType": "ElementaryTypeName",
@@ -92,7 +99,8 @@
         },
         {
           "anonymous": false,
-          "documentation": {
+          "documentation":
+          {
             "id": 10,
             "nodeType": "StructuredDocumentation",
             "src": "69:26:3",
@@ -102,7 +110,8 @@
           "name": "Evt",
           "nameLocation": "102:3:3",
           "nodeType": "EventDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 11,
             "nodeType": "ParameterList",
             "parameters": [],
@@ -111,11 +120,13 @@
           "src": "96:12:3"
         },
         {
-          "body": {
+          "body":
+          {
             "id": 16,
             "nodeType": "Block",
             "src": "153:6:3",
-            "statements": [
+            "statements":
+            [
               {
                 "id": 15,
                 "nodeType": "PlaceholderStatement",
@@ -123,7 +134,8 @@
               }
             ]
           },
-          "documentation": {
+          "documentation":
+          {
             "id": 13,
             "nodeType": "StructuredDocumentation",
             "src": "111:26:3",
@@ -133,7 +145,8 @@
           "name": "mod",
           "nameLocation": "147:3:3",
           "nodeType": "ModifierDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 14,
             "nodeType": "ParameterList",
             "parameters": [],
@@ -144,13 +157,15 @@
           "visibility": "internal"
         },
         {
-          "body": {
+          "body":
+          {
             "id": 21,
             "nodeType": "Block",
             "src": "209:2:3",
             "statements": []
           },
-          "documentation": {
+          "documentation":
+          {
             "id": 18,
             "nodeType": "StructuredDocumentation",
             "src": "162:25:3",
@@ -163,13 +178,15 @@
           "name": "fn",
           "nameLocation": "197:2:3",
           "nodeType": "FunctionDefinition",
-          "parameters": {
+          "parameters":
+          {
             "id": 19,
             "nodeType": "ParameterList",
             "parameters": [],
             "src": "199:2:3"
           },
-          "returnParameters": {
+          "returnParameters":
+          {
             "id": 20,
             "nodeType": "ParameterList",
             "parameters": [],

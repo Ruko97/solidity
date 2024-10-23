@@ -44,29 +44,26 @@ using namespace solidity::langutil;
 
 namespace
 {
-Dialect const& defaultDialect()
+Dialect const& defaultDialect(bool _yul)
 {
-	return yul::EVMDialect::strictAssemblyForEVM(
-		solidity::test::CommonOptions::get().evmVersion(),
-		solidity::test::CommonOptions::get().eofVersion()
-	);
+	return _yul ? yul::Dialect::yulDeprecated() : yul::EVMDialect::strictAssemblyForEVM(solidity::test::CommonOptions::get().evmVersion());
 }
 }
 
-std::pair<std::shared_ptr<AST const>, std::shared_ptr<yul::AsmAnalysisInfo>> yul::test::parse(std::string const& _source)
+std::pair<std::shared_ptr<Block>, std::shared_ptr<yul::AsmAnalysisInfo>> yul::test::parse(std::string const& _source, bool _yul)
 {
 	YulStack stack(
 		solidity::test::CommonOptions::get().evmVersion(),
 		solidity::test::CommonOptions::get().eofVersion(),
-		YulStack::Language::StrictAssembly,
+		_yul ? YulStack::Language::Yul : YulStack::Language::StrictAssembly,
 		solidity::test::CommonOptions::get().optimize ?
 			solidity::frontend::OptimiserSettings::standard() :
 			solidity::frontend::OptimiserSettings::minimal(),
 		DebugInfoSelection::All()
 	);
-	if (!stack.parseAndAnalyze("", _source) || Error::hasErrorsWarningsOrInfos(stack.errors()))
+	if (!stack.parseAndAnalyze("", _source) || !stack.errors().empty())
 		BOOST_FAIL("Invalid source.");
-	return std::make_pair(stack.parserResult()->code(), stack.parserResult()->analysisInfo);
+	return make_pair(stack.parserResult()->code, stack.parserResult()->analysisInfo);
 }
 
 std::pair<std::shared_ptr<Object>, std::shared_ptr<yul::AsmAnalysisInfo>> yul::test::parse(
@@ -81,34 +78,44 @@ std::pair<std::shared_ptr<Object>, std::shared_ptr<yul::AsmAnalysisInfo>> yul::t
 	std::shared_ptr<Object> parserResult = yul::ObjectParser(errorReporter, _dialect).parse(scanner, false);
 	if (!parserResult)
 		return {};
-	if (!parserResult->hasCode() || errorReporter.hasErrors())
+	if (!parserResult->code || errorReporter.hasErrors())
 		return {};
 	std::shared_ptr<AsmAnalysisInfo> analysisInfo = std::make_shared<AsmAnalysisInfo>();
 	AsmAnalyzer analyzer(*analysisInfo, errorReporter, _dialect, {}, parserResult->qualifiedDataNames());
 	// TODO this should be done recursively.
-	if (!analyzer.analyze(parserResult->code()->root()) || errorReporter.hasErrors())
+	if (!analyzer.analyze(*parserResult->code) || errorReporter.hasErrors())
 		return {};
 	return {std::move(parserResult), std::move(analysisInfo)};
 }
 
-yul::Block yul::test::disambiguate(std::string const& _source)
+yul::Block yul::test::disambiguate(std::string const& _source, bool _yul)
 {
-	auto result = parse(_source);
-	return std::get<Block>(Disambiguator(defaultDialect(), *result.second, {})(result.first->root()));
+	auto result = parse(_source, _yul);
+	return std::get<Block>(Disambiguator(defaultDialect(_yul), *result.second, {})(*result.first));
 }
 
-std::string yul::test::format(std::string const& _source)
+std::string yul::test::format(std::string const& _source, bool _yul)
 {
-	return yul::AsmPrinter()(parse(_source).first->root());
+	return yul::AsmPrinter()(*parse(_source, _yul).first);
 }
 
 namespace
 {
-std::map<std::string const, yul::Dialect const& (*)(langutil::EVMVersion, std::optional<uint8_t>)> const validDialects = {
+std::map<std::string const, yul::Dialect const& (*)(langutil::EVMVersion)> const validDialects = {
 	{
 		"evm",
-		[](langutil::EVMVersion _evmVersion, std::optional<uint8_t> _eofVersion) -> yul::Dialect const&
-		{ return yul::EVMDialect::strictAssemblyForEVMObjects(_evmVersion, _eofVersion); }
+		[](langutil::EVMVersion _evmVersion) -> yul::Dialect const&
+		{ return yul::EVMDialect::strictAssemblyForEVMObjects(_evmVersion); }
+	},
+	{
+		"evmTyped",
+		[](langutil::EVMVersion _evmVersion) -> yul::Dialect const&
+		{ return yul::EVMDialectTyped::instance(_evmVersion); }
+	},
+	{
+		"yul",
+		[](langutil::EVMVersion) -> yul::Dialect const&
+		{ return yul::Dialect::yulDeprecated(); }
 	}
 };
 
@@ -121,7 +128,7 @@ std::map<std::string const, yul::Dialect const& (*)(langutil::EVMVersion, std::o
 }
 }
 
-yul::Dialect const& yul::test::dialect(std::string const& _name, langutil::EVMVersion _evmVersion, std::optional<uint8_t> _eofVersion)
+yul::Dialect const& yul::test::dialect(std::string const& _name, langutil::EVMVersion _evmVersion)
 {
 	if (!validDialects.count(_name))
 		BOOST_THROW_EXCEPTION(std::runtime_error{
@@ -132,5 +139,5 @@ yul::Dialect const& yul::test::dialect(std::string const& _name, langutil::EVMVe
 			"."
 		});
 
-	return validDialects.at(_name)(_evmVersion, _eofVersion);
+	return validDialects.at(_name)(_evmVersion);
 }

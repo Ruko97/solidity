@@ -22,7 +22,7 @@
 #pragma once
 
 #include <libyul/ASTForward.h>
-#include <libyul/YulName.h>
+#include <libyul/YulString.h>
 #include <libyul/optimiser/OptimiserStep.h>
 #include <libyul/optimiser/NameDispenser.h>
 #include <liblangutil/EVMVersion.h>
@@ -70,7 +70,7 @@ public:
 		std::string_view _optimisationSequence,
 		std::string_view _optimisationCleanupSequence,
 		std::optional<size_t> _expectedExecutionsPerDeployment,
-		std::set<YulName> const& _externallyUsedIdentifiers = {}
+		std::set<YulString> const& _externallyUsedIdentifiers = {}
 	);
 
 	/// Ensures that specified sequence of step abbreviations is well-formed and can be executed.
@@ -91,6 +91,9 @@ public:
 private:
 	OptimiserStepContext& m_context;
 	Debug m_debug;
+#ifdef PROFILE_OPTIMIZER_STEPS
+	std::map<std::string, int64_t> m_durationPerStepInMicroseconds;
+#endif
 };
 
 }

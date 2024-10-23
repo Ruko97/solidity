@@ -23,6 +23,7 @@
 #include <libyul/optimiser/ExpressionSplitter.h>
 
 #include <libyul/optimiser/OptimiserStep.h>
+#include <libyul/optimiser/TypeInfo.h>
 
 #include <libyul/AST.h>
 #include <libyul/Dialect.h>
@@ -36,15 +37,16 @@ using namespace solidity::langutil;
 
 void ExpressionSplitter::run(OptimiserStepContext& _context, Block& _ast)
 {
-	ExpressionSplitter{_context.dialect, _context.dispenser}(_ast);
+	TypeInfo typeInfo(_context.dialect, _ast);
+	ExpressionSplitter{_context.dialect, _context.dispenser, typeInfo}(_ast);
 }
 
 void ExpressionSplitter::operator()(FunctionCall& _funCall)
 {
-	std::optional<BuiltinHandle> builtinHandle = m_dialect.findBuiltin(_funCall.functionName.name.str());
+	BuiltinFunction const* builtin = m_dialect.builtin(_funCall.functionName.name);
 
 	for (size_t i = _funCall.arguments.size(); i > 0; i--)
-		if (!builtinHandle || !m_dialect.builtin(*builtinHandle).literalArgument(i - 1))
+		if (!builtin || !builtin->literalArgument(i - 1))
 			outlineExpression(_funCall.arguments[i - 1]);
 }
 
@@ -97,12 +99,14 @@ void ExpressionSplitter::outlineExpression(Expression& _expr)
 	visit(_expr);
 
 	langutil::DebugData::ConstPtr debugData = debugDataOf(_expr);
-	YulName var = m_nameDispenser.newName({});
+	YulString var = m_nameDispenser.newName({});
+	YulString type = m_typeInfo.typeOf(_expr);
 	m_statementsToPrefix.emplace_back(VariableDeclaration{
 		debugData,
-		{{NameWithDebugData{debugData, var}}},
+		{{TypedName{debugData, var, type}}},
 		std::make_unique<Expression>(std::move(_expr))
 	});
 	_expr = Identifier{debugData, var};
+	m_typeInfo.setVariableType(var, type);
 }
 

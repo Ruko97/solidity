@@ -1,4 +1,5 @@
 ==== Source: L ====
+
 function free1() {}
 function free2() {}
 library L {
@@ -7,6 +8,7 @@ library L {
 }
 
 ==== Source: A ====
+
 import "L";
 contract A {
     function f() public {
@@ -23,6 +25,7 @@ contract B {
 }
 
 ==== Source: C ====
+
 import "L";
 contract C {
     function f() public {

@@ -30,9 +30,10 @@
 #include <libsolutil/Common.h>
 #include <libsolutil/Assertions.h>
 #include <libsolutil/Keccak256.h>
-#include <libsolutil/JSON.h>
 
 #include <libsolidity/interface/OptimiserSettings.h>
+
+#include <json/json.h>
 
 #include <iostream>
 #include <sstream>
@@ -47,24 +48,9 @@ using AssemblyPointer = std::shared_ptr<Assembly>;
 
 class Assembly
 {
-	using TagRefs = std::map<size_t, std::pair<size_t, size_t>>;
-	using DataRefs = std::multimap<util::h256, unsigned>;
-	using SubAssemblyRefs = std::multimap<size_t, size_t>;
-	using ProgramSizeRefs = std::vector<unsigned>;
-	using LinkRef = std::pair<size_t, std::string>;
-
 public:
-	Assembly(langutil::EVMVersion _evmVersion, bool _creation, std::optional<uint8_t> _eofVersion, std::string _name):
-		m_evmVersion(_evmVersion),
-		m_creation(_creation),
-		m_eofVersion(_eofVersion),
-		m_name(std::move(_name))
-	{
-		// Code section number 0 has to be non-returning.
-		m_codeSections.emplace_back(CodeSection{0, 0x80, {}});
-	}
+	Assembly(langutil::EVMVersion _evmVersion, bool _creation, std::string _name): m_evmVersion(_evmVersion), m_creation(_creation), m_name(std::move(_name)) { }
 
-	std::optional<uint8_t> eofVersion() const { return m_eofVersion; }
 	AssemblyItem newTag() { assertThrow(m_usedTags < 0xffffffff, AssemblyException, ""); return AssemblyItem(Tag, m_usedTags++); }
 	AssemblyItem newPushTag() { assertThrow(m_usedTags < 0xffffffff, AssemblyException, ""); return AssemblyItem(PushTag, m_usedTags++); }
 	/// Returns a tag identified by the given name. Creates it if it does not yet exist.
@@ -79,7 +65,6 @@ public:
 	AssemblyItem newPushLibraryAddress(std::string const& _identifier);
 	AssemblyItem newPushImmutable(std::string const& _identifier);
 	AssemblyItem newImmutableAssignment(std::string const& _identifier);
-	AssemblyItem newAuxDataLoadN(size_t offset);
 
 	AssemblyItem const& append(AssemblyItem _i);
 	AssemblyItem const& append(bytes const& _data) { return append(newData(_data)); }
@@ -92,7 +77,6 @@ public:
 	void appendLibraryAddress(std::string const& _identifier) { append(newPushLibraryAddress(_identifier)); }
 	void appendImmutable(std::string const& _identifier) { append(newPushImmutable(_identifier)); }
 	void appendImmutableAssignment(std::string const& _identifier) { append(newImmutableAssignment(_identifier)); }
-	void appendAuxDataLoadN(uint16_t _offset) { append(newAuxDataLoadN(_offset));}
 
 	void appendVerbatim(bytes _data, size_t _arguments, size_t _returnVariables)
 	{
@@ -113,6 +97,12 @@ public:
 
 	/// Appends @a _data literally to the very end of the bytecode.
 	void appendToAuxiliaryData(bytes const& _data) { m_auxiliaryData += _data; }
+
+	/// Returns the assembly items.
+	AssemblyItems const& items() const { return m_items; }
+
+	/// Returns the mutable assembly items. Use with care!
+	AssemblyItems& items() { return m_items; }
 
 	int deposit() const { return m_deposit; }
 	void adjustDeposit(int _adjustment) { m_deposit += _adjustment; assertThrow(m_deposit >= 0, InvalidDeposit, ""); }
@@ -160,7 +150,7 @@ public:
 	) const;
 
 	/// Create a JSON representation of the assembly.
-	Json assemblyJSON(std::map<std::string, unsigned> const& _sourceIndices, bool _includeSourceList = true) const;
+	Json::Value assemblyJSON(std::map<std::string, unsigned> const& _sourceIndices, bool _includeSourceList = true) const;
 
 	/// Constructs an @a Assembly from the serialized JSON representation.
 	/// @param _json JSON object containing assembly in the format produced by assemblyJSON().
@@ -173,10 +163,9 @@ public:
 	/// @returns Created @a Assembly and the source list read from the 'sourceList' field of the root
 	///     assembly or an empty list (in recursive calls).
 	static std::pair<std::shared_ptr<Assembly>, std::vector<std::string>> fromJSON(
-		Json const& _json,
+		Json::Value const& _json,
 		std::vector<std::string> const& _sourceList = {},
-		size_t _level = 0,
-		std::optional<uint8_t> _eofVersion = std::nullopt
+		size_t _level = 0
 	);
 
 	/// Mark this assembly as invalid. Calling ``assemble`` on it will throw.
@@ -187,43 +176,25 @@ public:
 
 	bool isCreation() const { return m_creation; }
 
-	struct CodeSection
-	{
-		uint8_t inputs = 0;
-		uint8_t outputs = 0;
-		AssemblyItems items{};
-	};
-
-	std::vector<CodeSection>& codeSections()
-	{
-		return m_codeSections;
-	}
-
-	std::vector<CodeSection> const& codeSections() const
-	{
-		return m_codeSections;
-	}
-
 protected:
 	/// Does the same operations as @a optimise, but should only be applied to a sub and
 	/// returns the replaced tags. Also takes an argument containing the tags of this assembly
 	/// that are referenced in a super-assembly.
 	std::map<u256, u256> const& optimiseInternal(OptimiserSettings const& _settings, std::set<size_t> _tagsReferencedFromOutside);
 
-	/// For EOF and legacy it calculates approximate size of "pure" code without data.
 	unsigned codeSize(unsigned subTagSize) const;
 
 	/// Add all assembly items from given JSON array. This function imports the items by iterating through
 	/// the code array. This method only works on clean Assembly objects that don't have any items defined yet.
 	/// @param _json JSON array that contains assembly items (e.g. json['.code'])
 	/// @param _sourceList List of source names.
-	void importAssemblyItemsFromJSON(Json const& _code, std::vector<std::string> const& _sourceList);
+	void importAssemblyItemsFromJSON(Json::Value const& _code, std::vector<std::string> const& _sourceList);
 
 	/// Creates an AssemblyItem from a given JSON representation.
 	/// @param _json JSON object that consists a single assembly item
 	/// @param _sourceList List of source names.
 	/// @returns AssemblyItem of _json argument.
-	AssemblyItem createAssemblyItemFromJSON(Json const& _json, std::vector<std::string> const& _sourceList);
+	AssemblyItem createAssemblyItemFromJSON(Json::Value const& _json, std::vector<std::string> const& _sourceList);
 
 private:
 	bool m_invalid = false;
@@ -233,25 +204,6 @@ private:
 	void encodeAllPossibleSubPathsInAssemblyTree(std::vector<size_t> _pathFromRoot = {}, std::vector<Assembly*> _assembliesOnPath = {});
 
 	std::shared_ptr<std::string const> sharedSourceName(std::string const& _name) const;
-
-	/// Returns EOF header bytecode | code section sizes offsets | data section size offset
-	std::tuple<bytes, std::vector<size_t>, size_t> createEOFHeader(std::set<uint16_t> const& _referencedSubIds) const;
-
-	LinkerObject const& assembleLegacy() const;
-	LinkerObject const& assembleEOF() const;
-
-	/// Returns map from m_subs to an index of subcontainer in the final EOF bytecode
-	std::map<uint16_t, uint16_t> findReferencedContainers() const;
-	/// Returns max AuxDataLoadN offset for the assembly.
-	std::optional<uint16_t> findMaxAuxDataLoadNOffset() const;
-
-	/// Assemble bytecode for AssemblyItem type.
-	[[nodiscard]] bytes assembleOperation(AssemblyItem const& _item) const;
-	[[nodiscard]] bytes assemblePush(AssemblyItem const& _item) const;
-	[[nodiscard]] std::pair<bytes, Assembly::LinkRef> assemblePushLibraryAddress(AssemblyItem const& _item, size_t _pos) const;
-	[[nodiscard]] bytes assembleVerbatimBytecode(AssemblyItem const& item) const;
-	[[nodiscard]] bytes assemblePushDeployTimeAddress() const;
-	[[nodiscard]] bytes assembleTag(AssemblyItem const& _item, size_t _pos, bool _addJumpDest) const;
 
 protected:
 	/// 0 is reserved for exception
@@ -266,12 +218,11 @@ protected:
 	};
 
 	std::map<std::string, NamedTagInfo> m_namedTags;
+	AssemblyItems m_items;
 	std::map<util::h256, bytes> m_data;
 	/// Data that is appended to the very end of the contract.
 	bytes m_auxiliaryData;
 	std::vector<std::shared_ptr<Assembly>> m_subs;
-	std::vector<CodeSection> m_codeSections;
-	uint16_t m_currentCodeSection = 0;
 	std::map<util::h256, std::string> m_strings;
 	std::map<util::h256, std::string> m_libraries; ///< Identifiers of libraries to be linked.
 	std::map<util::h256, std::string> m_immutables; ///< Identifiers of immutables.
@@ -292,7 +243,6 @@ protected:
 	int m_deposit = 0;
 	/// True, if the assembly contains contract creation code.
 	bool const m_creation = false;
-	std::optional<uint8_t> m_eofVersion;
 	/// Internal name of the assembly object, only used with the Yul backend
 	/// currently
 	std::string m_name;

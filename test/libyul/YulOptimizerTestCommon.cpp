@@ -74,394 +74,294 @@ using namespace solidity::yul::test;
 using namespace solidity::frontend;
 
 YulOptimizerTestCommon::YulOptimizerTestCommon(
-	std::shared_ptr<Object const> _obj,
+	std::shared_ptr<Object> _obj,
 	Dialect const& _dialect
-): m_dialect(&_dialect), m_object(_obj), m_optimizedObject(std::make_shared<Object>(*_obj))
+)
 {
-	if (
-		std::any_of(
-			m_object->subObjects.begin(),
-			m_object->subObjects.end(),
-			[](auto const& subObject) { return dynamic_cast<Data*>(subObject.get()) == nullptr;}
-		)
-	)
-		solUnimplementedAssert(false, "The current implementation of YulOptimizerTests ignores subobjects that are not Data.");
+	m_object = _obj;
+	m_ast = m_object->code;
+	m_analysisInfo = m_object->analysisInfo;
+	m_dialect = &_dialect;
 
 	m_namedSteps = {
-		{"disambiguator", [&]() { return disambiguate(); }},
+		{"disambiguator", [&]() { disambiguate(); }},
 		{"nameDisplacer", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
+			disambiguate();
 			NameDisplacer{
 				*m_nameDispenser,
-				{"illegal1"_yulname, "illegal2"_yulname, "illegal3"_yulname, "illegal4"_yulname, "illegal5"_yulname}
-			}(block);
-			return block;
+				{"illegal1"_yulstring, "illegal2"_yulstring, "illegal3"_yulstring, "illegal4"_yulstring, "illegal5"_yulstring}
+			}(*m_ast);
 		}},
 		{"blockFlattener", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionGrouper::run(*m_context, block);
-			BlockFlattener::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionGrouper::run(*m_context, *m_ast);
+			BlockFlattener::run(*m_context, *m_ast);
 		}},
 		{"constantOptimiser", [&]() {
-			auto block = std::get<Block>(ASTCopier{}(m_object->code()->root()));
-			updateContext(block);
 			GasMeter meter(dynamic_cast<EVMDialect const&>(*m_dialect), false, 200);
-			ConstantOptimiser{dynamic_cast<EVMDialect const&>(*m_dialect), meter}(block);
-			return block;
+			ConstantOptimiser{dynamic_cast<EVMDialect const&>(*m_dialect), meter}(*m_ast);
 		}},
-		{"varDeclInitializer", [&]() {
-			auto block = std::get<Block>(ASTCopier{}(m_object->code()->root()));
-			updateContext(block);
-			VarDeclInitializer::run(*m_context, block);
-			return block;
-		}},
+		{"varDeclInitializer", [&]() { VarDeclInitializer::run(*m_context, *m_ast); }},
 		{"varNameCleaner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			FunctionGrouper::run(*m_context, block);
-			VarNameCleaner::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
+			FunctionGrouper::run(*m_context, *m_ast);
+			VarNameCleaner::run(*m_context, *m_ast);
 		}},
 		{"forLoopConditionIntoBody", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopConditionIntoBody::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopConditionIntoBody::run(*m_context, *m_ast);
 		}},
 		{"forLoopInitRewriter", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
 		}},
 		{"commonSubexpressionEliminator", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			CommonSubexpressionEliminator::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			CommonSubexpressionEliminator::run(*m_context, *m_ast);
 		}},
 		{"conditionalUnsimplifier", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ConditionalUnsimplifier::run(*m_context, block);
-			return block;
+			disambiguate();
+			ConditionalUnsimplifier::run(*m_context, *m_ast);
 		}},
 		{"conditionalSimplifier", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ConditionalSimplifier::run(*m_context, block);
-			return block;
+			disambiguate();
+			ConditionalSimplifier::run(*m_context, *m_ast);
 		}},
-		{"expressionSplitter", [&]() {
-			auto block = std::get<Block>(ASTCopier{}(m_object->code()->root()));
-			updateContext(block);
-			ExpressionSplitter::run(*m_context, block);
-			return block;
-		}},
+		{"expressionSplitter", [&]() { ExpressionSplitter::run(*m_context, *m_ast); }},
 		{"expressionJoiner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"splitJoin", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ExpressionSplitter::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ExpressionSplitter::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"functionGrouper", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionGrouper::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionGrouper::run(*m_context, *m_ast);
 		}},
 		{"functionHoister", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
 		}},
 		{"functionSpecializer", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			FunctionSpecializer::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_object->code);
+			FunctionSpecializer::run(*m_context, *m_object->code);
 		}},
 		{"expressionInliner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ExpressionInliner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ExpressionInliner::run(*m_context, *m_ast);
 		}},
 		{"fullInliner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			FunctionGrouper::run(*m_context, block);
-			ExpressionSplitter::run(*m_context, block);
-			FullInliner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
+			FunctionGrouper::run(*m_context, *m_ast);
+			ExpressionSplitter::run(*m_context, *m_ast);
+			FullInliner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"fullInlinerWithoutSplitter", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			FunctionGrouper::run(*m_context, block);
-			FullInliner::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
+			FunctionGrouper::run(*m_context, *m_ast);
+			FullInliner::run(*m_context, *m_ast);
 		}},
 		{"rematerialiser", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			Rematerialiser::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			Rematerialiser::run(*m_context, *m_ast);
 		}},
 		{"expressionSimplifier", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			ExpressionSplitter::run(*m_context, block);
-			CommonSubexpressionEliminator::run(*m_context, block);
-			ExpressionSimplifier::run(*m_context, block);
-			ExpressionSimplifier::run(*m_context, block);
-			ExpressionSimplifier::run(*m_context, block);
-			UnusedPruner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			ExpressionSplitter::run(*m_context, *m_ast);
+			CommonSubexpressionEliminator::run(*m_context, *m_ast);
+			ExpressionSimplifier::run(*m_context, *m_ast);
+			ExpressionSimplifier::run(*m_context, *m_ast);
+			ExpressionSimplifier::run(*m_context, *m_ast);
+			UnusedPruner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"fullSimplify", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionGrouper::run(*m_context, block);
-			BlockFlattener::run(*m_context, block);
-			ExpressionSplitter::run(*m_context, block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			CommonSubexpressionEliminator::run(*m_context, block);
-			ExpressionSimplifier::run(*m_context, block);
-			UnusedPruner::run(*m_context, block);
-			CircularReferencesPruner::run(*m_context, block);
-			DeadCodeEliminator::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionGrouper::run(*m_context, *m_ast);
+			BlockFlattener::run(*m_context, *m_ast);
+			ExpressionSplitter::run(*m_context, *m_ast);
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			CommonSubexpressionEliminator::run(*m_context, *m_ast);
+			ExpressionSimplifier::run(*m_context, *m_ast);
+			UnusedPruner::run(*m_context, *m_ast);
+			CircularReferencesPruner::run(*m_context, *m_ast);
+			DeadCodeEliminator::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"unusedFunctionParameterPruner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			LiteralRematerialiser::run(*m_context, block);
-			UnusedFunctionParameterPruner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_object->code);
+			LiteralRematerialiser::run(*m_context, *m_object->code);
+			UnusedFunctionParameterPruner::run(*m_context, *m_object->code);
 		}},
 		{"unusedPruner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			UnusedPruner::run(*m_context, block);
-			return block;
+			disambiguate();
+			UnusedPruner::run(*m_context, *m_ast);
 		}},
 		{"circularReferencesPruner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			CircularReferencesPruner::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
+			CircularReferencesPruner::run(*m_context, *m_ast);
 		}},
 		{"deadCodeEliminator", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			DeadCodeEliminator::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			DeadCodeEliminator::run(*m_context, *m_ast);
 		}},
 		{"ssaTransform", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			SSATransform::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			SSATransform::run(*m_context, *m_ast);
 		}},
 		{"unusedAssignEliminator", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			UnusedAssignEliminator::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			UnusedAssignEliminator::run(*m_context, *m_ast);
 		}},
 		{"unusedStoreEliminator", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			ExpressionSplitter::run(*m_context, block);
-			SSATransform::run(*m_context, block);
-			UnusedStoreEliminator::run(*m_context, block);
-			SSAReverser::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			ExpressionSplitter::run(*m_context, *m_ast);
+			SSATransform::run(*m_context, *m_ast);
+			UnusedStoreEliminator::run(*m_context, *m_ast);
+			SSAReverser::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"equalStoreEliminator", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionHoister::run(*m_context, block);
-			ForLoopInitRewriter::run(*m_context, block);
-			EqualStoreEliminator::run(*m_context, block);
-			return block;
+			disambiguate();
+			FunctionHoister::run(*m_context, *m_ast);
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			EqualStoreEliminator::run(*m_context, *m_ast);
 		}},
 		{"ssaPlusCleanup", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			SSATransform::run(*m_context, block);
-			UnusedAssignEliminator::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			SSATransform::run(*m_context, *m_ast);
+			UnusedAssignEliminator::run(*m_context, *m_ast);
 		}},
 		{"loadResolver", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			FunctionGrouper::run(*m_context, block);
-			BlockFlattener::run(*m_context, block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			ExpressionSplitter::run(*m_context, block);
-			CommonSubexpressionEliminator::run(*m_context, block);
-			ExpressionSimplifier::run(*m_context, block);
+			disambiguate();
+			FunctionGrouper::run(*m_context, *m_ast);
+			BlockFlattener::run(*m_context, *m_ast);
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			ExpressionSplitter::run(*m_context, *m_ast);
+			CommonSubexpressionEliminator::run(*m_context, *m_ast);
+			ExpressionSimplifier::run(*m_context, *m_ast);
 
-			LoadResolver::run(*m_context, block);
+			LoadResolver::run(*m_context, *m_ast);
 
-			UnusedPruner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			ExpressionJoiner::run(*m_context, block);
-			return block;
+			UnusedPruner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
+			ExpressionJoiner::run(*m_context, *m_ast);
 		}},
 		{"loopInvariantCodeMotion", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			LoopInvariantCodeMotion::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			LoopInvariantCodeMotion::run(*m_context, *m_ast);
 		}},
 		{"controlFlowSimplifier", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			ControlFlowSimplifier::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			ControlFlowSimplifier::run(*m_context, *m_ast);
 		}},
 		{"structuralSimplifier", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			LiteralRematerialiser::run(*m_context, block);
-			StructuralSimplifier::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			LiteralRematerialiser::run(*m_context, *m_ast);
+			StructuralSimplifier::run(*m_context, *m_ast);
 		}},
 		{"equivalentFunctionCombiner", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			EquivalentFunctionCombiner::run(*m_context, block);
-			return block;
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			EquivalentFunctionCombiner::run(*m_context, *m_ast);
 		}},
 		{"ssaReverser", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			SSAReverser::run(*m_context, block);
-			return block;
+			disambiguate();
+			SSAReverser::run(*m_context, *m_ast);
 		}},
 		{"ssaAndBack", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
 			// apply SSA
-			SSATransform::run(*m_context, block);
-			UnusedAssignEliminator::run(*m_context, block);
+			SSATransform::run(*m_context, *m_ast);
+			UnusedAssignEliminator::run(*m_context, *m_ast);
 			// reverse SSA
-			SSAReverser::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			CommonSubexpressionEliminator::run(*m_context, block);
-			UnusedPruner::run(*m_context, block);
-			return block;
+			SSAReverser::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			CommonSubexpressionEliminator::run(*m_context, *m_ast);
+			UnusedPruner::run(*m_context, *m_ast);
 		}},
 		{"stackCompressor", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			ForLoopInitRewriter::run(*m_context, block);
-			FunctionHoister::run(*m_context, block);
-			FunctionGrouper::run(*m_context, block);
+			disambiguate();
+			ForLoopInitRewriter::run(*m_context, *m_ast);
+			FunctionHoister::run(*m_context, *m_ast);
+			FunctionGrouper::run(*m_context, *m_ast);
 			size_t maxIterations = 16;
-			{
-				Object object(*m_optimizedObject);
-				object.setCode(std::make_shared<AST>(std::get<Block>(ASTCopier{}(block))));
-				block = std::get<1>(StackCompressor::run(*m_dialect, object, true, maxIterations));
-			}
-			BlockFlattener::run(*m_context, block);
-			return block;
+			StackCompressor::run(*m_dialect, *m_object, true, maxIterations);
+			BlockFlattener::run(*m_context, *m_ast);
 		}},
 		{"fullSuite", [&]() {
 			GasMeter meter(dynamic_cast<EVMDialect const&>(*m_dialect), false, 200);
 			OptimiserSuite::run(
 				*m_dialect,
 				&meter,
-				*m_optimizedObject,
+				*m_object,
 				true,
 				frontend::OptimiserSettings::DefaultYulOptimiserSteps,
 				frontend::OptimiserSettings::DefaultYulOptimiserCleanupSteps,
 				frontend::OptimiserSettings::standard().expectedExecutionsPerDeployment
 			);
-			return std::get<Block>(ASTCopier{}(m_optimizedObject->code()->root()));
 		}},
 		{"stackLimitEvader", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
-			Object object(*m_optimizedObject);
-			object.setCode(std::make_shared<AST>(std::get<Block>(ASTCopier{}(block))));
-			auto const unreachables = CompilabilityChecker{
+			disambiguate();
+			StackLimitEvader::run(*m_context, *m_object, CompilabilityChecker{
 				*m_dialect,
-				object,
+				*m_object,
 				true
-			}.unreachableVariables;
-			StackLimitEvader::run(*m_context, block, unreachables);
-			return block;
+			}.unreachableVariables);
 		}},
 		{"fakeStackLimitEvader", [&]() {
-			auto block = disambiguate();
-			updateContext(block);
+			disambiguate();
 			// Mark all variables with a name starting with "$" for escalation to memory.
 			struct FakeUnreachableGenerator: ASTWalker
 			{
-				std::map<YulName, std::vector<YulName>> fakeUnreachables;
+				std::map<YulString, std::vector<YulString>> fakeUnreachables;
 				using ASTWalker::operator();
 				void operator()(FunctionDefinition const& _function) override
 				{
-					YulName originalFunctionName = m_currentFunction;
+					YulString originalFunctionName = m_currentFunction;
 					m_currentFunction = _function.name;
-					for (NameWithDebugData const& _argument: _function.parameters)
+					for (TypedName const& _argument: _function.parameters)
 						visitVariableName(_argument.name);
-					for (NameWithDebugData const& _argument: _function.returnVariables)
+					for (TypedName const& _argument: _function.returnVariables)
 						visitVariableName(_argument.name);
 					ASTWalker::operator()(_function);
 					m_currentFunction = originalFunctionName;
 				}
-				void visitVariableName(YulName _var)
+				void visitVariableName(YulString _var)
 				{
 					if (!_var.empty() && _var.str().front() == '$')
 						if (!util::contains(fakeUnreachables[m_currentFunction], _var))
@@ -478,12 +378,11 @@ YulOptimizerTestCommon::YulOptimizerTestCommon(
 					visitVariableName(_identifier.name);
 					ASTWalker::operator()(_identifier);
 				}
-				YulName m_currentFunction = YulName{};
+				YulString m_currentFunction = YulString{};
 			};
 			FakeUnreachableGenerator fakeUnreachableGenerator;
-			fakeUnreachableGenerator(block);
-			StackLimitEvader::run(*m_context, block, fakeUnreachableGenerator.fakeUnreachables);
-			return block;
+			fakeUnreachableGenerator(*m_ast);
+			StackLimitEvader::run(*m_context, *m_object, fakeUnreachableGenerator.fakeUnreachables);
 		}}
 	};
 }
@@ -497,11 +396,10 @@ bool YulOptimizerTestCommon::runStep()
 {
 	yulAssert(m_dialect, "Dialect not set.");
 
+	updateContext();
+
 	if (m_namedSteps.count(m_optimizerStep))
-	{
-		auto block = m_namedSteps[m_optimizerStep]();
-		m_optimizedObject->setCode(std::make_shared<AST>(std::move(block)));
-	}
+		m_namedSteps[m_optimizerStep]();
 	else
 		return false;
 
@@ -519,12 +417,13 @@ std::string YulOptimizerTestCommon::randomOptimiserStep(unsigned _seed)
 		if (count == idx)
 		{
 			std::string optimiserStep = step.first;
-			// Do not fuzz mainFunction
-			// because it does not preserve yul code semantics.
+			// Do not fuzz mainFunction and wordSizeTransform
+			// because they do not preserve yul code semantics.
 			// Do not fuzz reasoning based simplifier because
 			// it can sometimes drain memory.
 			if (
-				optimiserStep == "mainFunction"
+				optimiserStep == "mainFunction"	||
+				optimiserStep == "wordSizeTransform"
 			)
 				// "Fullsuite" is fuzzed roughly four times more frequently than
 				// other steps because of the filtering in place above.
@@ -537,29 +436,25 @@ std::string YulOptimizerTestCommon::randomOptimiserStep(unsigned _seed)
 	yulAssert(false, "Optimiser step selection failed.");
 }
 
-Block const* YulOptimizerTestCommon::run()
+std::shared_ptr<Block> YulOptimizerTestCommon::run()
 {
-	return runStep() ? &m_optimizedObject->code()->root() : nullptr;
+	return runStep() ? m_ast : nullptr;
 }
 
-Block YulOptimizerTestCommon::disambiguate()
+void YulOptimizerTestCommon::disambiguate()
 {
-	auto block = std::get<Block>(Disambiguator(*m_dialect, *m_object->analysisInfo)(m_object->code()->root()));
-	return block;
+	*m_object->code = std::get<Block>(Disambiguator(*m_dialect, *m_analysisInfo)(*m_object->code));
+	m_analysisInfo.reset();
+	updateContext();
 }
 
-void YulOptimizerTestCommon::updateContext(Block const& _block)
+void YulOptimizerTestCommon::updateContext()
 {
-	m_nameDispenser = std::make_unique<NameDispenser>(*m_dialect, _block, m_reservedIdentifiers);
+	m_nameDispenser = std::make_unique<NameDispenser>(*m_dialect, *m_object->code, m_reservedIdentifiers);
 	m_context = std::make_unique<OptimiserStepContext>(OptimiserStepContext{
 		*m_dialect,
 		*m_nameDispenser,
 		m_reservedIdentifiers,
 		frontend::OptimiserSettings::standard().expectedExecutionsPerDeployment
 	});
-}
-
-std::shared_ptr<Object> YulOptimizerTestCommon::optimizedObject() const
-{
-	return m_optimizedObject;
 }

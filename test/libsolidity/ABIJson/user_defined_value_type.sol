@@ -33,7 +33,8 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "myAddress",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "C.MyAddress",
 //         "name": "",
@@ -46,7 +47,8 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "myByte1",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "MyByte1",
 //         "name": "",
@@ -59,7 +61,8 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "myBytes32",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "C.MyBytes32",
 //         "name": "",
@@ -72,7 +75,8 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "myInt",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "MyInt",
 //         "name": "",
@@ -85,7 +89,8 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "myUInt8",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
 //         "internalType": "C.MyUInt8",
 //         "name": "",
@@ -96,7 +101,8 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "C.MyAddress",
 //         "name": "a",
@@ -109,7 +115,8 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "MyByte1",
 //         "name": "a",
@@ -122,7 +129,8 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "C.MyBytes32",
 //         "name": "a",
@@ -135,7 +143,8 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "MyInt",
 //         "name": "a",
@@ -148,7 +157,8 @@ contract C {
 //     "type": "function"
 //   },
 //   {
-//     "inputs": [
+//     "inputs":
+//     [
 //       {
 //         "internalType": "C.MyUInt8",
 //         "name": "a",

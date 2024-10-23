@@ -49,11 +49,7 @@ StackLayoutGeneratorTest::StackLayoutGeneratorTest(std::string const& _filename)
 {
 	m_source = m_reader.source();
 	auto dialectName = m_reader.stringSetting("dialect", "evm");
-	m_dialect = &dialect(
-		dialectName,
-		solidity::test::CommonOptions::get().evmVersion(),
-		solidity::test::CommonOptions::get().eofVersion()
-	);
+	m_dialect = &dialect(dialectName, solidity::test::CommonOptions::get().evmVersion());
 	m_expectation = m_reader.simpleExpectations();
 }
 
@@ -228,7 +224,7 @@ TestCase::TestResult StackLayoutGeneratorTest::run(std::ostream& _stream, std::s
 
 	std::ostringstream output;
 
-	std::unique_ptr<CFG> cfg = ControlFlowGraphBuilder::build(*analysisInfo, *m_dialect, object->code()->root());
+	std::unique_ptr<CFG> cfg = ControlFlowGraphBuilder::build(*analysisInfo, *m_dialect, *object->code);
 	StackLayout stackLayout = StackLayoutGenerator::run(*cfg);
 
 	output << "digraph CFG {\nnodesep=0.7;\nnode[shape=box];\n\n";

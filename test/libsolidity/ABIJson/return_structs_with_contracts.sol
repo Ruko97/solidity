@@ -10,9 +10,11 @@ contract C {
 //   {
 //     "inputs": [],
 //     "name": "f",
-//     "outputs": [
+//     "outputs":
+//     [
 //       {
-//         "components": [
+//         "components":
+//         [
 //           {
 //             "internalType": "contract C[]",
 //             "name": "x",
